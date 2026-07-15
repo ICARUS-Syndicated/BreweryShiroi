@@ -31,14 +31,14 @@ import org.bukkit.plugin.Plugin;
 
 @Getter
 @Setter
-public class WorldGuarkHook extends Hook {
+public class WorldGuardHook extends Hook {
 
-    public static final WorldGuarkHook WORLDGUARD = new WorldGuarkHook("WorldGuard", config.isUseWorldGuard());
+    public static final WorldGuardHook WORLDGUARD = new WorldGuardHook("WorldGuard", config.isUseWorldGuard());
 
     private WGBarrel wgBarrel;
 
 
-    public WorldGuarkHook(String name, boolean enabled) {
+    public WorldGuardHook(String name, boolean enabled) {
         super(name, enabled);
 
         if (!isEnabled()) {

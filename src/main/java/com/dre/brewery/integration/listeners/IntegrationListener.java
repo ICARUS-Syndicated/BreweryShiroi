@@ -31,7 +31,7 @@ import com.dre.brewery.configuration.files.Config;
 import com.dre.brewery.configuration.files.Lang;
 import com.dre.brewery.integration.BlockLockerHook;
 import com.dre.brewery.integration.Hook;
-import com.dre.brewery.integration.WorldGuarkHook;
+import com.dre.brewery.integration.WorldGuardHook;
 import com.dre.brewery.integration.barrel.BlockLockerBarrel;
 import com.dre.brewery.integration.barrel.GriefPreventionBarrel;
 import com.dre.brewery.integration.barrel.LWCBarrel;
@@ -69,7 +69,7 @@ public class IntegrationListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onBarrelAccessLowest(BarrelAccessEvent event) {
-        WorldGuarkHook hook = WorldGuarkHook.WORLDGUARD;
+        WorldGuardHook hook = WorldGuardHook.WORLDGUARD;
         if (hook.isEnabled()) {
             Plugin plugin = hook.getPlugin();
             if (plugin != null) {

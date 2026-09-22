@@ -1,4 +1,4 @@
-# German translation for BreweryX
+# German translation for BreweryShiroi
 # Author: DieReicheEtherons
 
 config:
@@ -6,7 +6,7 @@ config:
     Sprachdatei, die genutzt werden soll [en]
     Verfügbare Typen: en (Englisch), de (Deutsch), es (Spanisch), fr (Französisch), it (Italienisch), ru (Russisch), zh (Chinesisch), uk (Ukrainisch), pl (Polnisch)
   updateCheck: |
-    Should BreweryX check for updates? Specify which service you'd like to use for update checking or disable it.
+    Should BreweryShiroi check for updates? Specify which service you'd like to use for update checking or disable it.
     Options available: GitHub, Snapshots, Spigot, None [GitHub]
   autosave: "Autosave Intervall in Minuten [10]"
   pluginPrefix: "Prefix used on messages"
@@ -69,8 +69,8 @@ config:
   useLogBlock: "Änderungen an Fassinventaren mit LogBlock aufzeichen [true]"
   useOffhandForCauldron: "Ob Items in der Zweithand auch in den Kessel geworfen werden sollen [false]"
   loadDataAsync: |
-    This option no longer does anything anymore, and will be removed in future releases of BreweryX.
-    BreweryX will load data asynchronously always, with the exception of server startup and shutdown.
+    This option no longer does anything anymore, and will be removed in future releases of BreweryShiroi.
+    BreweryShiroi will load data asynchronously always, with the exception of server startup and shutdown.
   hangoverDays: "Zeit (in Tagen) die Trunkenheitsdaten nach offlinegehen eines Spielers im Speicher verbleiben, um z.B. Kater-Effekte anzuwenden. [7]"
   onlyAllowBrewsInBarrels: "If only Brewery drinks can be put into barrels [false]"
   colorInBarrels: "Färben der Iteminformationen je nach Qualität während sie sich 1. im Fass und/oder 2. im Braustand befinden [true, true]"

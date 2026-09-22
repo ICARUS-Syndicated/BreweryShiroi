@@ -46,7 +46,7 @@ import java.util.Random;
 
 
 @OkaeriConfigFileOptions(value = "config.yml", removeOrphans = true)
-@Header({ "!!! IMPORTANT: BreweryX configuration files do NOT support external comments! If you add any comments, they will be overwritten !!!",
+@Header({ "!!! IMPORTANT: BreweryShiroi configuration files do NOT support external comments! If you add any comments, they will be overwritten !!!",
     "Our proper config guide can be found at: https://brewery.lumamc.net/en/guide/edit_config/",
     "Still have questions? Join our Discord: https://discord.gg/ZTGCzeKg45" })
 @Footer({ "", "Yep, that's it! The end of config.yml! I had so much fun! And you?..." })
@@ -58,7 +58,7 @@ public class Config extends AbstractOkaeriConfigFile {
     @Override
     public void onFirstCreation() {
         Logging.log("&9Creating a new &6config.yml&9!");
-        Logging.log("&9If this is your first time using BreweryX, change config.yml#language to your language and run &6/brewery reload");
+        Logging.log("&9If this is your first time using BreweryShiroi, change config.yml#language to your language and run &6/brewery reload");
     }
 
     // This doesn't need to be an enumerator, we're reading this value back to an enum from TranslationManager which doesn't rely on this class.
@@ -72,7 +72,7 @@ public class Config extends AbstractOkaeriConfigFile {
     private int autosave = 10;
 
     @LocalizedComment("config.pluginPrefix")
-    private String pluginPrefix = "&2[BreweryX]&f ";
+    private String pluginPrefix = "&#D7FFFFBrewShiroi \u00BB &f ";
 
     @LocalizedComment("config.debug")
     private boolean debug = false;

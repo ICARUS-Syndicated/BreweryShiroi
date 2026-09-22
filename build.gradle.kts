@@ -199,11 +199,11 @@ tasks {
 
         doLast {
             // Much rather use a task in Gradle than a GitHub action for this,
-            // but, may want to look into finding a small plugin for this since BreweryX has
+            // but, may want to look into finding a small plugin for this since BreweryShiroi has
             // a variety of addons that would also need this code copied into them.
             val webhook = DiscordWebhook(System.getenv("DISCORD_WEBHOOK") ?: return@doLast)
             webhook.message = "<@&1393584912652566571>"
-            webhook.embedTitle = "BreweryX - v${project.version}"
+            webhook.embedTitle = "BreweryShiroi - v${project.version}"
             webhook.embedDescription = readChangeLog()
             webhook.send()
         }
@@ -216,7 +216,7 @@ tasks {
     register("publishToDiscord") {
         val webhook = DiscordWebhook(System.getenv("DISCORD_WEBHOOK"))
         webhook.message = "<@&1393584912652566571>"
-        webhook.embedTitle = "BreweryX - v${project.version}"
+        webhook.embedTitle = "BreweryShiroi - v${project.version}"
         webhook.embedDescription = readChangeLog()
         webhook.send()
     }
@@ -332,7 +332,7 @@ class DiscordWebhook(
     }
 
     var message: String = "content"
-    var username: String = "BreweryX Updates"
+    var username: String = "BreweryShiroi Updates"
     var avatarUrl: String = "https://github.com/breweryteam.png"
     var embedTitle: String = "Embed Title"
     var embedDescription: String = "Embed Description"

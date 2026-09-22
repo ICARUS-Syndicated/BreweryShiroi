@@ -1,4 +1,4 @@
-# Chinese lang translation for BreweryX
+# Chinese lang translation for BreweryShiroi
 # Author: nuoxi4n
 
 # Brew
@@ -120,9 +120,9 @@ Error_YmlRead: '无法读取config.yml, 请保证该文件符合正确的yml格�
 
 # Etc
 Etc_Barrel: '酒桶'
-Etc_LandsFlag_Description: '&r&7允许打开\n&r&7BreweryX 的木桶。'
+Etc_LandsFlag_Description: '&r&7允许打开\n&r&7BreweryShiroi 的木桶。'
 Etc_LandsFlag_Title: '桶访问'
-Etc_NewRelease: '&rBreweryX的新版本已经发布！ &2&v1 &r-> &2&v2&r 下载地址&7: &2&v3'
+Etc_NewRelease: '&rBreweryShiroi的新版本已经发布！ &2&v1 &r-> &2&v2&r 下 载地址&7: &2&v3'
 Etc_Page: '页'
 Etc_SealingTable: '沖泡密封台'
 Etc_Usage: '用途:'

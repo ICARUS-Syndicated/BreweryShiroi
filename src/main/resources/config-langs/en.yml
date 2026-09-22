@@ -1,4 +1,4 @@
-# English config translation for BreweryX
+# English config translation for BreweryShiroi
 # Author: Jsinco, DieReicheEtherons
 
 config:
@@ -6,7 +6,7 @@ config:
     The translation to be used [en]
     Available types: en (English), de (German), es (Spanish), fr (French), it (Italian), ru (Russian), zh (Chinese), uk (Ukrainian), pl (Polish)
   updateCheck: |
-    Should BreweryX check for updates? Specify which service you'd like to use for update checking or disable it.
+    Should BreweryShiroi check for updates? Specify which service you'd like to use for update checking or disable it.
     Options available: GitHub, Snapshots, Spigot, None [GitHub]
   autosave: "Autosave interval in minutes [10]"
   pluginPrefix: "Prefix used on messages"
@@ -93,8 +93,8 @@ config:
   useLogBlock: "Enable the Logging of Barrel Inventories to LogBlock [true]"
   useOffhandForCauldron: "If items in Offhand should be added to the cauldron as well [false]"
   loadDataAsync: |
-    This option no longer does anything anymore, and will be removed in future releases of BreweryX.
-    BreweryX will load data asynchronously always, with the exception of server startup and shutdown.
+    This option no longer does anything anymore, and will be removed in future releases of BreweryShiroi.
+    BreweryShiroi will load data asynchronously always, with the exception of server startup and shutdown.
   hangoverDays: "Time (in days) that drunkenness-data stays in memory after a player goes offline, to apply hangover etc. [7]"
   onlyAllowBrewsInBarrels: "If only Brewery drinks can be put into barrels [false]"
   colorInBarrels-Brewer: "Color the Item information (lore) depending on quality while it is 1. in a barrel and/or 2. in a brewing stand [true, true]"
@@ -146,7 +146,7 @@ recipesFile:
     ingredients: List of 'material/amount'
       With an item in your hand, use /brew ItemName to get its material for use in a recipe
       A list of materials can be found here: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Material.html
-      Plugin items with 'plugin:id' (Currently supporting Brewery, Garden (BreweryX Garden Addon), Oraxen, ItemsAdder, Nexo, Slimefun)
+      Plugin items with 'plugin:id' (Currently supporting Brewery, Garden (BreweryShiroi Garden Addon), Oraxen, ItemsAdder, Nexo, Slimefun)
       Example: '- itemsadder:grape/5'
       Custom items from 'custom-items.yml' do not require any prefixes ('- example_custom_item/10')
       You can also use drinks as ingredients for other drinks. Correct format for this would be: 'brewery:ID/amount'

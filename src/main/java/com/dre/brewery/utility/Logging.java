@@ -38,14 +38,27 @@ public final class Logging {
         DEBUG
     }
 
-    private static final Config config = ConfigManager.getConfig(Config.class);
+    /**
+     * The tag every console message of this plugin is prefixed with, in the BreweryShiroi color.
+     * <p>
+     * Messages sent to players keep using the configurable {@code pluginPrefix} instead.
+     */
+    public static final String PREFIX = "&#D7FFFFBrewShiroi \u00BB &f";
+
+    /**
+     * Resolved lazily on purpose: touching this class from {@code BreweryPlugin}'s constructor must not
+     * trigger a config load, since that needs the {@code mcVersion} which is only known in {@code onEnable}.
+     */
+    private static Config config() {
+        return ConfigManager.getConfig(Config.class);
+    }
 
     public static void msg(CommandSender sender, String msg) {
-        sender.sendMessage(BreweryUtil.color(config.getPluginPrefix() + msg));
+        sender.sendMessage(BreweryUtil.color(config().getPluginPrefix() + msg));
     }
 
     public static void log(String msg) {
-        Bukkit.getConsoleSender().sendMessage(BreweryUtil.color(config.getPluginPrefix() + msg));
+        Bukkit.getConsoleSender().sendMessage(BreweryUtil.color(PREFIX + msg));
     }
 
     public static void log(LogLevel level, String msg) {
@@ -68,17 +81,17 @@ public final class Logging {
     }
 
     public static void debugLog(String msg) {
-        if (ConfigManager.getConfig(Config.class).isDebug()) {
-            msg(Bukkit.getConsoleSender(), "&2[Debug] &f" + msg);
+        if (config().isDebug()) {
+            log("&2[Debug] &f" + msg);
         }
     }
 
     public static void warningLog(String msg) {
-        Bukkit.getConsoleSender().sendMessage(BreweryUtil.color("&e[BreweryX] WARNING: " + msg));
+        Bukkit.getConsoleSender().sendMessage(BreweryUtil.color(PREFIX + "&eWARNING: " + msg));
     }
 
     public static void errorLog(String msg) {
-        String str = BreweryUtil.color("&c[BreweryX] ERROR: " + msg);
+        String str = BreweryUtil.color(PREFIX + "&cERROR: " + msg);
         Bukkit.getConsoleSender().sendMessage(str);
         if (ReloadCommand.getReloader() != null) { // I hate this, but I'm too lazy to go change all of it - Jsinco
             ReloadCommand.getReloader().sendMessage(str);
@@ -98,13 +111,13 @@ public final class Logging {
         }
         Throwable cause = throwable.getCause();
         while (cause != null) {
-            Bukkit.getConsoleSender().sendMessage(BreweryUtil.color("&c[BreweryX]&6 Caused by: " + cause));
+            Bukkit.getConsoleSender().sendMessage(BreweryUtil.color(PREFIX + "&6Caused by: " + cause));
             for (StackTraceElement ste : cause.getStackTrace()) {
                 String str = ste.toString();
                 if (str.contains(".jar//")) {
                     str = str.substring(str.indexOf(".jar//") + 6);
                 }
-                Bukkit.getConsoleSender().sendMessage(BreweryUtil.color("&c[BreweryX]&6      " + str));
+                Bukkit.getConsoleSender().sendMessage(BreweryUtil.color(PREFIX + "&6     " + str));
             }
             cause = cause.getCause();
         }

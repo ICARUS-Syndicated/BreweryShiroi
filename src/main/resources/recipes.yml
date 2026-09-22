@@ -1,4 +1,4 @@
-# Bundled default recipes for BreweryX.
+# Bundled default recipes for BreweryShiroi.
 # This file is written to the plugin data folder on first start (with a localized header/footer) and is also
 # used to add newly shipped recipes to existing recipe files. It is never read at runtime directly.
 

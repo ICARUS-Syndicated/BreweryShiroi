@@ -62,7 +62,7 @@ public class SpigotReleaseChecker extends ReleaseChecker {
     }
 
     public String failedToResolve() {
-        Logging.warningLog("Failed to resolve latest BreweryX version from SpigotMC. (No connection?)");
+        Logging.warningLog("Failed to resolve latest BreweryShiroi version from SpigotMC. (No connection?)");
         this.resolvedLatestVersion = CONST_UNRESOLVED;
         return CONST_UNRESOLVED;
     }

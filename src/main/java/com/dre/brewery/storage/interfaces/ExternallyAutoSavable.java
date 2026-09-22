@@ -27,7 +27,7 @@ import com.dre.brewery.storage.DataManager;
  * Auto saving will occur every X number of minutes and will also occur when this Plugin is disabled.
  * <p>
  * A class
- * implementing this interface must be registered with BreweryX auto-savable system. {@link DataManager#registerAutoSavable(ExternallyAutoSavable)}
+ * implementing this interface must be registered with BreweryShiroi auto-savable system. {@link DataManager#registerAutoSavable(ExternallyAutoSavable)}
  *
  * @see DataManager#registerAutoSavable(ExternallyAutoSavable)
  * @see DataManager#unregisterAutoSavable(ExternallyAutoSavable)

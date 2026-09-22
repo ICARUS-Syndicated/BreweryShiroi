@@ -55,7 +55,7 @@ import java.util.stream.Collectors;
 
 public class MongoDBStorage extends DataManager {
 
-    private static final String URL = "mongodb+srv://%s:%s@%s/?retryWrites=true&w=majority&appName=BreweryX#%d";
+    private static final String URL = "mongodb+srv://%s:%s@%s/?retryWrites=true&w=majority&appName=BreweryShiroi#%d";
     private static final String[] COLLECTIONS = { "misc", "barrels", "cauldrons", "players", "wakeups" };
     private static final String MONGO_ID = "_id";
 

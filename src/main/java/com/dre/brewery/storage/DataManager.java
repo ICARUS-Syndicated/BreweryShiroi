@@ -229,7 +229,7 @@ public abstract class DataManager {
             dataManager.saveAll(false);
 
             Logging.log("&5Finished migrating legacy data! Took&7: &a" + (System.currentTimeMillis() - start) + "ms&5! Join our discord if you need assistance: &ahttps://discord.gg/3FkNaNDnta");
-            Logging.warningLog("BreweryX can only load legacy data from worlds that exist. If you're trying to migrate old cauldrons, barrels, etc. And the worlds they're in don't exist, you'll need to migrate manually.");
+            Logging.warningLog("BreweryShiroi can only load legacy data from worlds that exist. If you're trying to migrate old cauldrons, barrels, etc. And the worlds they're in don't exist, you'll need to migrate manually.");
         }
 
         // DataManager has been reloaded and may have swapped to a new implementation.

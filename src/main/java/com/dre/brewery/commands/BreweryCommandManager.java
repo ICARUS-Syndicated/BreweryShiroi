@@ -1,21 +1,21 @@
 /*
- * BreweryX Bukkit-Plugin for an alternate brewing process
+ * BreweryShiroi Bukkit-Plugin for an alternate brewing process
  * Copyright (C) 2026 Ph0sphorW
  *
- * This file is part of BreweryX.
+ * This file is part of BreweryShiroi.
  *
- * BreweryX is free software: you can redistribute it and/or modify
+ * BreweryShiroi is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * BreweryX is distributed in the hope that it will be useful,
+ * BreweryShiroi is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with BreweryX. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * along with BreweryShiroi. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
 package com.dre.brewery.commands;
@@ -56,7 +56,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Owns the {@link PaperCommandManager} of BreweryX and registers every command on it.
+ * Owns the {@link PaperCommandManager} of BreweryShiroi and registers every command on it.
  * <p>
  * The plugin main class only calls {@link #register()}, all commands live in this package, see
  * {@link BreweryCommands} for the built-in ones.
@@ -105,7 +105,7 @@ public class BreweryCommandManager {
     }
 
     /**
-     * Registers every command of BreweryX, this is the only method the plugin main class has to call.
+     * Registers every command of BreweryShiroi, this is the only method the plugin main class has to call.
      */
     public void register() {
         registerLocalizedCaptions();

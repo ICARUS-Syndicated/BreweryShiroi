@@ -48,13 +48,13 @@ public enum MinecraftVersion {
     V1_15("1.15"),
     V1_16("1.16"),
     // If we're being honest, probably no versions below this one will be used since we're compiling to Java 17.
-    //  So they'll need to get some server software for Java 17 *if* they want to use BreweryX.
+    //  So they'll need to get some server software for Java 17 *if* they want to use BreweryShiroi.
     V1_17("1.17"),
     V1_18("1.18"),
     V1_19("1.19"),
     V1_20("1.20"),
     V1_20_4("1.20.4", "1.20.3"), // 1.20.4 & 1.20.3 are one and the same
-    V1_21("1.21", "1.20.5", "1.20.6"), // 1.20.5, 1.20.6, & 1.21 are being used the same way in BreweryX.
+    V1_21("1.21", "1.20.5", "1.20.6"), // 1.20.5, 1.20.6, & 1.21 are being used the same way in BreweryShiroi.
     V1_21_4("1.21.4"), // min version for setItemModel
     V1_21_5("1.21.5"), // Int CustomModelData is deprecated since version 1.21.5
     V1_21_10("1.21.10", "1.21.9"), // 1.21.10 & 1.21.9 are one and the same

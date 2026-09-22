@@ -37,7 +37,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Stats which are exclusive to BreweryX.
+ * Stats which are exclusive to BreweryShiroi.
  */
 public class BreweryXStats {
 

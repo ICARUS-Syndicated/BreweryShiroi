@@ -249,9 +249,9 @@ public final class BreweryPlugin extends JavaPlugin {
         Logging.log("Using scheduler&7: &a" + scheduler.getClass().getSimpleName());
         Logging.log("Environment&7: &a" + Logging.getEnvironmentAsString());
         if (!PaperLib.isPaper()) {
-            Logging.log("&aBreweryX performs best on Paper-based servers. Please consider switching to Paper for the best experience. &7https://papermc.io");
+            Logging.log("&aBreweryShiroi performs best on Paper-based servers. Please consider switching to Paper for the best experience. &7https://papermc.io");
         }
-        Logging.log("BreweryX enabled!");
+        Logging.log("BreweryShiroi enabled!");
 
         ReleaseChecker releaseChecker = ReleaseChecker.getInstance();
         releaseChecker.checkForUpdate().thenAccept(updateAvailable -> {
@@ -279,7 +279,7 @@ public final class BreweryPlugin extends JavaPlugin {
             placeholderAPIHook.getInstance().unregister();
         }
 
-        Logging.log("BreweryX disabled!");
+        Logging.log("BreweryShiroi disabled!");
     }
 
 
@@ -365,30 +365,34 @@ public final class BreweryPlugin extends JavaPlugin {
     }
 
 
-    // Lots of users migrate from the original Brewery. Because of this,
-    // we need to rename our 'Brewery' folder to 'BreweryX' ASAP. Before Okaeri loads.
+    // BreweryShiroi was formerly known as BreweryX, which itself forked the original Brewery.
+    // Servers upgrading to the new name get their old data folder moved over, before Okaeri loads anything.
     public void migrateBreweryDataFolder() {
-        String pluginsFolder = getDataFolder().getParentFile().getPath();
+        File dataFolder = getDataFolder();
+        if (dataFolder.exists()) {
+            return;
+        }
 
-        File breweryFolder = new File(pluginsFolder + File.separator + "Brewery");
-        File breweryXFolder = new File(pluginsFolder + File.separator + "BreweryX");
-
-        if (breweryFolder.exists() && !breweryXFolder.exists()) {
-            if (!breweryXFolder.exists()) {
-                breweryXFolder.mkdirs();
+        File pluginsFolder = dataFolder.getParentFile();
+        for (String oldName : new String[]{ "BreweryX", "Brewery" }) {
+            File oldFolder = new File(pluginsFolder, oldName);
+            if (!oldFolder.exists()) {
+                continue;
             }
 
-            File[] files = breweryFolder.listFiles();
+            dataFolder.mkdirs();
+            File[] files = oldFolder.listFiles();
             if (files != null) {
                 for (File file : files) {
                     try {
-                        Files.copy(file.toPath(), new File(breweryXFolder, file.getName()).toPath());
+                        Files.copy(file.toPath(), new File(dataFolder, file.getName()).toPath());
                     } catch (IOException e) {
                         Logging.errorLog("Failed to move file: " + file.getName(), e);
                     }
                 }
-                Logging.log("&5Moved files from Brewery to BreweryX's data folder");
+                Logging.log("&5Moved files from " + oldName + " to BreweryShiroi's data folder");
             }
+            return;
         }
     }
 }

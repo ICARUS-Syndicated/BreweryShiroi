@@ -1,4 +1,4 @@
-# Polish lang translation for BreweryX
+# Polish lang translation for BreweryShiroi
 # Author: Bogdantheloser
 # Brew
 Brew_times: razy
@@ -122,9 +122,9 @@ Etc_Barrel: Beczka
 Etc_Page: Strona
 Etc_Usage: 'Użycie:'
 Etc_SealingTable: Stół do Pieczętowania Naparów
-Etc_NewRelease: '&rDostępna jest nowa wersja BreweryX! &2&v1 &r-> &2&v2&r Pobierz&7: &2&v3'
+Etc_NewRelease: '&rDostępna jest nowa wersja BreweryShiroi! &2&v1 &r-> &2&v2&r Pobierz&7: &2&v3'
 Etc_LandsFlag_Title: 'Dostęp do Beczek'
-Etc_LandsFlag_Description: '&r&7Pozwala na otwieranie\n&r&7beczek BreweryX.'
+Etc_LandsFlag_Description: '&r&7Pozwala na otwieranie\n&r&7beczek BreweryShiroi.'
 
 # Help
 Help_Copy: '&6/brew copy [Ilość]&9 Kopiuje miksturę trzymaną w ręce'

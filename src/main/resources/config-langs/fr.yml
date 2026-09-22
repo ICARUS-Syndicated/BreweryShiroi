@@ -1,4 +1,4 @@
-# Traduction française pour BreweryX
+# Traduction française pour BreweryShiroi
 # Auteur(e) (Author) : rédigé en grande partie par CiaoCiaoBambina.  Les anciennes traductions ont été faites avec
 # des traducteurs tels que DeepL, mais j'ai essayé de les remplacer avec des traductions faites à la mains.  Veuillez noter
 # qu’avec un fichier de cette taille, une possibilité d'erreurs lors de la traduction est toujours présente.  Vous pouvez me
@@ -13,7 +13,7 @@ config:
     Activer la cherche de mises à jour.  Si oui, veuillez préciser quel service à y utiliser pour vérifier les mises à jour ; si non, préciser « None ».
     Services disponibles : GitHub, Snapshots, Spigot, None [GitHub]
   autosave: "Intervale de la sauvegarde automatique en minutes [10]"
-  pluginPrefix: "Préfixe utilisé avec les messages BreweryX"
+  pluginPrefix: "Préfixe utilisé avec les messages BreweryShiroi"
   debug: "Afficher les messages de débogue dans le journal du serveur (log) [false]"
   storage:
     header: "-- Paramètres de stockage des données --"
@@ -80,7 +80,7 @@ config:
   useLogBlock: "Activer l’historique du contenu des tonneaux avec LogBlock [true]"
   useOffhandForCauldron: "Si les objets tenus par la main secondaire (Offhand) devraient être mis dans le chaudron [false]"
   loadDataAsync: |
-    AVERTISSEMENT : Cette option ne fais plus rien.  BreweryX prendra toujours les données en charge
+    AVERTISSEMENT : Cette option ne fais plus rien.  BreweryShiroi prendra toujours les données en charge
     de manière asynchrone sauf en cas du démarrage et de l’arrêt du serveur.  Cela sera supprimé avec les nouvelles versions du plug-in.
     Ancienne description:
     Si les données des fûts et des chaudrons peuvent être chargés de manière asynchrone ou en arrière-plan [true]

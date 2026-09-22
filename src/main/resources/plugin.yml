@@ -1,11 +1,11 @@
-name: BreweryX
+name: BreweryShiroi
 main: com.dre.brewery.BreweryPlugin
 version: '${version}'
 api-version: 1.13
 load: POSTWORLD
 folia-supported: true
 website: 'https://brewery.lumamc.net/'
-authors: [Jsinco, Mitality, Nadwey, Szarkans, Vutka1, Thorinwasher, Tisawesomeness]
+authors: [Jsinco, Mitality, Nadwey, Szarkans, Vutka1, Thorinwasher, Tisawesomeness, Ph0sphorW]
 softdepend:
   - LWC
   - LogBlock
@@ -119,7 +119,7 @@ permissions:
   brewery.cmd.reloadaddons:
     description: Reload all Addons
   brewery.cmd.version:
-    description: See misc info about BreweryX
+    description: See misc info about BreweryShiroi
   brewery.cmd.datamanager:
     description: DataManager stuff
 

@@ -1,4 +1,4 @@
-# Russian config translation for BreweryX
+# Russian config translation for BreweryShiroi
 # Author: Vutka1
 
 config:
@@ -11,7 +11,7 @@ config:
   autosave: "Период автосохранения данных (в минутах) [10]"
   pluginPrefix: |
     Префикс плагина, используемый в сообщениях.
-    Как и большинство текстов плагина, поддерживает HEX-цвета (пример: & FFFFFF - белый цвет) ['&2[BreweryX]&f ']
+    Как и большинство текстов плагина, поддерживает HEX-цвета (пример: & FFFFFF - белый цвет) ['&#D7FFFFBrewShiroi » &f ']
   debug: "Отображать ли отладочные сообщения в логах и в консоли [false]"
   storage:
     header: "-- Хранение данных --"
@@ -105,7 +105,7 @@ config:
   useOffhandForCauldron: "Можно ли добавлять в котел также вещи из второй руки [false]"
   loadDataAsync: |
     Эта опция больше не используется и в будущих версиях будет удалена.
-    Сейчас BreweryX всегда загружает данные асинхронно, за исключением запуска и остановки сервера.
+    Сейчас BreweryShiroi всегда загружает данные асинхронно, за исключением запуска и остановки сервера.
   hangoverDays: "Количество дней, в течение которых данные об опьянении игрока остаются в памяти после его выхода, чтобы при заходе наложить похмелье, тпшнуть его домой, и пр. [7]"
   onlyAllowBrewsInBarrels: "Разрешить ли класть в бочки только бутылки с напитками [false]"
   colorInBarrels-Brewer: "Окрашивать ли информацию об этапах приготовления, в зависимости от качества, внутри бочек и зельеварок [true, true]"
@@ -161,7 +161,7 @@ recipesFile:
 
     ingredients: 'ID/Количество'
       https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Material.html
-      Вещи из других плагинов вписывать с префиксом: 'plugin:id/кол-во' (Сейчас поддерживаются Brewery, Garden (BreweryX Garden Addon), Oraxen, ItemsAdder, Nexo, Slimefun).
+      Вещи из других плагинов вписывать с префиксом: 'plugin:id/кол-во' (Сейчас поддерживаются Brewery, Garden (BreweryShiroi Garden Addon), Oraxen, ItemsAdder, Nexo, Slimefun).
       Например: '- itemsadder:grape/5'
       Кастом итемы (из custom-items.yml) вписываются просто по их ID, без префикса (Например, '- vinograd/10')
       Также можно использовать одни напитки в качестве ингредиентов для других. Формат выглядит вот так: 'brewery:ID/число'
@@ -253,7 +253,7 @@ cauldronFile:
 
     ingredients: ингредиенты и их число(опицонально), из которых получается недовар. Пример: Potato/3
       Используйте /brew ItemName с предметом в руке, чтобы получить его айдишник для конфига
-      (как правило, соответствует майнкрафтовскому айдишнику, отличаться могут у предметов из других плагинов, поддержка которых есть в BreweryX)
+      (как правило, соответствует майнкрафтовскому айдишнику, отличаться могут у предметов из других плагинов, поддержка которых есть в BreweryShiroi)
 
     color: цвет зелья-недовара. Дефолтное значение - CYAN.
       Возможные значения: DARK_RED, RED, BRIGHT_RED, ORANGE, YELLOW, PINK, PURPLE, BLUE, CYAN, WATER, TEAL, OLIVE, GREEN, LIME, BLACK, GREY, BRIGHT_GREY, WHITE

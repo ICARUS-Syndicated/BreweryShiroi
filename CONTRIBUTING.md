@@ -1,4 +1,4 @@
-# Contributing to BreweryX
+# Contributing to BreweryShiroi
 
 ## Code Contributions
 
@@ -13,21 +13,21 @@ To maintain code clarity, use IntelliJ IDEA's 'Reformat Code' function before fi
 
 ### License Headers
 
-Not required for submitting PRs to BreweryX. IntelliJ IDEs should recognize
+Not required for submitting PRs to BreweryShiroi. IntelliJ IDEs should recognize
 the copyright included in the `.idea` folder automatically.
 
 ### Should Your Contribution Be an Addon?
 
-Before contributing features to BreweryX, ask yourself "Should this be an addon instead?".
-BreweryX has a mostly-extensive addon API which allows you to create plugin-like addons for
-BreweryX. Let's take a look at some examples that should be an addon vs what should be a contribution to BreweryX:
+Before contributing features to BreweryShiroi, ask yourself "Should this be an addon instead?".
+BreweryShiroi has a mostly-extensive addon API which allows you to create plugin-like addons for
+BreweryShiroi. Let's take a look at some examples that should be an addon vs what should be a contribution to BreweryShiroi:
 
 - A contribution that adds support for another plugin's custom items <-- ✅ **Great as a Contribution**
 - A contribution which adds GUIs to interface with cauldrons <-- ❌ **Changing the core gameplay of Brewery should not be a contribution, write this as an addon instead**
-- A contribution which patches bugs, exploits, or improves performance of BreweryX <-- ✅ **Great as a Contribution**
-- A contribution which adds growable plants which can be used in recipes  <-- ❌ **Bloating BreweryX with somewhat-niche features should not be a contribution, write this as an addon instead**
+- A contribution which patches bugs, exploits, or improves performance of BreweryShiroi <-- ✅ **Great as a Contribution**
+- A contribution which adds growable plants which can be used in recipes  <-- ❌ **Bloating BreweryShiroi with somewhat-niche features should not be a contribution, write this as an addon instead**
 
-Want to get started on building a BreweryX addon? See our wiki page on [Creating an Addon](https://brewery.lumamc.net/api/api/#creating_an_addon).
+Want to get started on building a BreweryShiroi addon? See our wiki page on [Creating an Addon](https://brewery.lumamc.net/api/api/#creating_an_addon).
 
 ### Don't Use Local Libraries
 
@@ -40,10 +40,10 @@ a local library.
 
 ### Translation Contributions
 
-Translations for BreweryX are always welcome!
+Translations for BreweryShiroi are always welcome!
 
 Translation contributions should include a `config-langs` and `languages` addition.
-One being a translation for the all configuration files of BreweryX and the other being a translation for
+One being a translation for the all configuration files of BreweryShiroi and the other being a translation for
 messages sent by the plugin (lang).
 
 Translation files should be named in **short language code**, e.g. `en.yml` for English and `zh.yml` for Chinese.
@@ -56,13 +56,13 @@ Git. **See below** for instructions on how to fork, clone, and submit a PR.
 ### Wiki Contributions
 
 Wiki contributions should have purpose and serve as informative pages to those learning how
-to navigate BreweryX. When submitting a Wiki PR, make sure the information included is accurate, up-to-date,
+to navigate BreweryShiroi. When submitting a Wiki PR, make sure the information included is accurate, up-to-date,
 and concise.
 
 
 ## Forking, Cloning, & Submitting Pull Requests
 
-Start by [forking](https://github.com/BreweryTeam/BreweryX/fork) the BreweryX repository to your GitHub profile.
+Start by [forking](https://github.com/BreweryTeam/BreweryX/fork) the BreweryShiroi repository to your GitHub profile.
 If contributing to a repository other than `master` (usually for code contributions), uncheck **☑️ Copy the `master` branch only**.
 
 Once created, navigate to the brightly colored **</> Code** button just above the file list on the repository.
@@ -85,7 +85,7 @@ Install [Git](https://git-scm.com/downloads) if you don't have it already.
 2. *Make your changes.*
 
 
-3. Push back to your forked Repository of BreweryX
+3. Push back to your forked Repository of BreweryShiroi
 
 `git add --all`
 
@@ -114,4 +114,4 @@ to your forked repository. Just navigate to the home page for your repository an
 prompts from there.
 
 
-# That should be it. Thanks for contributing to BreweryX!
+# That should be it. Thanks for contributing to BreweryShiroi!

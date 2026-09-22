@@ -55,9 +55,10 @@ public class VersionCommand {
 
         ReleaseChecker rc = ReleaseChecker.getInstance();
 
-        Logging.msg(sender, "&2BreweryX version&7: &av" + rc.localVersion() + " &7(Latest: v" + rc.getResolvedLatestVersion() + ")");
+        Logging.msg(sender, "&2BreweryShiroi version&7: &av" + rc.localVersion() + " &7(Latest: v" + rc.getResolvedLatestVersion() + ")");
         Logging.msg(sender, "&2Original authors&7: &aGrafe, TTTheKing, Sn0wStorm");
         Logging.msg(sender, "&dBreweryX authors&7: &aJsinco, Mitality, Nadwey, Szarkans, Vutka1");
+        Logging.msg(sender, "&dBreweryShiroi authors&7: &aPh0sphorW");
         Logging.msg(sender, "&2Loaded addons&7: &a" + addonString);
     }
 }

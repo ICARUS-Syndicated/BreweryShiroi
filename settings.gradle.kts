@@ -1,4 +1,4 @@
-rootProject.name = "BreweryX"
+rootProject.name = "BreweryShiroi"
 
 plugins {
     // add toolchain resolver

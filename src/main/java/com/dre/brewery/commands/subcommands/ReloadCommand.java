@@ -37,7 +37,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 
 /**
- * Reloads every configuration file, recipe and addon of BreweryX.
+ * Reloads every configuration file, recipe and addon of BreweryShiroi.
  */
 public class ReloadCommand {
 

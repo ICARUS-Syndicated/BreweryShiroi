@@ -284,7 +284,7 @@ public class SimulateCommand {
     }
 
     /**
-     * The options and ingredients of a simulate call, in the syntax older BreweryX versions used.
+     * The options and ingredients of a simulate call, in the syntax older BreweryShiroi versions used.
      */
     private static final class Arguments {
 

@@ -1,4 +1,4 @@
-# Traducción al español de la configuración de BreweryX
+# Traducción al español de la configuración de BreweryShiroi
 # Autora: AverageDood
 
 config:
@@ -6,7 +6,7 @@ config:
     La traducción a utilizar
     Tipos disponibles: en (Inglés), de (Alemán), es (Español), fr (Francés), it (Italiano), ru (Ruso), zh (Chino), uk (Ucraniano), pl (Polaco)
   updateCheck: |
-    Should BreweryX check for updates? Specify which service you'd like to use for update checking or disable it.
+    Should BreweryShiroi check for updates? Specify which service you'd like to use for update checking or disable it.
     Options available: GitHub, Snapshots, Spigot, None [GitHub]
   autosave: "Intervalo de autoguardado en minutos [10]"
   pluginPrefix: "Prefijo usado en los mensajes"
@@ -47,18 +47,18 @@ config:
   minimalParticles: "Si las particulas del caldero deberían reducirse al mínimo [false]"
   craft-enableSealingTable: "Si se activa la creación y uso de las mesas de sellado (2 botellas over 4 tablas de madera) [true, true]"
   sealingTableBlock: |
-    Por defecto, BreweryX utiliza un ahumador como mesa de sellado. Esta opción te permite cambiarlo
+    Por defecto, BreweryShiroi utiliza un ahumador como mesa de sellado. Esta opción te permite cambiarlo
     IMPORTANTE: Debe de ser un contenedor - un bloque que pueda contener objetos (por ejemplo, SMOKER, CHEST, BLAST_FURNACE).
   alwaysShowQuality: "Muestra siempre las estrellas en el objeto dependiendo de su calidad. Si se desactiva, solo aparecera durante su cocinado [true]"
   alwaysShowAlc: "Muestra siempre el nivel de alcohol del objeto. Si se desactiva, solo se mostrará en el estante de pociones [false]"
   showBrewer: "Si se debería mostrar quien hizo la bebida [false]"
   requireKeywordOnSigns: "Si los toneles solo son creados cuando el cartel contiene la palabra \"barrel\" (o una traducción cuando se usa otro idioma) [true]"
-  ageInMCBarrels: "Si se activa el enevjecimiento en los barriles de -Minecraft- [true] y cuantas bebidas de BreweryX pueden ponerse en estos [6]"
+  ageInMCBarrels: "Si se activa el enevjecimiento en los barriles de -Minecraft- [true] y cuantas bebidas de BreweryShiroi pueden ponerse en estos [6]"
   agingYearDuration: "Duración (en minutos) de un 'año' al envejecer bebidas [20]"
   commandAliases: |
     Aliases para el comando '/breweryx'. Requiere un reinicio del servidor para tomar efecto. (lista) [brewery, brew]
   enableEncode: |
-    Los ingredientes usados y otros datos de cocina están guardados en todos los objetos de BreweryX. para prevernir
+    Los ingredientes usados y otros datos de cocina están guardados en todos los objetos de BreweryShiroi. para prevernir
     que clientes hack puedan leer exactamente que se utiliza en un objeto, los datos se pueden codificar/revolver.
     Este es un proceso rápido para impedir que los jugadores saquen las recetas con hacks al obtener la bebida.
 
@@ -78,8 +78,8 @@ config:
   useLogBlock: "Activa el registro de los inventarios de tonel a LogBlock [true]"
   useOffhandForCauldron: "Si los objetos en la mano secundaria deberían añadirse al caldero también [false]"
   loadDataAsync: |
-    Esta opción ya no hace nada, y se eliminará en futuras versiones de BreweryX.
-    BreweryX siempre carga los datos de forma asíncrona, con las excepciones del inicio y el apagado del servidor.
+    Esta opción ya no hace nada, y se eliminará en futuras versiones de BreweryShiroi.
+    BreweryShiroi siempre carga los datos de forma asíncrona, con las excepciones del inicio y el apagado del servidor.
   hangoverDays: "Tiempo (en días) por el que se guarda los datos de borrachera en la memoria después de que un jugador se desconecte, para aplicar resaca. [7]"
   onlyAllowBrewsInBarrels: "If only Brewery drinks can be put into barrels [false]"
   colorInBarrels-Brewer: "Colorea la información (lore) de un objeto dependiendo de su calidad mientras está A) en un tonel y/o B) en un estante de pociones [true, true]"
@@ -98,7 +98,7 @@ config:
   distortSignText: "Distorsiona el texto escrito en carteles mientras se esté borracho [false]"
   distortBypass: |
     Encierra el texto en estos carácteres para ignorar la distorsión del char (usa "," como separador) (lista) [- '[,]']
-    Ejemplo de chat: Hola estoy borracho *Estoy probando BreweryX*
+    Ejemplo de chat: Hola estoy borracho *Estoy probando BreweryShiroi*
   words: |
     Palabras y letras que serán alteradas cuando se use el chat estando borracho.
     Será procesado del primero al último y una frase escrita es alterada en ese orden.

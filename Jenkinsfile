@@ -11,7 +11,7 @@ pipeline {
                 script {
                     def sanitizedBranch = env.BRANCH_NAME.replaceAll(/[^a-zA-Z0-9._]/, '_')
                     def shortHash = env.GIT_COMMIT.substring(0, 6)
-                    def jars = findFiles(glob: 'build/libs/BreweryX*.jar')
+                    def jars = findFiles(glob: 'build/libs/BreweryShiroi*.jar')
                     
                     jars.each { jar ->
                         def newPath = jar.path.replaceFirst(/\.jar$/, "-${sanitizedBranch}-${shortHash}.jar")
@@ -22,7 +22,7 @@ pipeline {
 
             post {        
                 always {
-                    archiveArtifacts artifacts: 'build/libs/BreweryX*.jar', fingerprint: true
+                    archiveArtifacts artifacts: 'build/libs/BreweryShiroi*.jar', fingerprint: true
                 }
             }
         }

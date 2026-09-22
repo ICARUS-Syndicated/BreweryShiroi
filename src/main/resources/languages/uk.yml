@@ -1,5 +1,5 @@
-# !!! IMPORTANT: BreweryX configuration files do NOT support external comments! If you add any comments, they will be overwritten !!!
-# Translations for BreweryX
+# !!! IMPORTANT: BreweryShiroi configuration files do NOT support external comments! If you add any comments, they will be overwritten !!!
+# Translations for BreweryShiroi
 
 # Brew
 Brew_times: -раз
@@ -61,10 +61,10 @@ Etc_Barrel: Бочка
 Etc_Page: Сторінка
 Etc_Usage: 'Використання:'
 Etc_SealingTable: Стол закупорки напитков.
-Etc_NewRelease: '&rДоступне нове оновлення BreweryX! &2&v1 &r-> &2&v2&r Посилання&7:
+Etc_NewRelease: '&rДоступне нове оновлення BreweryShiroi! &2&v1 &r-> &2&v2&r Посилання&7:
   &2&v3'
 Etc_LandsFlag_Title: 'Доступ до бочок'
-Etc_LandsFlag_Description: '&r&7Дозволяє відкривати\n&r&7бочки BreweryX.'
+Etc_LandsFlag_Description: '&r&7Дозволяє відкривати\n&r&7бочки BreweryShiroi.'
 
 # Help
 Help_Copy: '&6/brew copy [Quantity]&9 Копіює зілля у твоїй руці'

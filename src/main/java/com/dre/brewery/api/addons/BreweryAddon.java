@@ -41,25 +41,25 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Entry and exit point for a BreweryX addon. Addon classes should be annotated with {@link AddonInfo}.
+ * Entry and exit point for a BreweryShiroi addon. Addon classes should be annotated with {@link AddonInfo}.
  * Addons should also include their own Spigot, Paper, or Folia API they intend to write against.
- * Avoid including unnecessary dependencies since they WILL slow the loading process of BreweryX.
- * Addons should not include any Kotlin library, BreweryX will load kotlin's lib through Spigot's library loader
+ * Avoid including unnecessary dependencies since they WILL slow the loading process of BreweryShiroi.
+ * Addons should not include any Kotlin library, BreweryShiroi will load kotlin's lib through Spigot's library loader
  * automatically.
  * <p>
  * If an addon requires another plugin to function, it should check if the plugin is enabled using an extension of {@link com.dre.brewery.integration.Hook}
  * in methods that directly access the plugin's code, or after the server has finished starting up in the onAddonEnable method by using a runnable.
  * <p>
- * Addons should NOT use the scheduler of the server API they are writing against. They should use the scheduler provided by BreweryX because BreweryX may
- * run on Bukkit-like or Folia-like servers. The scheduler provided by BreweryX is a wrapper around the server API's scheduler and will work on Bukkit, Paper, and Folia server types.
+ * Addons should NOT use the scheduler of the server API they are writing against. They should use the scheduler provided by BreweryShiroi because BreweryShiroi may
+ * run on Bukkit-like or Folia-like servers. The scheduler provided by BreweryShiroi is a wrapper around the server API's scheduler and will work on Bukkit, Paper, and Folia server types.
  * <p>
  * If an addon needs a specific server software to function, it should determine the server software being used in it's onAddonEnable method,
- * if BreweryX is not being run on the required server software, the addon should unload itself with {@link AddonManager#unloadAddon(BreweryAddon)}.
+ * if BreweryShiroi is not being run on the required server software, the addon should unload itself with {@link AddonManager#unloadAddon(BreweryAddon)}.
  * <p>
  * Addons using Bukkit listeners can write Listeners the same way they would in a plugin, and register them with {@link #registerListener(Listener)},
  * and unregister them with {@link #unregisterListener(Listener)}.
  * <p>
- * Addons should use BreweryX's command interface to register commands. See {@link AddonCommand}. Commands should be registered with
+ * Addons should use BreweryShiroi's command interface to register commands. See {@link AddonCommand}. Commands should be registered with
  * {@link #registerCommand(String, AddonCommand)}, and unregistered with {@link #unregisterCommand(String)}.
  * <p>
  * Listeners and commands will be unregistered automatically when an addon is disabled.
@@ -178,7 +178,7 @@ public abstract class BreweryAddon {
 
 
     /**
-     * Register a command with BreweryX's command manager.
+     * Register a command with BreweryShiroi's command manager.
      *
      * @param name    The name of the command
      * @param command The command to register
@@ -189,7 +189,7 @@ public abstract class BreweryAddon {
     }
 
     /**
-     * Unregister a command with BreweryX's command manager.
+     * Unregister a command with BreweryShiroi's command manager.
      *
      * @param name The name of the command
      */
@@ -222,9 +222,9 @@ public abstract class BreweryAddon {
     // Utility
 
     /**
-     * Get the BreweryX plugin instance.
+     * Get the BreweryShiroi plugin instance.
      *
-     * @return The BreweryX plugin instance
+     * @return The BreweryShiroi plugin instance
      */
     @NotNull
     public BreweryPlugin getBreweryPlugin() {
@@ -233,7 +233,7 @@ public abstract class BreweryAddon {
 
 
     /**
-     * Get the scheduler for BreweryX.
+     * Get the scheduler for BreweryShiroi.
      *
      * @return The scheduler
      */
@@ -243,7 +243,7 @@ public abstract class BreweryAddon {
     }
 
     /**
-     * Retrieves the DataManager associated with the BreweryX plugin.
+     * Retrieves the DataManager associated with the BreweryShiroi plugin.
      *
      * @return The DataManager instance
      */
@@ -253,7 +253,7 @@ public abstract class BreweryAddon {
     }
 
     /**
-     * Get the addon manager for BreweryX.
+     * Get the addon manager for BreweryShiroi.
      *
      * @return The addon manager
      */
@@ -263,7 +263,7 @@ public abstract class BreweryAddon {
     }
 
     /**
-     * Get the Minecraft version of the server running BreweryX and this addon.
+     * Get the Minecraft version of the server running BreweryShiroi and this addon.
      *
      * @return The Minecraft version
      */
@@ -273,7 +273,7 @@ public abstract class BreweryAddon {
     }
 
     /**
-     * If BreweryX and this addon are running on Folia or a Folia-based server.
+     * If BreweryShiroi and this addon are running on Folia or a Folia-based server.
      *
      * @return true if running on Folia, false otherwise.
      */
@@ -282,7 +282,7 @@ public abstract class BreweryAddon {
     }
 
     /**
-     * If BreweryX and this addon are running on Paper or a Paper-based server.
+     * If BreweryShiroi and this addon are running on Paper or a Paper-based server.
      *
      * @return true if running on Paper, false otherwise.
      */

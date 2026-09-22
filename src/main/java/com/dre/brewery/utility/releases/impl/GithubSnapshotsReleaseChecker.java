@@ -68,7 +68,7 @@ public class GithubSnapshotsReleaseChecker extends ReleaseChecker {
                 this.resolvedLatestVersion = jsonResponse.get(CONST_JSON_FIELD).getAsString();
                 return this.resolvedLatestVersion;
             } catch (IOException | InterruptedException e) {
-                Logging.warningLog("Failed to resolve latest BreweryX version from GitHub. (No connection?)");
+                Logging.warningLog("Failed to resolve latest BreweryShiroi version from GitHub. (No connection?)");
                 this.resolvedLatestVersion = CONST_UNRESOLVED;
                 return CONST_UNRESOLVED;
             }

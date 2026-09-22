@@ -1,13 +1,13 @@
-# BreweryX ![License: GPLv3](https://img.shields.io/badge/license-GPLv3-blue) [![Releases](https://img.shields.io/github/v/release/BreweryTeam/BreweryX)](https://github.com/BreweryTeam/BreweryX/releases/latest)
+# BreweryShiroi ![License: GPLv3](https://img.shields.io/badge/license-GPLv3-blue) [![Releases](https://img.shields.io/github/v/release/BreweryTeam/BreweryX)](https://github.com/BreweryTeam/BreweryX/releases/latest)
 
-#### BreweryX is an actively maintained fork of Brewery which includes many new features and gives support to the inactive plugin. Find more info below.
+#### BreweryShiroi is an actively maintained fork of Brewery which includes many new features and gives support to the inactive plugin. Find more info below.
 
-### [Wiki & Docs](https://brewery.lumamc.net) **|** [Discord Support](https://discord.gg/aV5Am7uxWr) **|** [Download Brewery**X**](https://www.spigotmc.org/resources/breweryx.114777/)
+### [Wiki & Docs](https://brewery.lumamc.net) **|** [Discord Support](https://discord.gg/aV5Am7uxWr) **|** [Download BreweryShiroi](https://www.spigotmc.org/resources/breweryx.114777/)
 
 ---
 
 > [!IMPORTANT]
-> Brewery**X** is based off of an over **decade** old plugin, [Brewery](https://github.com/DieReicheErethons/Brewery). 
+> BreweryShiroi is based off of an over **decade** old plugin, [Brewery](https://github.com/DieReicheErethons/Brewery). 
 > Bugs and issues are bound to happen, so please report them on our [Discord](https://discord.gg/aV5Am7uxWr) or [GitHub issues](https://github.com/BreweryTeam/BreweryX/issues)!
 
 
@@ -32,7 +32,7 @@ The somewhat difficult brewing process rewards you with a diversity of Potions, 
 
 
 ---
-<h3 style="text-align: center;">Brewery<ins>X</ins> features</h3>
+<h3 style="text-align: center;">BreweryShiroi features</h3>
 
 - Customizable plugin prefix
 - Full RGB support for 1.16+
@@ -41,7 +41,7 @@ The somewhat difficult brewing process rewards you with a diversity of Potions, 
 - Addons! (Things like **[Recipes](https://www.spigotmc.org/resources/breweryrecipes-breweryx-addon.114897/)**)
 - Support for ItemsAdder & Oraxen items!
 - Patches like **[this](https://github.com/DieReicheErethons/Brewery/issues/541)**
-- Support for Brewery and BreweryX in our **[discord](https://discord.gg/6VzjPSNRex)**
+- Support for Brewery and BreweryShiroi in our **[discord](https://discord.gg/6VzjPSNRex)**
 - **[Folia](https://github.com/PaperMC/Folia)** support
 - **[PlaceholderAPI](https://www.spigotmc.org/resources/placeholderapi.6245/)** support
 - And more!
@@ -58,9 +58,13 @@ The somewhat difficult brewing process rewards you with a diversity of Potions, 
 
 - [Depenizen support](https://github.com/DenizenScript/Depenizen/pull/430) for Denizen Scripters
 
-### For Java developers, find our repository for the BreweryX API [here](https://repo.jsinco.dev/#/releases/com/dre/brewery/BreweryX).
+### For Java developers, find our repository for the BreweryShiroi API [here](https://repo.jsinco.dev/#/releases/com/dre/brewery/BreweryX).
 
 Check [the documentation](https://breweryx.breweryteam.dev/docs/for-developers/plugin-api/) for more information.
+
+### Credits
+
+BreweryShiroi is maintained by **Ph0sphorW**, on top of the work of the BreweryX and Brewery teams.
 
 ### License
 

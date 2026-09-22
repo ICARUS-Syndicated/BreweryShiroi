@@ -2,19 +2,19 @@
 
 
 ## Changes
-- SQLite is now the default storage method for BreweryX. For servers that experience slow saving times with `FlatFile` storage, you should migrate to SQLite, MySQL, or MongoDB. **~ by Nadwey**
+- SQLite is now the default storage method for BreweryShiroi. For servers that experience slow saving times with `FlatFile` storage, you should migrate to SQLite, MySQL, or MongoDB. **~ by Nadwey**
   `->` To migrate, start your server using the storage method `FlatFile`. Next, change your storage method to `SQLite` or another database storage method. Finally, run: `/brew data reload` and `/brew data save` to finalize your migration.
 
 
 ## Additions
 - You can now configure breweryBarrel inventory sizes **~ by Mitality**
-- BreweryX now hooks into the [Lands](https://www.spigotmc.org/resources/53313) plugin. **~ by Mitality**
-- You can now configure your own custom translations in BreweryX **~ by Thorinwasher**
+- BreweryShiroi now hooks into the [Lands](https://www.spigotmc.org/resources/53313) plugin. **~ by Mitality**
+- You can now configure your own custom translations in BreweryShiroi **~ by Thorinwasher**
 - Added a Ukranian translation **~ by Thorinwasher**
 
 
 ### Fixes
-- Fixes SQL storage methods not deleting objects from the database. If you're using an older version of BreweryX with an SQL database, you should update! **~ by Jsinco**
+- Fixes SQL storage methods not deleting objects from the database. If you're using an older version of BreweryShiroi with an SQL database, you should update! **~ by Jsinco**
 - Fixes Brewery not recognizing `cauldron.yml` recipes, [reference here](https://discord.com/channels/1108854517048549396/1331903625655615509/1331903625655615509) **~ by Jsinco**
 
 

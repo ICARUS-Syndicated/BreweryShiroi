@@ -23,60 +23,64 @@ package com.dre.brewery.commands.subcommands;
 import com.dre.brewery.Brew;
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.api.events.brew.BrewModifyEvent;
-import com.dre.brewery.commands.SubCommand;
+import com.dre.brewery.commands.BreweryCommandManager;
+import com.dre.brewery.commands.CommandUtil;
 import com.dre.brewery.configuration.files.Lang;
 import org.bukkit.Material;
-import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import java.util.List;
+/**
+ * Removes the detailed label of the brew in the players hand.
+ */
+public class UnLabelCommand {
 
-public class UnLabelCommand implements SubCommand {
-    @Override
-    public void execute(BreweryPlugin breweryPlugin, Lang lang, CommandSender sender, String label, String[] args) {
-        Player player = (Player) sender;
-        ItemStack hand = player.getInventory().getItemInMainHand();
-        if (hand.getType() != Material.AIR) {
-            Brew brew = Brew.get(hand);
-            if (brew != null) {
-                if (!brew.isUnlabeled()) {
-                    ItemMeta origMeta = hand.getItemMeta();
-                    brew.unLabel(hand);
-                    brew.touch();
-                    ItemMeta meta = hand.getItemMeta();
-                    assert meta != null;
-                    BrewModifyEvent modifyEvent = new BrewModifyEvent(brew, meta, BrewModifyEvent.Type.UNLABEL);
-                    BreweryPlugin.getInstance().getServer().getPluginManager().callEvent(modifyEvent);
-                    if (modifyEvent.isCancelled()) {
-                        hand.setItemMeta(origMeta);
-                        return;
-                    }
-                    brew.save(meta);
-                    hand.setItemMeta(meta);
-                    lang.sendEntry(sender, "CMD_UnLabel");
-                } else {
-                    lang.sendEntry(sender, "Error_AlreadyUnlabeled");
+    private UnLabelCommand() {
+    }
+
+    public static void register(BreweryCommandManager commands) {
+        commands.manager().command(commands.command("unLabel", "brewery.cmd.unlabel", "Help_UnLabel")
+            .handler(context -> {
+                Lang lang = commands.lang();
+                Player player = CommandUtil.requirePlayer(context.sender().source(), lang);
+                if (player == null) {
+                    return;
                 }
-                return;
-            }
+                unLabel(lang, player);
+            }));
+    }
+
+    private static void unLabel(Lang lang, Player player) {
+        ItemStack hand = player.getInventory().getItemInMainHand();
+        if (hand.getType() == Material.AIR) {
+            lang.sendEntry(player, "Error_ItemNotPotion");
+            return;
         }
-        lang.sendEntry(sender, "Error_ItemNotPotion");
-    }
 
-    @Override
-    public List<String> tabComplete(BreweryPlugin breweryPlugin, CommandSender sender, String label, String[] args) {
-        return null;
-    }
+        Brew brew = Brew.get(hand);
+        if (brew == null) {
+            lang.sendEntry(player, "Error_ItemNotPotion");
+            return;
+        }
+        if (brew.isUnlabeled()) {
+            lang.sendEntry(player, "Error_AlreadyUnlabeled");
+            return;
+        }
 
-    @Override
-    public String permission() {
-        return "brewery.cmd.unlabel";
-    }
-
-    @Override
-    public boolean playerOnly() {
-        return true;
+        ItemMeta origMeta = hand.getItemMeta();
+        brew.unLabel(hand);
+        brew.touch();
+        ItemMeta meta = hand.getItemMeta();
+        assert meta != null;
+        BrewModifyEvent modifyEvent = new BrewModifyEvent(brew, meta, BrewModifyEvent.Type.UNLABEL);
+        BreweryPlugin.getInstance().getServer().getPluginManager().callEvent(modifyEvent);
+        if (modifyEvent.isCancelled()) {
+            hand.setItemMeta(origMeta);
+            return;
+        }
+        brew.save(meta);
+        hand.setItemMeta(meta);
+        lang.sendEntry(player, "CMD_UnLabel");
     }
 }

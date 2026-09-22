@@ -26,8 +26,8 @@ import com.dre.brewery.Brew;
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.Translatable;
 import com.dre.brewery.configuration.ConfigManager;
-import com.dre.brewery.configuration.files.CustomItemsFile;
 import com.dre.brewery.configuration.files.Lang;
+import com.dre.brewery.configuration.recipes.CustomItemLoader;
 import com.dre.brewery.integration.PlaceholderAPIHook;
 import com.dre.brewery.recipe.items.CustomItem;
 import com.dre.brewery.recipe.items.Ingredient;
@@ -55,7 +55,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * A Recipe used to Brew a Brewery Potion.
@@ -180,7 +179,7 @@ public class BreweryRecipe implements Cloneable {
         }
 
         // Try to find this Ingredient as Custom Item
-        for (RecipeItem custom : ConfigManager.getConfig(CustomItemsFile.class).getRecipeItems().stream().filter(Objects::nonNull).toList()) {
+        for (RecipeItem custom : CustomItemLoader.getRecipeItems()) {
             if (custom.getConfigId().equalsIgnoreCase(matParts[0])) {
                 custom = custom.getMutableCopy();
                 custom.setAmount(amount);

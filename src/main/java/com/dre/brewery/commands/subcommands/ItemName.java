@@ -21,41 +21,41 @@
 package com.dre.brewery.commands.subcommands;
 
 import com.dre.brewery.BreweryPlugin;
-import com.dre.brewery.commands.SubCommand;
+import com.dre.brewery.commands.BreweryCommandManager;
 import com.dre.brewery.configuration.files.Lang;
 import com.dre.brewery.utility.MinecraftVersion;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.List;
 import java.util.Locale;
 
-public class ItemName implements SubCommand {
-    @Override
-    public void execute(BreweryPlugin breweryPlugin, Lang lang, CommandSender sender, String label, String[] args) {
-        Player player = (Player) sender;
-        @SuppressWarnings("deprecation")
-        ItemStack hand = BreweryPlugin.getMCVersion().isOrLater(MinecraftVersion.V1_9) ? player.getInventory().getItemInMainHand() : player.getItemInHand();
-        if (hand != null) {
-            lang.sendEntry(sender, "CMD_Configname", hand.getType().name().toLowerCase(Locale.ENGLISH));
-        } else {
-            lang.sendEntry(sender, "CMD_Configname_Error");
-        }
+/**
+ * Prints the material name of the item in the players hand, for use in the config.
+ */
+public class ItemName {
+
+    private ItemName() {
     }
 
-    @Override
-    public List<String> tabComplete(BreweryPlugin breweryPlugin, CommandSender sender, String label, String[] args) {
-        return null;
-    }
-
-    @Override
-    public String permission() {
-        return "brewery.cmd.itemname";
-    }
-
-    @Override
-    public boolean playerOnly() {
-        return true;
+    public static void register(BreweryCommandManager commands) {
+        commands.manager().command(commands.command("itemName", "brewery.cmd.itemname", "Help_ItemName")
+            .handler(context -> {
+                CommandSender sender = context.sender().source();
+                if (!(sender instanceof Player player)) {
+                    commands.lang().sendEntry(sender, "Error_PlayerCommand");
+                    return;
+                }
+                Lang lang = commands.lang();
+                @SuppressWarnings("deprecation")
+                ItemStack hand = BreweryPlugin.getMCVersion().isOrLater(MinecraftVersion.V1_9)
+                    ? player.getInventory().getItemInMainHand()
+                    : player.getItemInHand();
+                if (hand != null) {
+                    lang.sendEntry(sender, "CMD_Configname", hand.getType().name().toLowerCase(Locale.ENGLISH));
+                } else {
+                    lang.sendEntry(sender, "CMD_Configname_Error");
+                }
+            }));
     }
 }

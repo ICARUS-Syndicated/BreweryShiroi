@@ -20,41 +20,34 @@
 
 package com.dre.brewery.commands.subcommands;
 
-import com.dre.brewery.instruments.BrewerySealer;
 import com.dre.brewery.BreweryPlugin;
-import com.dre.brewery.commands.SubCommand;
-import com.dre.brewery.configuration.files.Lang;
+import com.dre.brewery.commands.BreweryCommandManager;
+import com.dre.brewery.commands.CommandUtil;
+import com.dre.brewery.instruments.BrewerySealer;
 import com.dre.brewery.utility.Logging;
 import com.dre.brewery.utility.MinecraftVersion;
-import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import java.util.List;
+/**
+ * Opens the Brew Sealer.
+ */
+public class SealCommand {
 
-public class SealCommand implements SubCommand {
-    @Override
-    public void execute(BreweryPlugin breweryPlugin, Lang lang, CommandSender sender, String label, String[] args) {
-        if (BreweryPlugin.getMCVersion().isOrEarlier(MinecraftVersion.V1_13)) {
-            Logging.msg(sender, "Sealing requires minecraft 1.13 or higher");
-            return;
-        }
-        Player player = (Player) sender;
-
-        player.openInventory(new BrewerySealer(player).getInventory());
+    private SealCommand() {
     }
 
-    @Override
-    public List<String> tabComplete(BreweryPlugin breweryPlugin, CommandSender sender, String label, String[] args) {
-        return null;
-    }
-
-    @Override
-    public String permission() {
-        return "brewery.cmd.seal";
-    }
-
-    @Override
-    public boolean playerOnly() {
-        return true;
+    public static void register(BreweryCommandManager commands) {
+        commands.manager().command(commands.command("seal", "brewery.cmd.seal", "Help_Seal")
+            .handler(context -> {
+                Player player = CommandUtil.requirePlayer(context.sender().source(), commands.lang());
+                if (player == null) {
+                    return;
+                }
+                if (BreweryPlugin.getMCVersion().isOrEarlier(MinecraftVersion.V1_13)) {
+                    Logging.msg(player, "Sealing requires minecraft 1.13 or higher");
+                    return;
+                }
+                player.openInventory(new BrewerySealer(player).getInventory());
+            }));
     }
 }

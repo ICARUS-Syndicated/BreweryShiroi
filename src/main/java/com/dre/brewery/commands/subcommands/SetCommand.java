@@ -21,80 +21,59 @@
 package com.dre.brewery.commands.subcommands;
 
 import com.dre.brewery.BreweryPlayer;
-import com.dre.brewery.BreweryPlugin;
-import com.dre.brewery.commands.SubCommand;
+import com.dre.brewery.commands.BreweryCommandManager;
+import com.dre.brewery.commands.CommandUtil;
 import com.dre.brewery.configuration.files.Lang;
 import com.dre.brewery.utility.BukkitEffectConstants;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.incendo.cloud.parser.standard.IntegerParser;
+import org.incendo.cloud.parser.standard.StringParser;
+import org.incendo.cloud.suggestion.SuggestionProvider;
 
-import java.util.List;
+/**
+ * Sets the drunkenness and quality of a player.
+ */
+public class SetCommand {
 
-public class SetCommand implements SubCommand {
+    private SetCommand() {
+    }
 
-    @Override
-    public void execute(BreweryPlugin breweryPlugin, Lang lang, CommandSender sender, String label, String[] args) {
+    public static void register(BreweryCommandManager commands) {
+        commands.manager().command(commands.command("set", "brewery.cmd.set", "Help_Set")
+            .required("player", StringParser.stringParser(),
+                SuggestionProvider.blockingStrings((context, input) -> CommandUtil.playerNames()))
+            .required("drunkenness", IntegerParser.integerParser(0, 100))
+            .optional("quality", IntegerParser.integerParser(0, 10))
+            .handler(context -> {
+                Lang lang = commands.lang();
+                CommandSender sender = context.sender().source();
+                String playerName = context.get("player").toString();
 
-        if (args.length < 3) {
-            lang.sendEntry(sender, "Etc_Usage");
-            lang.sendEntry(sender, "Help_Set");
-            return;
-        }
-
-        Player target = Bukkit.getPlayer(args[1]);
-        if (target == null) {
-            lang.sendEntry(sender, "Error_NoPlayer", args[1]);
-        } else {
-
-            int drunkenness = 0;
-            try {
-                drunkenness = Integer.parseInt(args[2]);
-                if (drunkenness > 100) drunkenness = 100;
-                if (drunkenness < 0) drunkenness = 0;
-            } catch (NumberFormatException e) {
-                //lang.sendEntry(sender, "Error_InvalidDrunkenness"));
-            }
-
-            int quality = 10;
-            if (args.length > 3) {
-                try {
-                    quality = Integer.parseInt(args[3]);
-                    if (quality > 10) quality = 10;
-                    if (quality < 0) quality = 0;
-                } catch (NumberFormatException e) {
-                    //lang.sendEntry(sender, "Error_InvalidQuality"));
+                Player target = Bukkit.getPlayer(playerName);
+                if (target == null) {
+                    lang.sendEntry(sender, "Error_NoPlayer", playerName);
+                    return;
                 }
-            }
 
-            BreweryPlayer breweryPlayer = BreweryPlayer.get(Bukkit.getOfflinePlayer(target.getUniqueId()));
-            if (breweryPlayer == null) breweryPlayer = BreweryPlayer.addPlayer(Bukkit.getOfflinePlayer(target.getUniqueId()));
+                int drunkenness = context.get("drunkenness");
+                int quality = context.<Integer>optional("quality").orElse(10);
 
-            breweryPlayer.setDrunkeness(drunkenness);
-            breweryPlayer.setQuality(quality * drunkenness);
+                BreweryPlayer breweryPlayer = BreweryPlayer.get(Bukkit.getOfflinePlayer(target.getUniqueId()));
+                if (breweryPlayer == null) {
+                    breweryPlayer = BreweryPlayer.addPlayer(Bukkit.getOfflinePlayer(target.getUniqueId()));
+                }
 
-            lang.sendEntry(sender, "CMD_Set", args[1], String.valueOf(drunkenness), String.valueOf(quality));
+                breweryPlayer.setDrunkeness(drunkenness);
+                breweryPlayer.setQuality(quality * drunkenness);
 
-            // Stop long nausea effects when drunkenness is 0
-            if (drunkenness == 0) target.removePotionEffect(BukkitEffectConstants.NAUSEA);
+                lang.sendEntry(sender, "CMD_Set", playerName, String.valueOf(drunkenness), String.valueOf(quality));
 
-        }
-
+                // Stop long nausea effects when drunkenness is 0
+                if (drunkenness == 0) {
+                    target.removePotionEffect(BukkitEffectConstants.NAUSEA);
+                }
+            }));
     }
-
-    @Override
-    public List<String> tabComplete(BreweryPlugin breweryPlugin, CommandSender sender, String label, String[] args) {
-        return null;
-    }
-
-    @Override
-    public String permission() {
-        return "brewery.cmd.set";
-    }
-
-    @Override
-    public boolean playerOnly() {
-        return false;
-    }
-
 }

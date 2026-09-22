@@ -20,22 +20,30 @@
 
 package com.dre.brewery.commands.subcommands;
 
-import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.api.addons.AddonManager;
 import com.dre.brewery.api.addons.BreweryAddon;
-import com.dre.brewery.commands.SubCommand;
-import com.dre.brewery.configuration.files.Lang;
+import com.dre.brewery.commands.BreweryCommandManager;
 import com.dre.brewery.utility.Logging;
 import com.dre.brewery.utility.releases.ReleaseChecker;
 import org.bukkit.command.CommandSender;
 
 import java.util.List;
 
-public class VersionCommand implements SubCommand {
-    @Override
-    public void execute(BreweryPlugin breweryPlugin, Lang lang, CommandSender sender, String label, String[] args) {
-        StringBuilder addonString = new StringBuilder();
+/**
+ * Shows version information and the loaded addons.
+ */
+public class VersionCommand {
 
+    private VersionCommand() {
+    }
+
+    public static void register(BreweryCommandManager commands) {
+        commands.manager().command(commands.command("version", "brewery.cmd.version", "Help_Version")
+            .handler(context -> show(context.sender().source())));
+    }
+
+    private static void show(CommandSender sender) {
+        StringBuilder addonString = new StringBuilder();
 
         List<BreweryAddon> addons = List.copyOf(AddonManager.LOADED_ADDONS);
         for (BreweryAddon addon : addons) {
@@ -51,20 +59,5 @@ public class VersionCommand implements SubCommand {
         Logging.msg(sender, "&2Original authors&7: &aGrafe, TTTheKing, Sn0wStorm");
         Logging.msg(sender, "&dBreweryX authors&7: &aJsinco, Mitality, Nadwey, Szarkans, Vutka1");
         Logging.msg(sender, "&2Loaded addons&7: &a" + addonString);
-    }
-
-    @Override
-    public List<String> tabComplete(BreweryPlugin breweryPlugin, CommandSender sender, String label, String[] args) {
-        return null;
-    }
-
-    @Override
-    public String permission() {
-        return "brewery.cmd.version";
-    }
-
-    @Override
-    public boolean playerOnly() {
-        return false;
     }
 }

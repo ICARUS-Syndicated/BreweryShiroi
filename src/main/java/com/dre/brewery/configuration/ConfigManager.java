@@ -23,8 +23,9 @@ package com.dre.brewery.configuration;
 import com.dre.brewery.Brew;
 import com.dre.brewery.DistortChat;
 import com.dre.brewery.configuration.annotation.OkaeriConfigFileOptions;
-import com.dre.brewery.configuration.files.CauldronFile;
 import com.dre.brewery.configuration.files.Config;
+import com.dre.brewery.configuration.recipes.CauldronIngredientLoader;
+import com.dre.brewery.configuration.recipes.CustomItemLoader;
 import com.dre.brewery.configuration.recipes.RecipeLoader;
 import com.dre.brewery.configuration.sector.capsule.ConfigDistortWord;
 import com.dre.brewery.integration.Hook;
@@ -34,16 +35,12 @@ import com.dre.brewery.integration.item.MMOItemsPluginItem;
 import com.dre.brewery.integration.item.NexoPluginItem;
 import com.dre.brewery.integration.item.OraxenPluginItem;
 import com.dre.brewery.integration.item.SlimefunPluginItem;
-import com.dre.brewery.recipe.BreweryCauldronRecipe;
-import com.dre.brewery.recipe.BreweryRecipe;
 import com.dre.brewery.recipe.items.PluginItem;
-import com.dre.brewery.utility.Logging;
 import eu.okaeri.configs.configurer.Configurer;
 import eu.okaeri.configs.serdes.OkaeriSerdesPack;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Map;
 
 public class ConfigManager {
@@ -135,30 +132,12 @@ public class ConfigManager {
         RecipeLoader.loadRecipes();
     }
 
+    public static void loadCustomItems() {
+        CustomItemLoader.loadCustomItems();
+    }
 
     public static void loadCauldronIngredients() {
-        // Loading Cauldron Recipes
-
-        List<BreweryCauldronRecipe> configRecipes = BreweryCauldronRecipe.getConfigRecipes();
-        configRecipes.clear();
-
-        for (var cauldronEntry : getConfig(CauldronFile.class).getCauldronIngredients().entrySet()) {
-            BreweryCauldronRecipe recipe = BreweryCauldronRecipe.fromConfig(cauldronEntry.getKey(), cauldronEntry.getValue());
-            if (recipe != null) {
-                configRecipes.add(recipe);
-            } else {
-                Logging.errorLog("Loading the Cauldron-Recipe with id: '" + cauldronEntry.getKey() + "' failed!");
-            }
-        }
-        BreweryCauldronRecipe.setNumConfigRecipes(configRecipes.size());
-
-        // Recalculating Cauldron-Accepted Items for non-config recipes
-        for (BreweryRecipe recipe : BreweryRecipe.getAddedRecipes()) {
-            recipe.updateAcceptedLists();
-        }
-        for (BreweryCauldronRecipe recipe : BreweryCauldronRecipe.getAddedRecipes()) {
-            recipe.updateAcceptedLists();
-        }
+        CauldronIngredientLoader.loadCauldronIngredients();
     }
 
     public static void loadDistortWords() {

@@ -21,11 +21,7 @@
 package com.dre.brewery.recipe.items;
 
 import com.dre.brewery.BreweryPlugin;
-import com.dre.brewery.configuration.sector.capsule.ConfigCustomItem;
 import com.dre.brewery.recipe.BreweryCauldronRecipe;
-import com.dre.brewery.utility.utils.BreweryUtil;
-import com.dre.brewery.utility.Logging;
-import com.dre.brewery.utility.utils.MaterialUtil;
 import com.dre.brewery.utility.MinecraftVersion;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
@@ -33,7 +29,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -196,10 +191,21 @@ public abstract class RecipeItem implements Cloneable, DebuggableItem {
         return rItem;
     }
 
+    /**
+     * Creates a Custom Item from an already parsed {@code custom-items.yml} entry.
+     *
+     * @param id               The id the item is defined under in the config
+     * @param matchAny         True if one matching property is already enough
+     * @param materials        The materials the item may have
+     * @param names            The names the item may have, already colored
+     * @param lore             The lore the item may have, already colored
+     * @param customModelDatas The custom model data values the item may have
+     * @return The Custom Item, or null if nothing to match on was given
+     */
     @Nullable
-    public static RecipeItem fromConfigCustom(String id, ConfigCustomItem configCustomItem) {
+    public static RecipeItem fromConfigCustom(String id, boolean matchAny, List<Material> materials, List<String> names, List<String> lore, List<Integer> customModelDatas) {
         RecipeItem rItem;
-        if (configCustomItem.getMatchAny() != null && configCustomItem.getMatchAny()) {
+        if (matchAny) {
             rItem = new CustomMatchAnyItem();
         } else {
             rItem = new CustomItem();
@@ -207,15 +213,6 @@ public abstract class RecipeItem implements Cloneable, DebuggableItem {
 
         rItem.cfgId = id;
         rItem.immutable = true;
-
-        List<Material> materials = BreweryUtil.getListSafely(configCustomItem.getMaterial(), Material.class);
-        List<String> names = BreweryUtil.colorArrayList(BreweryUtil.getListSafely(configCustomItem.getName()));
-        List<String> lore = BreweryUtil.colorArrayList(BreweryUtil.getListSafely(configCustomItem.getLore()));
-        List<Integer> customModelDatas = BreweryUtil.getListSafely(configCustomItem.getCustomModelData());
-
-        if ((materials == null || materials.isEmpty()) && (names == null || names.isEmpty()) && (lore == null || lore.isEmpty()) && (customModelDatas == null || customModelDatas.isEmpty())) {
-            return null;
-        }
 
         if (rItem instanceof CustomItem cItem) {
             if (!materials.isEmpty()) {
@@ -237,33 +234,6 @@ public abstract class RecipeItem implements Cloneable, DebuggableItem {
         }
 
         return rItem;
-    }
-
-    @Nullable
-    protected static List<Material> loadMaterials(List<String> ingredientsList) {
-        List<Material> materials = new ArrayList<>(ingredientsList.size());
-        for (String item : ingredientsList) {
-            String[] ingredParts = item.split("/");
-            if (ingredParts.length == 2) {
-                Logging.errorLog("Item Amount can not be specified for Custom Items: " + item);
-                return null;
-            }
-            Material mat = MaterialUtil.getMaterialSafely(ingredParts[0]);
-
-            if (mat == null && VERSION.isOrEarlier(MinecraftVersion.V1_14) && ingredParts[0].equalsIgnoreCase("cornflower")) {
-                // Using this in default custom-items, but will error on < 1.14
-                materials.add(Material.BEDROCK);
-                continue;
-            }
-
-            if (mat != null) {
-                materials.add(mat);
-            } else {
-                Logging.errorLog("Unknown Material: " + ingredParts[0]);
-                return null;
-            }
-        }
-        return materials;
     }
 
     @Override

@@ -23,65 +23,71 @@ package com.dre.brewery.commands.subcommands;
 import com.dre.brewery.Brew;
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.api.events.brew.BrewModifyEvent;
-import com.dre.brewery.commands.SubCommand;
+import com.dre.brewery.commands.BreweryCommandManager;
+import com.dre.brewery.commands.CommandUtil;
 import com.dre.brewery.configuration.files.Lang;
 import org.bukkit.Material;
-import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import java.util.List;
+/**
+ * Toggles whether the brew in the players hand is static, meaning it will not age or distill any further.
+ */
+public class StaticCommand {
 
-public class StaticCommand implements SubCommand {
-    @Override
-    public void execute(BreweryPlugin breweryPlugin, Lang lang, CommandSender sender, String label, String[] args) {
-        Player player = (Player) sender;
-        ItemStack hand = player.getItemInHand();
-        if (hand.getType() != Material.AIR) {
-            Brew brew = Brew.get(hand);
-            if (brew != null) {
-                if (brew.isStatic()) {
-                    if (!brew.isStripped()) {
-                        brew.setStatic(false, hand);
-                        lang.sendEntry(sender, "CMD_NonStatic");
-                    } else {
-                        lang.sendEntry(sender, "Error_SealedAlwaysStatic");
-                        return;
-                    }
-                } else {
-                    brew.setStatic(true, hand);
-                    lang.sendEntry(sender, "CMD_Static");
-                }
-                brew.touch();
-                ItemMeta meta = hand.getItemMeta();
-                assert meta != null;
-                BrewModifyEvent modifyEvent = new BrewModifyEvent(brew, meta, BrewModifyEvent.Type.STATIC);
-                BreweryPlugin.getInstance().getServer().getPluginManager().callEvent(modifyEvent);
-                if (brew != modifyEvent.getBrew()) brew = modifyEvent.getBrew();
-                if (modifyEvent.isCancelled()) {
+    private StaticCommand() {
+    }
+
+    public static void register(BreweryCommandManager commands) {
+        commands.manager().command(commands.command("static", "brewery.cmd.static", "Help_Static")
+            .handler(context -> {
+                Lang lang = commands.lang();
+                Player player = CommandUtil.requirePlayer(context.sender().source(), lang);
+                if (player == null) {
                     return;
                 }
-                brew.save(meta);
-                hand.setItemMeta(meta);
+                toggle(lang, player);
+            }));
+    }
+
+    private static void toggle(Lang lang, Player player) {
+        ItemStack hand = player.getInventory().getItemInMainHand();
+        if (hand.getType() == Material.AIR) {
+            lang.sendEntry(player, "Error_ItemNotPotion");
+            return;
+        }
+
+        Brew brew = Brew.get(hand);
+        if (brew == null) {
+            lang.sendEntry(player, "Error_ItemNotPotion");
+            return;
+        }
+
+        if (brew.isStatic()) {
+            if (brew.isStripped()) {
+                lang.sendEntry(player, "Error_SealedAlwaysStatic");
                 return;
             }
+            brew.setStatic(false, hand);
+            lang.sendEntry(player, "CMD_NonStatic");
+        } else {
+            brew.setStatic(true, hand);
+            lang.sendEntry(player, "CMD_Static");
         }
-        lang.sendEntry(sender, "Error_ItemNotPotion");
-    }
 
-    @Override
-    public List<String> tabComplete(BreweryPlugin breweryPlugin, CommandSender sender, String label, String[] args) {
-        return null;
-    }
-
-    @Override
-    public String permission() {
-        return "brewery.cmd.static";
-    }
-
-    @Override
-    public boolean playerOnly() {
-        return true;
+        brew.touch();
+        ItemMeta meta = hand.getItemMeta();
+        assert meta != null;
+        BrewModifyEvent modifyEvent = new BrewModifyEvent(brew, meta, BrewModifyEvent.Type.STATIC);
+        BreweryPlugin.getInstance().getServer().getPluginManager().callEvent(modifyEvent);
+        if (brew != modifyEvent.getBrew()) {
+            brew = modifyEvent.getBrew();
+        }
+        if (modifyEvent.isCancelled()) {
+            return;
+        }
+        brew.save(meta);
+        hand.setItemMeta(meta);
     }
 }

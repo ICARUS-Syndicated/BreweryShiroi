@@ -20,13 +20,10 @@
 
 package com.dre.brewery.recipe;
 
-import com.dre.brewery.configuration.sector.capsule.ConfigCauldronIngredient;
 import com.dre.brewery.recipe.items.Ingredient;
 import com.dre.brewery.recipe.items.RecipeItem;
 import com.dre.brewery.recipe.items.SimpleItem;
-import com.dre.brewery.utility.utils.BreweryUtil;
 import com.dre.brewery.utility.Logging;
-import com.dre.brewery.utility.StringParser;
 import com.dre.brewery.utility.Tuple;
 import lombok.Getter;
 import lombok.Setter;
@@ -35,11 +32,9 @@ import org.bukkit.Material;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * A Recipe for the Base Potion coming out of the Cauldron.
@@ -81,77 +76,6 @@ public class BreweryCauldronRecipe {
     }
 
     @Nullable
-    public static BreweryCauldronRecipe fromConfig(String id, ConfigCauldronIngredient cfgCauldronIngredient) {
-
-        String name = cfgCauldronIngredient.getName();
-        if (name != null) {
-            name = BreweryUtil.color(name);
-        } else {
-            Logging.errorLog("Missing name for Cauldron-Recipe: " + id);
-            return null;
-        }
-
-        BreweryCauldronRecipe recipe = new BreweryCauldronRecipe(id, name);
-
-        recipe.ingredients = BreweryRecipe.loadIngredients(BreweryUtil.getListSafely(cfgCauldronIngredient.getIngredients()), id);
-        if (recipe.ingredients == null || recipe.ingredients.isEmpty()) {
-            Logging.errorLog("No ingredients for Cauldron-Recipe: " + recipe.name);
-            return null;
-        }
-
-        String col = cfgCauldronIngredient.getColor();
-        if (col != null) {
-            recipe.color = PotionColor.fromString(col);
-        } else {
-            recipe.color = PotionColor.CYAN;
-        }
-        if (recipe.color == PotionColor.WATER && !col.equals("WATER")) {
-            recipe.color = PotionColor.CYAN;
-            // Don't throw error here as old mc versions will not know even the default colors
-            //P.p.errorLog("Invalid Color '" + col + "' in Cauldron-Recipe: " + recipe.name);
-            //return null;
-        }
-
-        List<String> cookParticles = cfgCauldronIngredient.getCookParticles() != null ? cfgCauldronIngredient.getCookParticles() : new ArrayList<>();
-        for (String entry : cookParticles) {
-            String[] split = entry.split("/");
-            int minute;
-            if (split.length == 1) {
-                minute = 10;
-            } else if (split.length == 2) {
-                minute = BreweryUtil.parseIntOrZero(split[1]);
-            } else {
-                Logging.errorLog("cookParticle: '" + entry + "' in: " + recipe.name);
-                return null;
-            }
-            if (minute < 1) {
-                Logging.errorLog("cookParticle: '" + entry + "' in: " + recipe.name);
-                return null;
-            }
-            PotionColor partCol = PotionColor.fromString(split[0]);
-            if (partCol == PotionColor.WATER && !split[0].equals("WATER")) {
-                Logging.errorLog("Color of cookParticle: '" + entry + "' in: " + recipe.name);
-                return null;
-            }
-            recipe.particleColor.add(new Tuple<>(minute, partCol.getColor()));
-        }
-        if (!recipe.particleColor.isEmpty()) {
-            // Sort by minute
-            recipe.particleColor.sort(Comparator.comparing(Tuple::first));
-        }
-
-
-        List<Tuple<Integer, String>> lore = BreweryRecipe.loadQualityStringList(cfgCauldronIngredient.getLore(), StringParser.ParseType.LORE);
-        if (!lore.isEmpty()) {
-            recipe.lore = lore.stream().map(Tuple::second).collect(Collectors.toList());
-        }
-
-        recipe.cmData = cfgCauldronIngredient.getCustomModelData() != null ? cfgCauldronIngredient.getCustomModelData() : 0;
-
-        return recipe;
-    }
-
-
     /**
      * Find how much these ingredients match the given ones from 0-10.
      * <p>If any ingredient is missing, returns 0

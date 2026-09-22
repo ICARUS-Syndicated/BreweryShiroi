@@ -20,56 +20,55 @@
 
 package com.dre.brewery.commands.subcommands;
 
-import com.dre.brewery.BreweryIngredients;
 import com.dre.brewery.Brew;
+import com.dre.brewery.BreweryIngredients;
 import com.dre.brewery.BreweryPlugin;
-import com.dre.brewery.commands.SubCommand;
-import com.dre.brewery.configuration.files.Lang;
-import com.dre.brewery.recipe.BreweryRecipe;
+import com.dre.brewery.commands.BreweryCommandManager;
+import com.dre.brewery.commands.CommandUtil;
 import com.dre.brewery.recipe.BestRecipeResult;
-import com.dre.brewery.recipe.items.Ingredient;
+import com.dre.brewery.recipe.BreweryRecipe;
 import com.dre.brewery.recipe.RecipeEvaluation;
+import com.dre.brewery.recipe.items.Ingredient;
 import com.dre.brewery.recipe.items.RecipeItem;
 import com.dre.brewery.utility.Logging;
 import com.dre.brewery.utility.MinecraftVersion;
 import org.bukkit.ChatColor;
-import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.incendo.cloud.parser.standard.StringParser;
+import org.incendo.cloud.suggestion.SuggestionProvider;
 
-import java.util.List;
+/**
+ * Writes detailed debugging information about the brew in the players hand into the log.
+ */
+public class DebugInfoCommand {
 
-public class DebugInfoCommand implements SubCommand {
-
-
-    @Override
-    public void execute(BreweryPlugin breweryPlugin, Lang lang, CommandSender sender, String label, String[] args) {
-        debugInfo(sender, args.length > 1 ? args[1] : null);
+    private DebugInfoCommand() {
     }
 
-    @Override
-    public List<String> tabComplete(BreweryPlugin breweryPlugin, CommandSender sender, String label, String[] args) {
-        return null;
+    public static void register(BreweryCommandManager commands) {
+        commands.manager().command(commands.command("debuginfo", "brewery.cmd.debuginfo", "Help_DebugInfo")
+            .optional("recipe", StringParser.greedyStringParser(),
+                SuggestionProvider.blockingStrings((context, input) -> CommandUtil.recipeNamesAndIds()))
+            .handler(context -> {
+                Player player = CommandUtil.requirePlayer(context.sender().source(), commands.lang());
+                if (player == null) {
+                    return;
+                }
+                debugInfo(player, context.optional("recipe").map(Object::toString).orElse(null));
+            }));
     }
 
-    @Override
-    public String permission() {
-        return "brewery.cmd.debuginfo";
-    }
+    private static void debugInfo(Player player, String recipeName) {
+        if (BreweryPlugin.getMCVersion().isOrEarlier(MinecraftVersion.V1_9)) {
+            return;
+        }
 
-    @Override
-    public boolean playerOnly() {
-        return true;
-    }
-
-    public void debugInfo(CommandSender sender, String recipeName) {
-        if (BreweryPlugin.getMCVersion().isOrEarlier(MinecraftVersion.V1_9)) return;
-
-        Player player = (Player) sender;
         ItemStack hand = player.getInventory().getItemInMainHand();
         Brew brew = Brew.get(hand);
-
-        if (brew == null) return;
+        if (brew == null) {
+            return;
+        }
 
         Logging.log(brew.toString());
         BreweryIngredients ingredients = brew.getIngredients();
@@ -129,5 +128,4 @@ public class DebugInfoCommand implements SubCommand {
         RecipeEvaluation woodQ = ingredients.getWoodQualityFull(recipe, brew.getWood());
         Logging.log(String.format("%s&r woodQlty: %s", recipe.getRecipeName(), woodQ));
     }
-
 }

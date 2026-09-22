@@ -106,6 +106,20 @@ public class TranslationManager {
         return fallbackTranslationString;
     }
 
+    /**
+     * Same as {@link #getTranslationWithFallback(String)}, but without warning about a missing key.
+     * <p>
+     * Meant for optional translations, like the footer of a config file, where a missing translation is normal.
+     */
+    @Nullable
+    public String getOptionalTranslation(String key) {
+        String activeTranslationString = translations.getTranslation(key);
+        if (activeTranslationString != null) {
+            return activeTranslationString;
+        }
+        return fallbackTranslations.getTranslation(key);
+    }
+
     public void createLanguageFile(Translation translation) {
         Path languageFile = dataFolder.toPath().resolve("languages").resolve(translation.fileName());
         if (!Files.exists(languageFile) && TranslationManager.class.getResource("/languages/" + translation.fileName()) == null) {

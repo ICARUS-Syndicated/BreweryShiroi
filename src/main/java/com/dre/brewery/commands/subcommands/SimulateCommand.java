@@ -1,6 +1,6 @@
 /*
  * BreweryX Bukkit-Plugin for an alternate brewing process
- * Copyright (C) 2024-2025 The Brewery Team
+ * Copyright (C) 2024 The Brewery Team
  *
  * This file is part of BreweryX.
  *
@@ -14,136 +14,204 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with BreweryX. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
+ * You should have received a copy of the GNU General Public License along
+ * with BreweryX. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
 package com.dre.brewery.commands.subcommands;
 
-import com.dre.brewery.BreweryIngredients;
-import com.dre.brewery.instruments.barrel.BarrelWoodType;
 import com.dre.brewery.Brew;
+import com.dre.brewery.BreweryIngredients;
 import com.dre.brewery.BreweryPlugin;
-import com.dre.brewery.Translatable;
-import com.dre.brewery.commands.SubCommand;
+import com.dre.brewery.commands.BreweryCommandManager;
 import com.dre.brewery.configuration.ConfigManager;
 import com.dre.brewery.configuration.files.Lang;
+import com.dre.brewery.instruments.barrel.BarrelWoodType;
 import com.dre.brewery.recipe.BreweryCauldronRecipe;
 import com.dre.brewery.recipe.BreweryRecipe;
 import com.dre.brewery.recipe.items.RecipeItem;
-import com.dre.brewery.utility.utils.BreweryUtil;
 import com.dre.brewery.utility.Logging;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.ToString;
+import com.dre.brewery.utility.OptionalFloat;
+import com.dre.brewery.utility.utils.BreweryUtil;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.PotionMeta;
-import org.bukkit.util.StringUtil;
+import org.incendo.cloud.parser.standard.StringParser;
+import org.incendo.cloud.suggestion.SuggestionProvider;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.OptionalInt;
 import java.util.stream.Stream;
 
-public class SimulateCommand implements SubCommand {
+/**
+ * Simulates the brewing process without needing a cauldron, barrel or brewing stand.
+ * <p>
+ * The options keep the syntax of the old hand written parser, so
+ * {@code /breweryx simulate -c 7 -d 4 -a oak 1 <ingredients...>} keeps working. The arguments are therefore
+ * parsed here instead of by the command framework, which would only accept flags after the ingredients.
+ * <ul>
+ *     <li>{@code -r/--recipe <recipe>}</li>
+ *     <li>{@code -c/--cook <minutes>}</li>
+ *     <li>{@code -d/--distill <runs>}</li>
+ *     <li>{@code -a/--age <barrel type> <years>}</li>
+ *     <li>{@code -b/--brewer <player>}</li>
+ *     <li>{@code -p/--player <player>}</li>
+ * </ul>
+ */
+public class SimulateCommand {
 
-    @Override
-    public void execute(BreweryPlugin breweryPlugin, Lang lang, CommandSender sender, String label, String[] args) {
-        List<String> arguments = BreweryUtil.splitStringKeepingQuotes(String.join(" ", args));
+    private static final String OPTION_RECIPE = "r";
+    private static final String OPTION_COOK = "c";
+    private static final String OPTION_DISTILL = "d";
+    private static final String OPTION_AGE = "a";
+    private static final String OPTION_BREWER = "b";
+    private static final String OPTION_PLAYER = "p";
 
-        SimulationParser parser = new SimulationParser();
-        for (int i = 1; i <= arguments.size(); i++) {
-            Status status;
-            if (i < arguments.size()) {
-                String arg = arguments.get(i);
-                status = parser.parse(arg);
-            } else {
-                status = parser.finish();
-            }
+    private SimulateCommand() {
+    }
 
-            if (status instanceof Status.Help) {
-                sendUsage(lang, sender);
-                return;
-            } else if (status instanceof Status.Finished finished) {
-                simulate(lang, sender, finished.simulation());
-                return;
-            } else if (status instanceof Status.Error error) {
-                lang.sendEntry(sender, error.error().getTranslationKey(), error.args());
+    public static void register(BreweryCommandManager commands) {
+        commands.manager().command(commands.command("simulate", "brewery.cmd.create", "Help_Simulate")
+            .optional("options", StringParser.greedyStringParser(),
+                SuggestionProvider.blockingStrings((context, input) -> suggestions(input.input())))
+            .handler(context -> simulate(commands,
+                context.sender().source(),
+                context.<String>optional("options").orElse(""))));
+    }
+
+    private static void simulate(BreweryCommandManager commands, CommandSender sender, String rawArguments) {
+        Lang lang = commands.lang();
+        Arguments arguments = new Arguments(rawArguments);
+
+        BreweryRecipe recipe = null;
+        if (arguments.recipe != null) {
+            recipe = BreweryRecipe.getMatching(arguments.recipe);
+            if (recipe == null) {
+                lang.sendEntry(sender, "Error_NoBrewName", arguments.recipe);
                 return;
             }
         }
-        throw new AssertionError("parser.finish() must not return Status.Updated()");
+
+        List<RecipeItem> ingredients = new ArrayList<>();
+        for (String raw : arguments.ingredients) {
+            BreweryRecipe.IngredientResult result = BreweryRecipe.loadIngredientVerbose(raw);
+            if (result instanceof BreweryRecipe.IngredientResult.Error error) {
+                lang.sendEntry(sender, error.error().getTranslationKey(), error.invalidPart());
+                return;
+            }
+            ingredients.add(((BreweryRecipe.IngredientResult.Success) result).ingredient());
+        }
+
+        int cookedTime;
+        if (arguments.cook != null) {
+            cookedTime = arguments.cook;
+        } else if (recipe != null) {
+            cookedTime = recipe.getCookingTime();
+        } else {
+            lang.sendEntry(sender, "CMD_Missing_Cook_Time");
+            return;
+        }
+
+        OptionalInt distill;
+        if (arguments.distill != null) {
+            distill = OptionalInt.of(arguments.distill);
+        } else if (recipe != null && recipe.needsDistilling()) {
+            distill = OptionalInt.of(recipe.getDistillruns());
+        } else {
+            distill = OptionalInt.empty();
+        }
+
+        Age age;
+        if (arguments.age != null) {
+            age = arguments.age;
+        } else if (recipe != null) {
+            age = Age.of(recipe);
+        } else {
+            age = null;
+        }
+
+        if (ingredients.isEmpty()) {
+            if (recipe == null) {
+                lang.sendEntry(sender, "CMD_Missing_Ingredients");
+                return;
+            }
+            ingredients.addAll(recipe.getIngredients());
+        }
+
+        Player brewer = null;
+        if (arguments.brewer != null) {
+            brewer = resolvePlayer(lang, sender, arguments.brewer);
+            if (brewer == null) {
+                return;
+            }
+        }
+
+        Player player = null;
+        if (arguments.player != null) {
+            player = resolvePlayer(lang, sender, arguments.player);
+            if (player == null) {
+                return;
+            }
+        }
+
+        run(lang, sender, cookedTime, distill, age, ingredients, brewer, player);
     }
 
-    private static void sendUsage(Lang lang, CommandSender sender) {
-        lang.sendEntry(sender, "Etc_Usage");
-        lang.sendEntry(sender, "Help_Simulate");
-        lang.sendEntry(sender, "Help_Simulate_Options");
-        lang.sendEntry(sender, "Help_Simulate_Recipe");
-        lang.sendEntry(sender, "Help_Simulate_Cook");
-        lang.sendEntry(sender, "Help_Simulate_Distill");
-        lang.sendEntry(sender, "Help_Simulate_Age");
-        lang.sendEntry(sender, "Help_Simulate_Brewer");
-        lang.sendEntry(sender, "Help_Simulate_Player");
+    @Nullable
+    private static Player resolvePlayer(Lang lang, CommandSender sender, String name) {
+        Player player = BreweryUtil.getPlayerfromString(name);
+        if (player == null) {
+            lang.sendEntry(sender, "Error_NoPlayer", name);
+        }
+        return player;
     }
 
-    private static void simulate(Lang lang, CommandSender sender, SimulationParameters simulation) {
-        BreweryIngredients ingredients = new BreweryIngredients();
-        for (RecipeItem item : simulation.ingredients()) {
+    private static void run(Lang lang, CommandSender sender, int cookedTime, OptionalInt distillRuns,
+                            @Nullable Age age, List<RecipeItem> ingredients,
+                            @Nullable Player brewer, @Nullable Player player) {
+        BreweryIngredients ingredientsHolder = new BreweryIngredients();
+        for (RecipeItem item : ingredients) {
             for (int i = 0; i < item.getAmount(); i++) {
-                ingredients.addGeneric(item);
+                ingredientsHolder.addGeneric(item);
             }
         }
-        Logging.debugLog(String.format("simulate: ingredients=%s", ingredients));
 
-        ItemStack item = ingredients.cook(simulation.cookedTime(), simulation.brewer());
-        Brew brew = new Brew(ingredients);
-        Logging.debugLog(String.format("simulate: cooked for %d minutes: %s",
-            simulation.cookedTime(), ChatColor.stripColor(brew.toString())));
+        ItemStack item = ingredientsHolder.cook(cookedTime, brewer);
+        Brew brew = new Brew(ingredientsHolder);
 
-        if (simulation.distillRuns().isPresent()) {
+        if (distillRuns.isPresent()) {
             if (!(item.getItemMeta() instanceof PotionMeta meta)) {
                 lang.sendEntry(sender, "CMD_Cannot_Distill");
                 return;
             }
 
-            int distillRuns = simulation.distillRuns().getAsInt();
-            for (int i = 0; i < distillRuns; i++) {
+            int runs = distillRuns.getAsInt();
+            for (int i = 0; i < runs; i++) {
                 brew.distillSlot(item, meta);
             }
             Logging.debugLog(String.format("simulate: distilled for %d runs: %s",
-                distillRuns, ChatColor.stripColor(brew.toString())));
+                runs, ChatColor.stripColor(brew.toString())));
 
             if (!brew.hasRecipe()) {
                 lang.sendEntry(sender, "CMD_Distill_Ruined");
-                giveBrew(lang, sender, item, simulation.player());
+                giveBrew(lang, sender, item, player);
                 return;
             }
         }
 
-        Age age = simulation.age();
         if (age != null) {
-            BarrelWoodType barrelType = age.barrelType();
-            if (barrelType == null) {
-                lang.sendEntry(sender, "Error_MissingBarrelType");
-                return;
-            }
             brew.age(item, age.ageTime(), age.barrelType());
-            Logging.debugLog(String.format("simulate: aged for %.3f years in %s barrel: %s",
-                age.ageTime(), age.barrelType().getFormattedName(), ChatColor.stripColor(brew.toString())));
-
             if (!brew.hasRecipe()) {
                 lang.sendEntry(sender, "CMD_Age_Ruined");
             }
         }
 
-        giveBrew(lang, sender, item, simulation.player());
+        giveBrew(lang, sender, item, player);
     }
 
     private static void giveBrew(Lang lang, CommandSender sender, ItemStack item, @Nullable Player player) {
@@ -155,7 +223,7 @@ public class SimulateCommand implements SubCommand {
             Brew fromItem = Brew.get(item);
             if (fromItem == null) {
                 // this message should never appear since simulation was successful
-                sender.sendMessage("&cCould not get brew from item");
+                sender.sendMessage(ChatColor.RED + "Could not get brew from item");
                 return;
             }
             sender.sendMessage(fromItem.toString());
@@ -163,324 +231,48 @@ public class SimulateCommand implements SubCommand {
         lang.sendEntry(sender, "CMD_Simulated");
     }
 
-    @Override
-    public List<String> tabComplete(BreweryPlugin breweryPlugin, CommandSender sender, String label, String[] args) {
-        List<String> arguments = BreweryUtil.splitStringKeepingQuotes(String.join(" ", args));
+    /**
+     * @return The option names and recipe names a sender may type next
+     */
+    private static List<String> suggestions(String input) {
+        List<String> options = new ArrayList<>(List.of(
+            "-r", "--recipe", "-c", "--cook", "-d", "--distill",
+            "-a", "--age", "-b", "--brewer", "-p", "--player"));
+        options.addAll(recipeNames());
+        options.addAll(ingredientNames());
 
-        SimulationParser parser = new SimulationParser();
-        for (int i = 1; i <= arguments.size(); i++) {
-            String arg = arguments.size() == 1 ? args[1] : arguments.get(i);
-
-            if (i >= arguments.size() - 1) {
-                String rawLastArg = args[args.length - 1];
-
-                // supporting tab complete mid-quote is too complicated
-                if (rawLastArg.equals("\"")) {
-                    return List.of();
-                }
-
-                // If player inputs `/brew simulate --age ` (notice the trailing space), rawLastArg will be blank.
-                // Since splitStringKeepingQuotes() will remove the trailing space,
-                // we need to first parse `--age` then tab complete on `` (blank).
-                if (rawLastArg.isBlank()) {
-                    Status status = parser.parse(arg);
-                    if (status instanceof Status.Help || status instanceof Status.Error) {
-                        return List.of();
-                    }
-                    return tabComplete(parser, rawLastArg);
-                }
-
-                return tabComplete(parser, arg);
-            }
-
-            Status status = parser.parse(arg);
-            if (status instanceof Status.Help || status instanceof Status.Error) {
-                return List.of();
-            }
+        String current = input.contains(" ") ? input.substring(input.lastIndexOf(' ') + 1) : "";
+        if (current.isEmpty()) {
+            return options;
         }
-        throw new AssertionError("unreachable");
+        String lower = current.toLowerCase(Locale.ROOT);
+        return options.stream().filter(option -> option.toLowerCase(Locale.ROOT).startsWith(lower)).toList();
     }
 
-    private static @Nullable List<String> tabComplete(SimulationParser parser, String arg) {
-        List<String> completions = parser.getTabCompletions();
-        return completions == null ? null : StringUtil.copyPartialMatches(arg, completions, new ArrayList<>());
+    private static List<String> recipeNames() {
+        return Stream.concat(
+                BreweryCauldronRecipe.getAllRecipes().stream().map(BreweryCauldronRecipe::getName),
+                BreweryRecipe.getAllRecipes().stream()
+                    .mapMulti((recipe, consumer) -> {
+                        consumer.accept(recipe.getRecipeName());
+                        consumer.accept(recipe.getId());
+                    }))
+            .sorted()
+            .distinct()
+            .toList();
     }
 
-    @ToString
-    private static class SimulationParser {
-
-        private static final List<String> helpStrings = List.of("help", "-h", "--help");
-
-        @Nullable
-        private BreweryRecipe recipe = null;
-        private int cookedTime = -1;
-        private int distillRuns = -1;
-        @Nullable
-        BarrelWoodType woodType = null;
-        private float ageTime = Float.NaN;
-        private final List<RecipeItem> ingredients = new ArrayList<>();
-        @Nullable
-        private Player brewer = null;
-        @Nullable
-        private Player player = null;
-
-        private final EnumSet<Option> options = EnumSet.noneOf(Option.class);
-        private State state = State.OPTIONS;
-
-        @Nullable
-        private String prevArg = null;
-
-        public Status parse(String arg) {
-            if (arg.isBlank()) {
-                return new Status.Updated();
-            }
-
-            switch (state) {
-
-                case OPTIONS -> {
-                    if (prevArg == null && helpStrings.contains(arg.toLowerCase(Locale.ROOT))) {
-                        return new Status.Help();
-                    }
-                    if (!arg.startsWith("-")) {
-                        if (prevArg == null) {
-                            return new Status.Error(ErrorType.INVALID_OPTION, arg);
-                        } else {
-                            state = State.INGREDIENTS;
-                            return parseIngredient(arg);
-                        }
-                    }
-
-                    Option option = Option.get(arg);
-                    if (option == null) {
-                        return new Status.Error(ErrorType.INVALID_OPTION, arg);
-                    }
-                    if (!options.add(option)) {
-                        return new Status.Error(ErrorType.DUPLICATE_OPTION, arg);
-                    }
-                    state = option.getState();
-                }
-
-                case RECIPE -> {
-                    BreweryRecipe recipe = BreweryRecipe.getMatching(arg);
-                    if (recipe == null) {
-                        return new Status.Error(ErrorType.RECIPE, arg);
-                    }
-                    this.recipe = recipe;
-                    state = State.OPTIONS;
-                }
-
-                case COOK -> {
-                    int cookedTime = BreweryUtil.parseInt(arg).orElse(-1);
-                    if (cookedTime < 0) {
-                        return new Status.Error(ErrorType.COOK, arg);
-                    }
-                    this.cookedTime = cookedTime;
-                    state = State.OPTIONS;
-                }
-
-                case DISTILL -> {
-                    int distillRuns = BreweryUtil.parseInt(arg).orElse(-1);
-                    if (distillRuns <= 0) {
-                        return new Status.Error(ErrorType.DISTILL_RUNS, arg);
-                    }
-                    this.distillRuns = distillRuns;
-                    state = State.OPTIONS;
-                }
-
-                case WOOD -> {
-                    BarrelWoodType woodType = BarrelWoodType.fromName(arg);
-                    if (woodType == null || !woodType.isSpecific()) {
-                        return new Status.Error(ErrorType.WOOD_TYPE, arg);
-                    }
-                    this.woodType = woodType;
-                    state = State.AGE;
-                }
-                case AGE -> {
-                    float ageTime = BreweryUtil.parseFloat(arg).orElse(-1);
-                    if (ageTime <= 0) {
-                        return new Status.Error(ErrorType.AGE_TIME, arg);
-                    }
-                    this.ageTime = ageTime;
-                    state = State.OPTIONS;
-                }
-
-                case BREWER -> {
-                    Player brewer = BreweryUtil.getPlayerfromString(arg);
-                    if (brewer == null) {
-                        return new Status.Error(ErrorType.PLAYER, arg);
-                    }
-                    this.brewer = brewer;
-                    state = State.OPTIONS;
-                }
-
-                case PLAYER -> {
-                    Player player = BreweryUtil.getPlayerfromString(arg);
-                    if (player == null) {
-                        return new Status.Error(ErrorType.PLAYER, arg);
-                    }
-                    this.player = player;
-                    state = State.OPTIONS;
-                }
-
-                case INGREDIENTS -> {
-                    return parseIngredient(arg);
-                }
-
-            }
-            return update(arg);
-        }
-
-        private Status parseIngredient(String arg) {
-            // user probably meant "ingredient/#" instead of "ingredient #"
-            if (BreweryUtil.isInt(arg)) {
-                String prevIngredient = prevArg != null ? prevArg : ConfigManager.getConfig(Lang.class).getEntry("CMD_Ingredient");
-                return new Status.Error(ErrorType.INVALID_INGREDIENT, arg, prevIngredient);
-            }
-
-            BreweryRecipe.IngredientResult result = BreweryRecipe.loadIngredientVerbose(arg);
-            if (result instanceof BreweryRecipe.IngredientResult.Error error) {
-                return new Status.Error(error.error(), error.invalidPart());
-            }
-            ingredients.add(((BreweryRecipe.IngredientResult.Success) result).ingredient());
-
-            return update(arg);
-        }
-
-        private Status update(String arg) {
-            prevArg = arg;
-            return new Status.Updated();
-        }
-
-        public Status finish() {
-            int cookedTime;
-            if (options.contains(Option.COOK)) {
-                cookedTime = this.cookedTime;
-            } else if (recipe != null) {
-                cookedTime = recipe.getCookingTime();
-            } else {
-                return new Status.Error(ErrorType.MISSING_COOK);
-            }
-
-            OptionalInt distill;
-            if (options.contains(Option.DISTILL)) {
-                distill = OptionalInt.of(distillRuns);
-            } else if (recipe != null && recipe.needsDistilling()) {
-                distill = OptionalInt.of(recipe.getDistillruns());
-            } else {
-                distill = OptionalInt.empty();
-            }
-
-            Age age;
-            if (options.contains(Option.AGE)) {
-                age = new Age(woodType, ageTime);
-            } else if (recipe != null) {
-                age = Age.of(recipe);
-            } else {
-                age = null;
-            }
-
-            List<RecipeItem> ingredients = new ArrayList<>();
-            if (recipe != null && this.ingredients.isEmpty()) {
-                ingredients.addAll(recipe.getIngredients());
-            } else if (!this.ingredients.isEmpty()) {
-                ingredients.addAll(this.ingredients);
-            } else {
-                return new Status.Error(ErrorType.MISSING_INGREDIENTS);
-            }
-
-            return new Status.Finished(new SimulationParameters(cookedTime, distill, age, ingredients, brewer, player));
-        }
-
-        @Nullable
-        public List<String> getTabCompletions() {
-            return switch (state) {
-
-                case OPTIONS -> {
-                    List<String> completions = new ArrayList<>();
-                    if (prevArg == null) {
-                        completions.addAll(helpStrings);
-                    }
-                    if (options.contains(Option.RECIPE) || options.contains(Option.COOK)) {
-                        completions.addAll(getIngredientCompletions());
-                    }
-                    completions.addAll(getOptionCompletions());
-                    yield completions;
-                }
-
-                case RECIPE -> getRecipeCompletions();
-                case COOK -> BreweryUtil.numberRange(1, 30);
-                case DISTILL -> BreweryUtil.numberRange(1, 10);
-                case WOOD -> BarrelWoodType.TAB_COMPLETIONS;
-                case AGE -> BreweryUtil.numberRange(1, 50);
-                case BREWER, PLAYER -> null;
-                case INGREDIENTS -> getIngredientCompletions();
-
-            };
-        }
-
-        private List<String> getOptionCompletions() {
-            return EnumSet.complementOf(options).stream()
-                .map(Option::getOptions)
-                .flatMap(List::stream)
-                .toList();
-        }
-
-        @Getter
-        private enum Option {
-            RECIPE(State.RECIPE, "-r", "--recipe"),
-            COOK(State.COOK, "-c", "--cook"),
-            DISTILL(State.DISTILL, "-d", "--distill"),
-            AGE(State.WOOD, "-a", "--age"),
-            BREWER(State.BREWER, "-b", "--brewer"),
-            PLAYER(State.PLAYER, "-p", "--player");
-
-            private final State state;
-            private final List<String> options;
-
-            Option(State state, String... options) {
-                this.state = state;
-                this.options = List.of(options);
-            }
-
-            public boolean matches(String arg) {
-                return options.contains(arg.toLowerCase(Locale.ROOT));
-            }
-
-            public static @Nullable Option get(String arg) {
-                for (Option option : values()) {
-                    if (option.matches(arg)) {
-                        return option;
-                    }
-                }
-                return null;
-            }
-        }
-
-        private enum State {
-            OPTIONS, RECIPE, COOK, DISTILL, WOOD, AGE, BREWER, PLAYER, INGREDIENTS
-        }
-
+    private static List<String> ingredientNames() {
+        return Stream.concat(
+                BreweryCauldronRecipe.getAllRecipes().stream().map(BreweryCauldronRecipe::getIngredients),
+                BreweryRecipe.getAllRecipes().stream().map(BreweryRecipe::getIngredients))
+            .flatMap(List::stream)
+            .map(RecipeItem::toConfigStringNoAmount)
+            .sorted()
+            .distinct()
+            .toList();
     }
 
-    private sealed interface Status {
-        /** The parser was updated with the latest argument, and parsing should continue */
-        record Updated() implements Status {}
-        /** Need to display command usage */
-        record Help() implements Status {}
-        /** Parsing finished, next arguments are ingredients */
-        record Finished(SimulationParameters simulation) implements Status {}
-        /** User error */
-        record Error(Translatable error, Object... args) implements Status {}
-    }
-
-    private record SimulationParameters(
-        int cookedTime,
-        OptionalInt distillRuns,
-        @Nullable Age age,
-        List<RecipeItem> ingredients,
-        @Nullable Player brewer,
-        @Nullable Player player
-    ) {}
     private record Age(BarrelWoodType barrelType, float ageTime) {
         public static @Nullable Age of(BreweryRecipe recipe) {
             if (recipe.needsToAge()) {
@@ -491,64 +283,108 @@ public class SimulateCommand implements SubCommand {
         }
     }
 
-    @AllArgsConstructor
-    @Getter
-    private enum ErrorType implements Translatable {
-        INVALID_OPTION("CMD_Invalid_Option"),
-        DUPLICATE_OPTION("CMD_Duplicate_Option"),
-        RECIPE("Error_NoBrewName"),
-        COOK("CMD_Invalid_Cook_Time"),
-        DISTILL_RUNS("CMD_Invalid_Distill_Runs"),
-        WOOD_TYPE("CMD_Invalid_Wood_Type"),
-        AGE_TIME("CMD_Invalid_Age_Time"),
-        PLAYER("Error_NoPlayer"),
-        /** Takes 2 parameters, [arg, prevArg] */
-        INVALID_INGREDIENT("CMD_Invalid_Ingredient"),
-        /** Takes 0 parameters */
-        MISSING_COOK("CMD_Missing_Cook_Time"),
-        /** Takes 0 parameters */
-        MISSING_INGREDIENTS("CMD_Missing_Ingredients");
+    /**
+     * The options and ingredients of a simulate call, in the syntax older BreweryX versions used.
+     */
+    private static final class Arguments {
 
-        private final String translationKey;
+        @Nullable
+        private String recipe;
+        @Nullable
+        private Integer cook;
+        @Nullable
+        private Integer distill;
+        @Nullable
+        private Age age;
+        @Nullable
+        private String brewer;
+        @Nullable
+        private String player;
+        private final List<String> ingredients = new ArrayList<>();
+
+        private Arguments(String raw) {
+            String[] parts = raw.trim().split("\\s+");
+            for (int i = 0; i < parts.length; i++) {
+                String part = parts[i];
+                if (part.isBlank()) {
+                    continue;
+                }
+
+                String option = normalizeOption(part);
+                if (option == null) {
+                    // The user probably meant "ingredient/#" instead of "ingredient #"
+                    if (BreweryUtil.isInt(part) && !ingredients.isEmpty()) {
+                        ingredients.set(ingredients.size() - 1, ingredients.get(ingredients.size() - 1) + "/" + part);
+                    } else {
+                        ingredients.add(part);
+                    }
+                    continue;
+                }
+
+                switch (option) {
+                    case OPTION_RECIPE -> recipe = next(parts, ++i);
+                    case OPTION_COOK -> cook = parseInt(next(parts, ++i));
+                    case OPTION_DISTILL -> distill = parseInt(next(parts, ++i));
+                    case OPTION_AGE -> {
+                        String wood = next(parts, ++i);
+                        String time = next(parts, ++i);
+                        age = parseAge(wood, time);
+                    }
+                    case OPTION_BREWER -> brewer = next(parts, ++i);
+                    case OPTION_PLAYER -> player = next(parts, ++i);
+                    default -> ingredients.add(part);
+                }
+            }
+        }
+
+        /**
+         * @return The option letter, or null when the token is no option at all
+         */
+        @Nullable
+        private static String normalizeOption(String token) {
+            if (!token.startsWith("-")) {
+                return null;
+            }
+            String name = token.startsWith("--") ? token.substring(2) : token.substring(1);
+            return switch (name.toLowerCase(Locale.ROOT)) {
+                case "r", "recipe" -> OPTION_RECIPE;
+                case "c", "cook" -> OPTION_COOK;
+                case "d", "distill" -> OPTION_DISTILL;
+                case "a", "age" -> OPTION_AGE;
+                case "b", "brewer" -> OPTION_BREWER;
+                case "p", "player" -> OPTION_PLAYER;
+                default -> null;
+            };
+        }
+
+        @Nullable
+        private static String next(String[] parts, int index) {
+            return index < parts.length ? parts[index] : null;
+        }
+
+        @Nullable
+        private static Integer parseInt(@Nullable String value) {
+            if (value == null) {
+                return null;
+            }
+            OptionalInt parsed = BreweryUtil.parseInt(value);
+            return parsed.isPresent() ? parsed.getAsInt() : null;
+        }
+
+        @Nullable
+        private static Age parseAge(@Nullable String wood, @Nullable String time) {
+            if (wood == null || time == null) {
+                return null;
+            }
+            BarrelWoodType woodType = BarrelWoodType.fromName(wood);
+            if (woodType == null || !woodType.isSpecific()) {
+                return null;
+            }
+            OptionalFloat parsedTime = BreweryUtil.parseFloat(time);
+            if (parsedTime.isEmpty() || parsedTime.getAsFloat() <= 0) {
+                return null;
+            }
+            return new Age(woodType, parsedTime.getAsFloat());
+        }
     }
-
-    private static List<String> getRecipeCompletions() {
-        return Stream.concat(
-            BreweryCauldronRecipe.getAllRecipes().stream()
-                .map(BreweryCauldronRecipe::getName),
-            BreweryRecipe.getAllRecipes().stream()
-                .mapMulti((recipe, consumer) -> {
-                    consumer.accept(recipe.getRecipeName());
-                    consumer.accept(recipe.getId());
-                })
-        ).sorted()
-            .distinct()
-            .map(BreweryUtil::quote)
-            .toList();
-    }
-
-    private static List<String> getIngredientCompletions() {
-        return Stream.concat(
-                BreweryCauldronRecipe.getAllRecipes().stream()
-                    .map(BreweryCauldronRecipe::getIngredients),
-                BreweryRecipe.getAllRecipes().stream()
-                    .map(BreweryRecipe::getIngredients)
-            ).flatMap(List::stream)
-            .map(RecipeItem::toConfigStringNoAmount)
-            .sorted()
-            .distinct()
-            .map(BreweryUtil::quote)
-            .toList();
-    }
-
-    @Override
-    public String permission() {
-        return "brewery.cmd.create";
-    }
-
-    @Override
-    public boolean playerOnly() {
-        return false;
-    }
-
 }

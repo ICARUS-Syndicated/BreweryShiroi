@@ -1,6 +1,6 @@
 /*
  * BreweryX Bukkit-Plugin for an alternate brewing process
- * Copyright (C) 2024-2025 The Brewery Team
+ * Copyright (C) 2024 The Brewery Team
  *
  * This file is part of BreweryX.
  *
@@ -20,45 +20,51 @@
 
 package com.dre.brewery.commands.subcommands;
 
-import com.dre.brewery.instruments.barrel.BarrelWoodType;
 import com.dre.brewery.Brew;
-import com.dre.brewery.BreweryPlugin;
-import com.dre.brewery.commands.SubCommand;
+import com.dre.brewery.commands.BreweryCommandManager;
+import com.dre.brewery.commands.CommandUtil;
 import com.dre.brewery.configuration.files.Lang;
-import com.dre.brewery.utility.utils.BreweryUtil;
+import com.dre.brewery.instruments.barrel.BarrelWoodType;
 import com.dre.brewery.utility.Logging;
 import org.bukkit.ChatColor;
-import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.util.StringUtil;
+import org.incendo.cloud.parser.standard.DoubleParser;
+import org.incendo.cloud.suggestion.SuggestionProvider;
 
-import java.util.ArrayList;
-import java.util.List;
+/**
+ * Ages the brew in the players hand in a barrel of the given wood type.
+ */
+public class AgeCommand {
 
-public class AgeCommand implements SubCommand {
+    private AgeCommand() {
+    }
 
-    @Override
-    public void execute(BreweryPlugin breweryPlugin, Lang lang, CommandSender sender, String label, String[] args) {
-        if (args.length < 3) {
-            lang.sendEntry(sender, "Etc_Usage");
-            lang.sendEntry(sender, "Help_Age");
-            return;
-        }
+    public static void register(BreweryCommandManager commands) {
+        commands.manager().command(commands.command("age", "brewery.cmd.create", "Help_Age")
+            .required("wood", org.incendo.cloud.parser.standard.StringParser.stringParser(),
+                SuggestionProvider.suggestingStrings(BarrelWoodType.TAB_COMPLETIONS))
+            .required("time", DoubleParser.doubleParser(0.001))
+            .handler(context -> {
+                Lang lang = commands.lang();
+                Player player = CommandUtil.requirePlayer(context.sender().source(), lang);
+                if (player == null) {
+                    return;
+                }
 
-        BarrelWoodType woodType = BarrelWoodType.fromName(args[1]);
-        if (woodType == null || !woodType.isSpecific()) {
-            lang.sendEntry(sender, "CMD_Invalid_Wood_Type", args[1]);
-            return;
-        }
+                String woodName = context.get("wood").toString();
+                BarrelWoodType woodType = BarrelWoodType.fromName(woodName);
+                if (woodType == null || !woodType.isSpecific()) {
+                    lang.sendEntry(player, "CMD_Invalid_Wood_Type", woodName);
+                    return;
+                }
 
-        float ageTime = BreweryUtil.parseFloat(args[2]).orElse(0);
-        if (ageTime <= 0) {
-            lang.sendEntry(sender, "CMD_Invalid_Age_Time", args[2]);
-            return;
-        }
+                double ageTime = context.get("time");
+                age(lang, player, woodType, (float) ageTime, ageTime);
+            }));
+    }
 
-        Player player = (Player) sender;
+    private static void age(Lang lang, Player player, BarrelWoodType woodType, float ageTime, double rawAgeTime) {
         ItemStack item = player.getInventory().getItemInMainHand();
         Brew brew = Brew.get(item);
         if (brew == null) {
@@ -68,26 +74,7 @@ public class AgeCommand implements SubCommand {
 
         brew.age(item, ageTime, woodType);
         Logging.debugLog(String.format("age: aged for %s years in %s barrel: %s",
-            args[2], woodType.getFormattedName(), ChatColor.stripColor(brew.toString())));
-        lang.sendEntry(sender, "CMD_Aged", args[2]);
+            rawAgeTime, woodType.getFormattedName(), ChatColor.stripColor(brew.toString())));
+        lang.sendEntry(player, "CMD_Aged", rawAgeTime);
     }
-
-    @Override
-    public List<String> tabComplete(BreweryPlugin breweryPlugin, CommandSender sender, String label, String[] args) {
-        if (args.length == 2) {
-            return StringUtil.copyPartialMatches(args[1], BarrelWoodType.TAB_COMPLETIONS, new ArrayList<>());
-        }
-        return List.of();
-    }
-
-    @Override
-    public String permission() {
-        return "brewery.cmd.create";
-    }
-
-    @Override
-    public boolean playerOnly() {
-        return true;
-    }
-
 }

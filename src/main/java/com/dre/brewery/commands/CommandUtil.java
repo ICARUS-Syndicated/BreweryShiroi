@@ -22,227 +22,102 @@ package com.dre.brewery.commands;
 
 import com.dre.brewery.Brew;
 import com.dre.brewery.BreweryPlugin;
-import com.dre.brewery.configuration.ConfigManager;
 import com.dre.brewery.configuration.files.Lang;
 import com.dre.brewery.recipe.BreweryRecipe;
-import com.dre.brewery.utility.utils.BreweryUtil;
-import com.dre.brewery.utility.Logging;
-import com.dre.brewery.utility.MinecraftVersion;
-import com.dre.brewery.utility.utils.PermissionUtil;
 import com.dre.brewery.utility.Tuple;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.dre.brewery.utility.utils.PermissionUtil.BPermission.COPY;
-import static com.dre.brewery.utility.utils.PermissionUtil.BPermission.CREATE;
-import static com.dre.brewery.utility.utils.PermissionUtil.BPermission.DELETE;
-import static com.dre.brewery.utility.utils.PermissionUtil.BPermission.DRINK;
-import static com.dre.brewery.utility.utils.PermissionUtil.BPermission.DRINK_OTHER;
-import static com.dre.brewery.utility.utils.PermissionUtil.BPermission.INFO;
-import static com.dre.brewery.utility.utils.PermissionUtil.BPermission.INFO_OTHER;
-import static com.dre.brewery.utility.utils.PermissionUtil.BPermission.PUKE;
-import static com.dre.brewery.utility.utils.PermissionUtil.BPermission.PUKE_OTHER;
-import static com.dre.brewery.utility.utils.PermissionUtil.BPermission.RELOAD;
-import static com.dre.brewery.utility.utils.PermissionUtil.BPermission.SEAL;
-import static com.dre.brewery.utility.utils.PermissionUtil.BPermission.SET;
-import static com.dre.brewery.utility.utils.PermissionUtil.BPermission.STATIC;
-import static com.dre.brewery.utility.utils.PermissionUtil.BPermission.UNLABEL;
-import static com.dre.brewery.utility.utils.PermissionUtil.BPermission.WAKEUP;
-
+/**
+ * Shared helpers of the commands, mostly argument resolution and suggestions.
+ */
 public class CommandUtil {
 
-    private static final BreweryPlugin plugin = BreweryPlugin.getInstance();
-    private static final MinecraftVersion VERSION = BreweryPlugin.getMCVersion();
-    private static final Lang lang = ConfigManager.getConfig(Lang.class);
-
-    // Todo: Replace with a map
     private static Set<Tuple<String, String>> mainSet;
     private static Set<Tuple<String, String>> altSet;
-    private static final String[] QUALITY = { "1", "10" };
 
-
-    public static void cmdHelp(CommandSender sender, String[] args) {
-
-        int page = 1;
-        if (args.length > 1) {
-            page = BreweryUtil.parseInt(args[1]).orElse(1);
-        }
-
-        ArrayList<String> commands = getCommands(sender);
-
-        if (page == 1) {
-            Logging.msg(sender, "&6" + plugin.getDescription().getName() + " v" + plugin.getDescription().getVersion());
-        }
-
-        BreweryUtil.list(sender, commands, page);
-
+    private CommandUtil() {
     }
 
+    /**
+     * Resolves the sender as a player.
+     *
+     * @return The player, or null after an error was sent to the sender
+     */
     @Nullable
-    public static Tuple<Brew, Player> getFromCommand(CommandSender sender, String[] args) {
-        if (args.length < 2) {
-            return null;
+    public static Player requirePlayer(CommandSender sender, Lang lang) {
+        if (sender instanceof Player player) {
+            return player;
         }
-
-        int quality = 10;
-        boolean hasQuality = false;
-        String pName = null;
-        if (args.length > 2) {
-            quality = BreweryUtil.getRandomIntInRange(args[args.length - 1]);
-
-            if (quality <= 0 || quality > 10) {
-                pName = args[args.length - 1];
-                if (args.length > 3) {
-                    quality = BreweryUtil.getRandomIntInRange(args[args.length - 2]);
-                }
-            }
-            if (quality > 0 && quality <= 10) {
-                hasQuality = true;
-            } else {
-                quality = 10;
-            }
-        }
-        Player player = null;
-        if (pName != null) {
-            player = plugin.getServer().getPlayer(pName);
-        }
-
-        if (!(sender instanceof Player) && player == null) {
-            lang.sendEntry(sender, "Error_PlayerCommand");
-            return null;
-        }
-
-        if (player == null) {
-            player = ((Player) sender);
-            pName = null;
-        }
-        int stringLength = args.length - 1;
-        if (pName != null) {
-            stringLength--;
-        }
-        if (hasQuality) {
-            stringLength--;
-        }
-
-        String name;
-        if (stringLength > 1) {
-            StringBuilder builder = new StringBuilder(args[1]);
-
-            for (int i = 2; i < stringLength + 1; i++) {
-                builder.append(" ").append(args[i]);
-            }
-            name = builder.toString();
-        } else {
-            name = args[1];
-        }
-        name = name.replaceAll("\"", "");
-
-        BreweryRecipe recipe = BreweryRecipe.getMatching(name);
-        if (recipe != null) {
-            return new Tuple<>(recipe.createBrew(quality), player);
-        } else {
-            lang.sendEntry(sender, "Error_NoBrewName", name);
-        }
+        lang.sendEntry(sender, "Error_PlayerCommand");
         return null;
     }
 
-    public static ArrayList<String> getCommands(CommandSender sender) {
-
-        ArrayList<String> cmds = new ArrayList<>();
-        cmds.add(lang.getEntry("Help_Help"));
-        PermissionUtil.evaluateExtendedPermissions(sender);
-
-        if (INFO.checkCached(sender)) {
-            cmds.add(lang.getEntry("Help_Info"));
+    /**
+     * Resolves the brew in the main hand of the sender.
+     *
+     * @return The brew, or null after an error was sent to the sender
+     */
+    @Nullable
+    public static Brew requireBrewInHand(CommandSender sender, Lang lang) {
+        Player player = requirePlayer(sender, lang);
+        if (player == null) {
+            return null;
         }
-
-        if (VERSION.isOrLater(MinecraftVersion.V1_13) && SEAL.checkCached(sender)) {
-            cmds.add(lang.getEntry("Help_Seal"));
+        Brew brew = Brew.get(player.getInventory().getItemInMainHand());
+        if (brew == null) {
+            lang.sendEntry(sender, "Error_ItemNotPotion");
         }
-
-        if (UNLABEL.checkCached(sender)) {
-            cmds.add(lang.getEntry("Help_UnLabel"));
-        }
-
-        if (PermissionUtil.noExtendedPermissions(sender)) {
-            return cmds;
-        }
-
-        if (INFO_OTHER.checkCached(sender)) {
-            cmds.add(lang.getEntry("Help_InfoOther"));
-        }
-
-        if (CREATE.checkCached(sender)) {
-            cmds.add(lang.getEntry("Help_Create"));
-            cmds.add(lang.getEntry("Help_Give"));
-            cmds.add(lang.getEntry("Help_Distill"));
-            cmds.add(lang.getEntry("Help_Age"));
-            cmds.add(lang.getEntry("Help_Simulate"));
-        }
-
-        if (DRINK.checkCached(sender) || DRINK_OTHER.checkCached(sender)) {
-            cmds.add(lang.getEntry("Help_Drink"));
-        }
-
-        if (RELOAD.checkCached(sender)) {
-            cmds.add(lang.getEntry("Help_Configname"));
-            cmds.add(lang.getEntry("Help_Reload"));
-        }
-
-        if (PUKE.checkCached(sender) || PUKE_OTHER.checkCached(sender)) {
-            cmds.add(lang.getEntry("Help_Puke"));
-        }
-
-        if (WAKEUP.checkCached(sender)) {
-            cmds.add(lang.getEntry("Help_Wakeup"));
-            cmds.add(lang.getEntry("Help_WakeupList"));
-            cmds.add(lang.getEntry("Help_WakeupCheck"));
-            cmds.add(lang.getEntry("Help_WakeupCheckSpecific"));
-            cmds.add(lang.getEntry("Help_WakeupAdd"));
-            cmds.add(lang.getEntry("Help_WakeupRemove"));
-        }
-
-        if (STATIC.checkCached(sender)) {
-            cmds.add(lang.getEntry("Help_Static"));
-        }
-
-        if (SET.checkCached(sender)) {
-            cmds.add(lang.getEntry("Help_Set"));
-        }
-
-        if (COPY.checkCached(sender)) {
-            cmds.add(lang.getEntry("Help_Copy"));
-        }
-
-        if (DELETE.checkCached(sender)) {
-            cmds.add(lang.getEntry("Help_Delete"));
-        }
-
-        return cmds;
+        return brew;
     }
 
+    /**
+     * Creates a brew of the given recipe for the given player.
+     *
+     * @param sender     The sender that executed the command
+     * @param recipeName The name or id of the recipe
+     * @param quality    The quality of the brew, 1-10, defaults to 10
+     * @param playerName The player that receives the brew, defaults to the sender
+     * @return The brew and the player it is meant for, or null after an error was sent
+     */
+    @Nullable
+    public static Tuple<Brew, Player> createBrew(CommandSender sender, String recipeName,
+                                                 @Nullable Integer quality, @Nullable String playerName, Lang lang) {
+        int brewQuality = quality != null ? quality : 10;
 
-    public static List<String> recipeNamesAndIds(String[] args) {
-        if (args.length == 2) {
-            return recipeNamesAndIds(args[1]);
+        Player player;
+        if (playerName == null) {
+            player = requirePlayer(sender, lang);
+            if (player == null) {
+                return null;
+            }
         } else {
-            if (args[args.length - 1].matches("10|[1-9]")) {
-                return null; // automatically suggests player names
-            } else {
-                return filterWithInput(QUALITY, args[args.length - 1]);
+            player = BreweryPlugin.getInstance().getServer().getPlayer(playerName);
+            if (player == null) {
+                lang.sendEntry(sender, "Error_NoPlayer", playerName);
+                return null;
             }
         }
+
+        BreweryRecipe recipe = BreweryRecipe.getMatching(recipeName);
+        if (recipe == null) {
+            lang.sendEntry(sender, "Error_NoBrewName", recipeName);
+            return null;
+        }
+        return new Tuple<>(recipe.createBrew(brewQuality), player);
     }
 
-    public static List<String> recipeNamesAndIds(String arg) {
+    /**
+     * @return Every name and id of every recipe, for tab completion
+     */
+    public static List<String> recipeNamesAndIds() {
         if (mainSet == null) {
             mainSet = new HashSet<>();
             altSet = new HashSet<>();
@@ -259,23 +134,22 @@ public class CommandUtil {
                 for (String altName : altNames) {
                     altSet.addAll(createLookupFromName(altName));
                 }
-
             }
         }
 
-        final String input = arg.toLowerCase();
+        List<String> options = mainSet.stream().map(Tuple::second).collect(Collectors.toList());
+        options.addAll(altSet.stream().map(Tuple::second).toList());
+        return options.stream().distinct().toList();
+    }
 
-        List<String> options = mainSet.stream()
-            .filter(s -> s.a().startsWith(input))
-            .map(Tuple::second)
-            .collect(Collectors.toList());
-        if (options.isEmpty()) {
-            options = altSet.stream()
-                .filter(s -> s.a().startsWith(input))
-                .map(Tuple::second)
-                .collect(Collectors.toList());
-        }
-        return options;
+    /**
+     * @return The names of all online players, for tab completion
+     */
+    public static List<String> playerNames() {
+        return BreweryPlugin.getInstance().getServer().getOnlinePlayers().stream()
+            .map(Player::getName)
+            .sorted()
+            .toList();
     }
 
     private static List<Tuple<String, String>> createLookupFromName(final String name) {
@@ -284,12 +158,9 @@ public class CommandUtil {
             .collect(Collectors.toList());
     }
 
-    public static List<String> filterWithInput(String[] options, String input) {
-        return Arrays.stream(options)
-            .filter(s -> s.startsWith(input))
-            .collect(Collectors.toList());
-    }
-
+    /**
+     * Clears the cached recipe names, has to be called after the recipes changed.
+     */
     public static void reloadTabCompleter() {
         mainSet = null;
         altSet = null;

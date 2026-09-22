@@ -112,7 +112,7 @@ public class RecipeDefinition {
      * @return The recipe, or null if the definition is invalid
      */
     @Nullable
-    public BreweryRecipe toBRecipe(String id) {
+    public BreweryRecipe toBreweryRecipe(String id) {
         BreweryRecipe recipe = new BreweryRecipe();
         recipe.setId(id);
 

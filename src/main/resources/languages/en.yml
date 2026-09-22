@@ -113,6 +113,10 @@ Error_UnknownCommand: Unknown Command
 Error_YmlRead: 'Could not read file config.yml, please make sure the file is in valid yml format (correct spaces, using '' '' etc.)'
 Error_NoPlayer: '&cPlayer not found: &v1'
 Error_InvalidAmount: '&cInvalid amount: &v1'
+# Cloud fills in the <...> placeholders itself
+Error_InvalidArgument: '&c''<input>'' is not a valid argument'
+Error_InvalidNumber: '&c''<input>'' is not a valid number in the range <min> to <max>'
+Error_InvalidSyntax: '&cInvalid command syntax. Correct syntax is: <syntax>'
 Error_InvalidPluginItem: '&cCould not find plugin item: &v1'
 Error_InvalidMaterial: '&cCould not find material: &v1'
 Error_MissingBarrelType: '&cInvalid BarrelType'
@@ -127,6 +131,20 @@ Etc_LandsFlag_Title: 'Barrel Access'
 Etc_LandsFlag_Description: '&r&7Allows opening\n&r&7BreweryX barrels.'
 
 # Help
+# Captions of the help screen, <...> placeholders are filled in by the command framework
+Help_Title: Help
+Help_Command: Command
+Help_Description: Description
+Help_NoDescription: No description
+Help_Arguments: Arguments
+Help_Optional: Optional
+Help_AvailableCommands: Available Commands
+Help_ShowingResultsFor: ' Showing search results for query'
+Help_NoResultsFor: No results for query
+Help_ClickToShow: '#Click to show help for this command'
+Help_PageOutOfRange: 'Error: Page <page> is not in range. Must be in range [1, <max_pages>]'
+Help_ClickNextPage: Click for next page
+Help_ClickPreviousPage: Click for previous page
 Help_Copy: '&6/brew copy [Quantity]&9 Copies the potion in your hand'
 Help_Create: '&6/brew create <Recipe> [Quality] [Player] &9Create a Brew with optional quality (1-10)'
 Help_Give: '&6/brew give <Recipe> [Quality] [Player] &9Alias for /brew create'
@@ -158,6 +176,12 @@ Help_WakeupList: '&6/brew wakeup list <Page> [World]&9 Lists all wakeup points o
 Help_WakeupRemove: '&6/brew wakeup remove <id> &9Removes the wakeup point with <id>'
 Help_Puke: '&6/brew puke [Player] [Amount] &9Makes you or [Player] puke'
 Help_Drink: '&6/brew drink <Recipe> [Quality] [Player] &9Simulates [Player] drinking a Brew'
+Help_Version: '&6/brew version &9Displays version information and the loaded addons'
+Help_ShowStats: '&6/brew showstats &9Displays statistics about the brewing process'
+Help_DebugInfo: '&6/brew debuginfo [Recipe] &9Writes debugging information about the item in your hand into the log'
+Help_Data: '&6/brew data <save|reload> &9Saves or reloads the data of the DataManager'
+Help_ReloadAddons: '&6/brew reloadaddons &9Reloads all addons'
+Help_ItemName: '&6/brew ItemName &9Display name of item in hand for the config'
 
 # Perms
 Perms_NoBarrelCreate: '&cYou don''t have permissions to create barrels!'

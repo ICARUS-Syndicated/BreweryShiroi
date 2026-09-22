@@ -65,8 +65,9 @@ repositories {
 }
 
 dependencies {
-    // Spigot
-    compileOnly("org.spigotmc:spigot-api:1.21.11-R0.1-SNAPSHOT") {
+    // Paper API, which is what the plugin is built and run against.
+    // The Cloud command framework is registered through the Paper command API, which is Paper only.
+    compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT") {
         exclude("com.google.code.gson", "gson") // Implemented manually
     }
     // Paper Lib, performance improvements on Paper-based servers and async teleporting on Folia
@@ -106,8 +107,18 @@ dependencies {
         exclude("org.yaml", "snakeyaml") // Provided by the server, same as for Okaeri
     }
 
+    // Cloud command framework, https://github.com/Incendo/cloud
+    implementation(platform("org.incendo:cloud-minecraft-bom:2.0.0"))
+    implementation("org.incendo:cloud-paper")
+    implementation("org.incendo:cloud-minecraft-extras") {
+        // Adventure is provided by the server
+        exclude("net.kyori")
+    }
+
     // Plugin Compatability
-    compileOnly("com.sk89q:worldguard:6.1") // https://dev.bukkit.org/projects/worldedit/files
+    compileOnly("com.sk89q:worldguard:6.1") { // https://dev.bukkit.org/projects/worldedit/files
+        exclude("org.bukkit") // Ships a very old bukkit-api, which conflicts with the Paper API
+    }
     compileOnly("com.sk89q.worldguard:worldguard-bukkit:7.0.7")
     compileOnly("com.sk89q.worldedit:worldedit-bukkit:7.3.0-SNAPSHOT") // https://dev.bukkit.org/projects/worldedit/files
     compileOnly("com.sk89q.worldedit:worldedit-core:7.3.0-SNAPSHOT") // https://dev.bukkit.org/projects/worldguard/files
@@ -172,6 +183,10 @@ tasks {
         relocate("org.bson", "$pack.bson")
         relocate("io.papermc.lib", "$pack.paperlib")
         relocate("com.zaxxer.hikari", "$pack.hikari")
+        relocate("org.incendo", "$pack.cloud")
+
+        // Only used by the annotation processor of cloud, not needed at runtime
+        exclude("org/immutables/**")
 
         archiveClassifier.set("")
     }
@@ -269,7 +284,7 @@ modrinth {
     versionNumber.set(project.version.toString())
     versionType.set("release") // This is the default -- can also be `beta` or `alpha`
     uploadFile.set(tasks.shadowJar)
-    loaders.addAll("bukkit", "spigot", "paper", "purpur", "folia")
+    loaders.addAll("paper", "purpur", "folia")
     gameVersions.addAll(
         "1.20.2", "1.20.3", "1.20.4", "1.20.5",
         "1.20.6", "1.21", "1.21.1", "1.21.2",

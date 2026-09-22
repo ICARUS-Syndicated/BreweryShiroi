@@ -1,6 +1,6 @@
 /*
  * BreweryX Bukkit-Plugin for an alternate brewing process
- * Copyright (C) 2024-2025 The Brewery Team
+ * Copyright (C) 2024 The Brewery Team
  *
  * This file is part of BreweryX.
  *
@@ -21,36 +21,38 @@
 package com.dre.brewery.commands.subcommands;
 
 import com.dre.brewery.Brew;
-import com.dre.brewery.BreweryPlugin;
-import com.dre.brewery.commands.SubCommand;
+import com.dre.brewery.commands.BreweryCommandManager;
+import com.dre.brewery.commands.CommandUtil;
 import com.dre.brewery.configuration.files.Lang;
-import com.dre.brewery.utility.utils.BreweryUtil;
 import com.dre.brewery.utility.Logging;
 import org.bukkit.ChatColor;
-import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.PotionMeta;
+import org.incendo.cloud.parser.standard.IntegerParser;
 
-import java.util.List;
+/**
+ * Distills the brew in the players hand.
+ */
+public class DistillCommand {
 
-public class DistillCommand implements SubCommand {
-
-    @Override
-    public void execute(BreweryPlugin breweryPlugin, Lang lang, CommandSender sender, String label, String[] args) {
-        if (args.length < 2) {
-            cmdDistill(lang, (Player) sender, 1);
-        } else {
-            int distillRuns = BreweryUtil.parseInt(args[1]).orElse(0);
-            if (distillRuns <= 0) {
-                lang.sendEntry(sender, "CMD_Invalid_Distill_Runs", args[1]);
-                return;
-            }
-            cmdDistill(lang, (Player) sender, distillRuns);
-        }
+    private DistillCommand() {
     }
 
-    private static void cmdDistill(Lang lang, Player player, int distillRuns) {
+    public static void register(BreweryCommandManager commands) {
+        commands.manager().command(commands.command("distill", "brewery.cmd.create", "Help_Distill")
+            .optional("runs", IntegerParser.integerParser(1, 10))
+            .handler(context -> {
+                Lang lang = commands.lang();
+                Player player = CommandUtil.requirePlayer(context.sender().source(), lang);
+                if (player == null) {
+                    return;
+                }
+                distill(lang, player, context.<Integer>optional("runs").orElse(1));
+            }));
+    }
+
+    private static void distill(Lang lang, Player player, int distillRuns) {
         ItemStack item = player.getInventory().getItemInMainHand();
         Brew brew = Brew.get(item);
         if (brew == null) {
@@ -67,20 +69,4 @@ public class DistillCommand implements SubCommand {
         player.getInventory().setItemInMainHand(item);
         lang.sendEntry(player, "CMD_Distilled", distillRuns);
     }
-
-    @Override
-    public List<String> tabComplete(BreweryPlugin breweryPlugin, CommandSender sender, String label, String[] args) {
-        return List.of();
-    }
-
-    @Override
-    public String permission() {
-        return "brewery.cmd.create";
-    }
-
-    @Override
-    public boolean playerOnly() {
-        return true;
-    }
-
 }

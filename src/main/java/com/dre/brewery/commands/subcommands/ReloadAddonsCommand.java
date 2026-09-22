@@ -22,41 +22,40 @@ package com.dre.brewery.commands.subcommands;
 
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.api.addons.AddonManager;
-import com.dre.brewery.commands.SubCommand;
-import com.dre.brewery.configuration.files.Lang;
+import com.dre.brewery.commands.BreweryCommandManager;
 import com.dre.brewery.utility.Logging;
 import org.bukkit.command.CommandSender;
+import org.incendo.cloud.parser.standard.StringParser;
+import org.incendo.cloud.suggestion.SuggestionProvider;
 
-import java.util.List;
+/**
+ * Reloads all addons, which requires an explicit confirmation as it can break addons.
+ */
+public class ReloadAddonsCommand {
 
-public class ReloadAddonsCommand implements SubCommand {
-    @Override
-    public void execute(BreweryPlugin breweryPlugin, Lang lang, CommandSender sender, String label, String[] args) {
-        if (args.length > 1 && args[1].equalsIgnoreCase("confirm")) {
-            AddonManager addonManager = BreweryPlugin.getAddonManager();
-            addonManager.unloadAddons();
-            addonManager.loadAddons();
-            addonManager.enableAddons();
-            Logging.msg(sender, "Finished loading " + addonManager.getAddons().size() + " addon(s)");
-            Logging.msg(sender, "&eUsing this command should be avoided as it can cause unpredictable behavior within addons!");
-        } else {
-            Logging.msg(sender, "&rThis command should be avoided as it can cause unpredictable behavior within addons, use &6/brewery reloadaddons confirm &r to confirm.");
-            Logging.msg(sender, "&aMost addons support reloading without using this command! Try using &6/brewery reload &ainstead.");
-        }
+    private ReloadAddonsCommand() {
     }
 
-    @Override
-    public List<String> tabComplete(BreweryPlugin breweryPlugin, CommandSender sender, String label, String[] args) {
-        return List.of("confirm");
-    }
+    public static void register(BreweryCommandManager commands) {
+        commands.manager().command(commands.command("reloadaddons", "brewery.cmd.reloadaddons", "Help_ReloadAddons")
+            .optional("confirmation", StringParser.stringParser(),
+                SuggestionProvider.suggestingStrings("confirm"))
+            .handler(context -> {
+                CommandSender sender = context.sender().source();
+                String confirmation = context.optional("confirmation").map(Object::toString).orElse("");
 
-    @Override
-    public String permission() {
-        return "brewery.cmd.reloadaddons";
-    }
+                if (!confirmation.equalsIgnoreCase("confirm")) {
+                    Logging.msg(sender, "&rThis command should be avoided as it can cause unpredictable behavior within addons, use &6/brewery reloadaddons confirm &r to confirm.");
+                    Logging.msg(sender, "&aMost addons support reloading without using this command! Try using &6/brewery reload &ainstead.");
+                    return;
+                }
 
-    @Override
-    public boolean playerOnly() {
-        return false;
+                AddonManager addonManager = BreweryPlugin.getAddonManager();
+                addonManager.unloadAddons();
+                addonManager.loadAddons();
+                addonManager.enableAddons();
+                Logging.msg(sender, "Finished loading " + addonManager.getAddons().size() + " addon(s)");
+                Logging.msg(sender, "&eUsing this command should be avoided as it can cause unpredictable behavior within addons!");
+            }));
     }
 }

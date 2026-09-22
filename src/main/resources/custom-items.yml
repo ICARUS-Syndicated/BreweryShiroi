@@ -1,0 +1,35 @@
+# Bundled default custom items for BreweryX.
+# This file is written to the plugin data folder on first start (with a localized header/footer). It is never
+# read at runtime directly and existing files are not modified.
+
+ex-item:
+  material: Barrier
+  name: Wall
+  lore:
+    - '&7Very well protected'
+
+ex-item2:
+  matchAny: true
+  material:
+    - Acacia_Door
+    - Oak_Door
+    - Spruce_Door
+  name:
+    - Beechwood Door
+  lore:
+    - A door
+
+rasp:
+  name: '&cRaspberry'
+
+modelitem:
+  material: paper
+  customModelData:
+    - 10234
+    - 30334
+
+blue-flowers:
+  matchAny: true
+  material:
+    - cornflower
+    - blue_orchid

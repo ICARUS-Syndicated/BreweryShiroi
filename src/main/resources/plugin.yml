@@ -23,10 +23,7 @@ softdepend:
   - Nexo
   - Movecraft
   - MMOItems
-commands:
-  breweryx:
-    description: Mostly admin commands to create/modify Brews and drunkenness
-#    aliases: [brewery, brew] Now handled by config
+# The commands are registered by Cloud (BreweryCommandManager), so they must NOT be declared here
 permissions:
 # -- Groups --
 # User

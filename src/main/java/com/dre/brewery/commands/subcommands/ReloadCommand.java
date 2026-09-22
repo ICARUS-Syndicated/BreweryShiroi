@@ -20,15 +20,15 @@
 
 package com.dre.brewery.commands.subcommands;
 
-import com.dre.brewery.instruments.BreweryCauldron;
-import com.dre.brewery.instruments.BrewerySealer;
 import com.dre.brewery.Brew;
 import com.dre.brewery.BreweryPlugin;
+import com.dre.brewery.commands.BreweryCommandManager;
 import com.dre.brewery.commands.CommandUtil;
-import com.dre.brewery.commands.SubCommand;
 import com.dre.brewery.configuration.ConfigManager;
 import com.dre.brewery.configuration.configurer.TranslationManager;
 import com.dre.brewery.configuration.files.Lang;
+import com.dre.brewery.instruments.BreweryCauldron;
+import com.dre.brewery.instruments.BrewerySealer;
 import com.dre.brewery.utility.Logging;
 import com.dre.brewery.utility.releases.ReleaseChecker;
 import lombok.Getter;
@@ -36,19 +36,34 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 
-import java.util.List;
-
-public class ReloadCommand implements SubCommand {
+/**
+ * Reloads every configuration file, recipe and addon of BreweryX.
+ */
+public class ReloadCommand {
 
     @Getter
     private static CommandSender reloader;
 
-    @Override
-    public void execute(BreweryPlugin breweryPlugin, Lang lang, CommandSender sender, String label, String[] args) {
+    private ReloadCommand() {
+    }
+
+    public static void register(BreweryCommandManager commands) {
+        commands.manager().command(commands.command("reload", "brewery.cmd.reload", "Help_Reload")
+            .handler(context -> reload(context.sender().source())));
+    }
+
+    /**
+     * Reloads everything, all messages keep being sent to the given sender while this runs.
+     *
+     * @param sender The sender that requested the reload
+     */
+    public static void reload(CommandSender sender) {
+        BreweryPlugin breweryPlugin = BreweryPlugin.getInstance();
+        Lang lang = ConfigManager.getConfig(Lang.class);
+
         if (!sender.equals(Bukkit.getConsoleSender())) {
             reloader = sender;
         }
-
 
         try {
             // Reload translation manager
@@ -64,6 +79,8 @@ public class ReloadCommand implements SubCommand {
                 }
             }
 
+            // Reload the custom items first, the cauldron ingredients and recipes below may reference them by id
+            ConfigManager.loadCustomItems();
             // Reload Cauldron Ingredients
             ConfigManager.loadCauldronIngredients();
             // Reload Recipes
@@ -110,20 +127,5 @@ public class ReloadCommand implements SubCommand {
         }
         // Make sure this reloader is set to null after
         reloader = null;
-    }
-
-    @Override
-    public List<String> tabComplete(BreweryPlugin breweryPlugin, CommandSender sender, String label, String[] args) {
-        return null;
-    }
-
-    @Override
-    public String permission() {
-        return "brewery.cmd.reload";
-    }
-
-    @Override
-    public boolean playerOnly() {
-        return false;
     }
 }

@@ -21,7 +21,7 @@
 package com.dre.brewery;
 
 import com.dre.brewery.api.addons.AddonManager;
-import com.dre.brewery.commands.CommandManager;
+import com.dre.brewery.commands.BreweryCommandManager;
 import com.dre.brewery.configuration.ConfigManager;
 import com.dre.brewery.configuration.configurer.TranslationManager;
 import com.dre.brewery.configuration.files.Config;
@@ -68,8 +68,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.command.CommandMap;
-import org.bukkit.command.PluginCommand;
+import org.bukkit.command.CommandSender;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -97,6 +96,7 @@ public final class BreweryPlugin extends JavaPlugin {
 
     private final Map<String, Function<ItemLoader, Ingredient>> ingredientLoaders = new HashMap<>(); // Registrations
     private BreweryStats breweryStats; // Metrics
+    private BreweryCommandManager commandManager; // Commands and their aliases
 
     {
         // Basically just racing to be the first code to execute.
@@ -153,6 +153,8 @@ public final class BreweryPlugin extends JavaPlugin {
         addonManager = new AddonManager(this);
         addonManager.loadAddons();
 
+        // Custom items first, the cauldron ingredients and recipes below may reference them by id
+        ConfigManager.loadCustomItems();
         ConfigManager.loadCauldronIngredients();
         ConfigManager.loadRecipes();
         ConfigManager.loadDistortWords();
@@ -205,22 +207,9 @@ public final class BreweryPlugin extends JavaPlugin {
         this.breweryStats.setupBStats();
         new BreweryXStats().setupBStats();
 
-        // Register command and aliases
-        PluginCommand defaultCommand = getCommand("breweryx");
-        defaultCommand.setExecutor(new CommandManager());
-        try {
-            // This has to be done reflectively because Spigot doesn't expose the CommandMap through the API
-            Field bukkitCommandMap = getServer().getClass().getDeclaredField("commandMap");
-            bukkitCommandMap.setAccessible(true);
-
-            CommandMap commandMap = (CommandMap) bukkitCommandMap.get(getServer());
-
-            for (String alias : config.getCommandAliases()) {
-                commandMap.register(alias, "breweryx", defaultCommand);
-            }
-        } catch (Exception e) {
-            Logging.errorLog("Failed to register command aliases!", e);
-        }
+        // Register the commands, including the aliases configured in the config
+        this.commandManager = new BreweryCommandManager(this);
+        this.commandManager.register();
 
         // Register Listeners
         PluginManager pluginManager = getServer().getPluginManager();

@@ -20,53 +20,56 @@
 
 package com.dre.brewery.commands.subcommands;
 
-import com.dre.brewery.BreweryPlayer;
 import com.dre.brewery.Brew;
-import com.dre.brewery.BreweryPlugin;
+import com.dre.brewery.BreweryPlayer;
+import com.dre.brewery.commands.BreweryCommandManager;
 import com.dre.brewery.commands.CommandUtil;
-import com.dre.brewery.commands.SubCommand;
 import com.dre.brewery.configuration.files.Lang;
 import com.dre.brewery.utility.Tuple;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.incendo.cloud.parser.standard.IntegerParser;
+import org.incendo.cloud.parser.standard.StringParser;
+import org.incendo.cloud.suggestion.SuggestionProvider;
 
-import java.util.List;
+/**
+ * Simulates a player drinking a brew, useful for testing recipes.
+ */
+public class DrinkCommand {
 
-public class DrinkCommand implements SubCommand {
-    @Override
-    public void execute(BreweryPlugin breweryPlugin, Lang lang, CommandSender sender, String label, String[] args) {
-        if (args.length < 2) {
-            lang.sendEntry(sender, "Etc_Usage");
-            lang.sendEntry(sender, "Help_Drink");
+    private DrinkCommand() {
+    }
+
+    public static void register(BreweryCommandManager commands) {
+        commands.manager().command(commands.command("drink", "brewery.cmd.drink", "Help_Drink")
+            .required("recipe", StringParser.quotedStringParser(),
+                SuggestionProvider.blockingStrings((context, input) -> CommandUtil.recipeNamesAndIds()))
+            .optional("quality", IntegerParser.integerParser(1, 10))
+            .optional("player", StringParser.stringParser(),
+                SuggestionProvider.blockingStrings((context, input) -> CommandUtil.playerNames()))
+            .handler(context -> run(commands, context.sender().source(),
+                context.get("recipe").toString(),
+                context.<Integer>optional("quality").orElse(null),
+                context.<String>optional("player").orElse(null))));
+    }
+
+    private static void run(BreweryCommandManager commands, CommandSender sender,
+                            String recipeName, Integer quality, String playerName) {
+        Lang lang = commands.lang();
+
+        Tuple<Brew, Player> brewForPlayer = CommandUtil.createBrew(sender, recipeName, quality, playerName, lang);
+        if (brewForPlayer == null) {
             return;
         }
 
-        Tuple<Brew, Player> brewForPlayer = CommandUtil.getFromCommand(sender, args);
-        if (brewForPlayer != null) {
-            Player player = brewForPlayer.b();
-            Brew brew = brewForPlayer.a();
-            String brewName = brew.getCurrentRecipe().getName(brew.getQuality());
-            BreweryPlayer.drink(brew, player, null, null);
+        Player player = brewForPlayer.b();
+        Brew brew = brewForPlayer.a();
+        String brewName = brew.getCurrentRecipe().getName(brew.getQuality());
+        BreweryPlayer.drink(brew, player, null, null);
 
-            lang.sendEntry(sender, "CMD_Drink", brewName);
-            if (!sender.equals(player)) {
-                lang.sendEntry(sender, "CMD_DrinkOther", player.getDisplayName(), brewName);
-            }
+        lang.sendEntry(sender, "CMD_Drink", brewName);
+        if (!sender.equals(player)) {
+            lang.sendEntry(sender, "CMD_DrinkOther", player.getDisplayName(), brewName);
         }
-    }
-
-    @Override
-    public List<String> tabComplete(BreweryPlugin breweryPlugin, CommandSender sender, String label, String[] args) {
-        return CommandUtil.recipeNamesAndIds(args);
-    }
-
-    @Override
-    public String permission() {
-        return "brewery.cmd.drink";
-    }
-
-    @Override
-    public boolean playerOnly() {
-        return false;
     }
 }

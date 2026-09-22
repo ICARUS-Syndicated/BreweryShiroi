@@ -1,0 +1,170 @@
+# Bundled default cauldron ingredients for BreweryX.
+# This file is written to the plugin data folder on first start (with a localized header/footer). It is never
+# read at runtime directly and existing files are not modified.
+
+ex:
+  name: Example
+  ingredients:
+    - BEDROCK/2
+    - DIAMOND
+  color: BLACK
+  cookParticles:
+    - RED/5
+    - WHITE/10
+    - 800000/25
+  lore:
+    - An example for a Base Potion
+    - This is how it comes out of a Cauldron
+  customModelData: 545
+
+wheat:
+  name: Fermented wheat
+  ingredients:
+    - WHEAT
+  cookParticles:
+    - 2d8686/8
+
+sugarcane:
+  name: Sugar brew
+  ingredients:
+    - SUGAR_CANE
+  color: f1ffad
+  cookParticles:
+    - f1ffad/4
+    - 858547/10
+
+sugar:
+  name: Sugarwater
+  ingredients:
+    - SUGAR
+  cookParticles:
+    - WHITE/4
+    - BRIGHT_GREY/25
+
+apple:
+  name: Apple must
+  ingredients:
+    - APPLE
+
+berries:
+  name: Grape must
+  ingredients:
+    - SWEET_BERRIES
+  color: RED
+  cookParticles:
+    - ff6666/2
+    - RED/7
+    - ac6553/13
+
+potato:
+  name: Potatomash
+  ingredients:
+    - POTATO
+
+grass:
+  name: Boiled herbs
+  ingredients:
+    - SHORT_GRASS
+  color: 99ff66
+  cookParticles:
+    - GREEN/2
+    - 99ff99/20
+
+rmushroom:
+  name: Mushroom brew
+  ingredients:
+    - RED_MUSHROOM
+  color: ff5c33
+  cookParticles:
+    - fab09e/15
+
+bmushroom:
+  name: Mushroom brew
+  ingredients:
+    - BROWN_MUSHROOM
+  color: c68c53
+  cookParticles:
+    - c68c53/15
+
+cocoa:
+  name: Chocolately brew
+  ingredients:
+    - COCOA_BEANS
+  color: 804600
+  cookParticles:
+    - a26011/1
+    - 5c370a/3
+    - 4d4133/8
+
+milk:
+  name: Milky water
+  ingredients:
+    - MILK_BUCKET
+  color: BRIGHT_GREY
+  cookParticles:
+    - fbfbd0/1
+    - WHITE/6
+
+bl_flow:
+  name: Blueish brew
+  ingredients:
+    - blue-flowers
+  color: 0099ff
+  cookParticles:
+    - 0099ff
+
+cactus:
+  name: Agave brew
+  ingredients:
+    - CACTUS
+  color: 00b300
+  cookParticles:
+    - 00b300/16
+
+poi_potato:
+  name: Poisonous Broth
+  ingredients:
+    - POISONOUS_POTATO
+
+egg:
+  name: Sticky brew
+  ingredients:
+    - EGG
+
+oak_sapling:
+  name: Stringy herb broth
+  ingredients:
+    - OAK_SAPLING
+
+vine:
+  name: Boiled herbs
+  ingredients:
+    - VINE
+  color: 99ff66
+  cookParticles:
+    - GREEN/2
+    - 99ff99/20
+
+rot_flesh:
+  name: Foul pest
+  ingredients:
+    - ROTTEN_FLESH
+  color: 263300
+  cookParticles:
+    - 263300/8
+    - BLACK/20
+
+melon:
+  name: Melon juice
+  ingredients:
+    - MELON_SLICE
+
+wheat_seeds:
+  name: Bitter brew
+  ingredients:
+    - WHEAT_SEEDS
+
+melon_seeds:
+  name: Bitter brew
+  ingredients:
+    - MELON_SEEDS

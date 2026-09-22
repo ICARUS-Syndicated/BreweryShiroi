@@ -21,57 +21,69 @@
 package com.dre.brewery.commands.subcommands;
 
 import com.dre.brewery.Brew;
-import com.dre.brewery.BreweryPlugin;
+import com.dre.brewery.commands.BreweryCommandManager;
 import com.dre.brewery.commands.CommandUtil;
-import com.dre.brewery.commands.SubCommand;
 import com.dre.brewery.configuration.files.Lang;
 import com.dre.brewery.utility.Tuple;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.incendo.cloud.parser.standard.IntegerParser;
+import org.incendo.cloud.parser.standard.StringParser;
+import org.incendo.cloud.suggestion.SuggestionProvider;
 
-import java.util.List;
+/**
+ * Creates a brew of a recipe, optionally with a specific quality and for another player.
+ * <p>
+ * Also available as {@code /breweryx give}.
+ */
+public class CreateCommand {
 
-public class CreateCommand implements SubCommand {
+    private CreateCommand() {
+    }
 
-    @Override
-    public void execute(BreweryPlugin breweryPlugin, Lang lang, CommandSender sender, String label, String[] args) {
-        if (args.length < 2) {
-            lang.sendEntry(sender, "Etc_Usage");
-            lang.sendEntry(sender, "Help_Create");
+    public static void register(BreweryCommandManager commands) {
+        commands.manager().command(commands.command("create", "brewery.cmd.create", "Help_Create")
+            .required("recipe", StringParser.quotedStringParser(),
+                SuggestionProvider.blockingStrings((context, input) -> CommandUtil.recipeNamesAndIds()))
+            .optional("quality", IntegerParser.integerParser(1, 10))
+            .optional("player", StringParser.stringParser(),
+                SuggestionProvider.blockingStrings((context, input) -> CommandUtil.playerNames()))
+            .handler(context -> run(commands, context.sender().source(),
+                context.get("recipe").toString(),
+                context.<Integer>optional("quality").orElse(null),
+                context.<String>optional("player").orElse(null))));
+
+        commands.manager().command(commands.command("give", "brewery.cmd.create", "Help_Give")
+            .required("recipe", StringParser.quotedStringParser(),
+                SuggestionProvider.blockingStrings((context, input) -> CommandUtil.recipeNamesAndIds()))
+            .optional("quality", IntegerParser.integerParser(1, 10))
+            .optional("player", StringParser.stringParser(),
+                SuggestionProvider.blockingStrings((context, input) -> CommandUtil.playerNames()))
+            .handler(context -> run(commands, context.sender().source(),
+                context.get("recipe").toString(),
+                context.<Integer>optional("quality").orElse(null),
+                context.<String>optional("player").orElse(null))));
+    }
+
+    private static void run(BreweryCommandManager commands, CommandSender sender,
+                            String recipeName, Integer quality, String playerName) {
+        Lang lang = commands.lang();
+
+        Tuple<Brew, Player> brewForPlayer = CommandUtil.createBrew(sender, recipeName, quality, playerName, lang);
+        if (brewForPlayer == null) {
             return;
         }
 
-        Tuple<Brew, Player> brewForPlayer = CommandUtil.getFromCommand(sender, args);
+        if (brewForPlayer.b().getInventory().firstEmpty() == -1) {
+            lang.sendEntry(sender, "CMD_Copy_Error", "1");
+            return;
+        }
 
-        if (brewForPlayer != null) {
-            if (brewForPlayer.b().getInventory().firstEmpty() == -1) {
-                lang.sendEntry(sender, "CMD_Copy_Error", "1");
-                return;
-            }
-
-            ItemStack item = brewForPlayer.a().createItem(null, brewForPlayer.b());
-            if (item != null) {
-                brewForPlayer.b().getInventory().addItem(item);
-                lang.sendEntry(sender, "CMD_Created");
-            }
+        ItemStack item = brewForPlayer.a().createItem(null, brewForPlayer.b());
+        if (item != null) {
+            brewForPlayer.b().getInventory().addItem(item);
+            lang.sendEntry(sender, "CMD_Created");
         }
     }
-
-    @Override
-    public List<String> tabComplete(BreweryPlugin breweryPlugin, CommandSender sender, String label, String[] args) {
-        return CommandUtil.recipeNamesAndIds(args);
-    }
-
-    @Override
-    public String permission() {
-        return "brewery.cmd.create";
-    }
-
-    @Override
-    public boolean playerOnly() {
-        return false;
-    }
-
-
 }

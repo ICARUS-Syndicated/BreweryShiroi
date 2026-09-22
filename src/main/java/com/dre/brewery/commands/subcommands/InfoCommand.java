@@ -22,59 +22,47 @@ package com.dre.brewery.commands.subcommands;
 
 import com.dre.brewery.BreweryPlayer;
 import com.dre.brewery.BreweryPlugin;
-import com.dre.brewery.commands.SubCommand;
+import com.dre.brewery.commands.BreweryCommandManager;
 import com.dre.brewery.configuration.files.Lang;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.incendo.cloud.parser.standard.StringParser;
+import org.incendo.cloud.suggestion.SuggestionProvider;
 
-import java.util.List;
+/**
+ * Shows the drunkenness of a player, either your own or, with permission, of somebody else.
+ */
+public class InfoCommand {
 
-public class InfoCommand implements SubCommand {
-
-
-    @Override
-    public void execute(BreweryPlugin breweryPlugin, Lang lang, CommandSender sender, String label, String[] args) {
-        if (args.length > 1) {
-            if (sender.hasPermission("brewery.cmd.infoOther")) {
-                cmdInfo(sender, args[1], lang);
-            } else {
-                lang.sendEntry(sender, "Error_NoPermissions");
-            }
-        } else {
-            if (sender.hasPermission("brewery.cmd.info")) {
-                cmdInfo(sender, null, lang);
-            } else {
-                lang.sendEntry(sender, "Error_NoPermissions");
-            }
-        }
+    private InfoCommand() {
     }
 
-    @Override
-    public List<String> tabComplete(BreweryPlugin breweryPlugin, CommandSender sender, String label, String[] args) {
-        return null;
+    public static void register(BreweryCommandManager commands) {
+        commands.manager().command(commands.command("info", "brewery.cmd.info", "Help_Info")
+            .optional("player", StringParser.stringParser(), SuggestionProvider.blockingStrings(
+                (context, input) -> BreweryPlugin.getInstance().getServer().getOnlinePlayers().stream()
+                    .map(Player::getName).toList()))
+            .handler(context -> {
+                Lang lang = commands.lang();
+                CommandSender sender = context.sender().source();
+                String playerName = context.optional("player").map(Object::toString).orElse(null);
+
+                if (playerName == null) {
+                    if (!(sender instanceof Player player)) {
+                        lang.sendEntry(sender, "Error_PlayerCommand");
+                        return;
+                    }
+                    playerName = player.getName();
+                } else if (!sender.hasPermission("brewery.cmd.infoOther")) {
+                    lang.sendEntry(sender, "Error_NoPermissions");
+                    return;
+                }
+                showInfo(sender, playerName, lang);
+            }));
     }
 
-    @Override
-    public String permission() {
-        return "brewery.cmd.info";
-    }
-
-    @Override
-    public boolean playerOnly() {
-        return false;
-    }
-
-    public void cmdInfo(CommandSender sender, String playerName, Lang lang) {
-
-        boolean selfInfo = playerName == null;
-        if (selfInfo) {
-            if (sender instanceof Player player) {
-                playerName = player.getName();
-            } else {
-                lang.sendEntry(sender, "Error_PlayerCommand");
-                return;
-            }
-        }
+    private static void showInfo(CommandSender sender, String playerName, Lang lang) {
+        boolean selfInfo = sender instanceof Player player && player.getName().equals(playerName);
 
         Player player = BreweryPlugin.getInstance().getServer().getPlayerExact(playerName);
         BreweryPlayer breweryPlayer;
@@ -83,15 +71,14 @@ public class InfoCommand implements SubCommand {
         } else {
             breweryPlayer = BreweryPlayer.get(player);
         }
+
         if (breweryPlayer == null) {
             lang.sendEntry(sender, "CMD_Info_NotDrunk", playerName);
+        } else if (selfInfo) {
+            breweryPlayer.showDrunkeness((Player) sender);
         } else {
-            if (selfInfo) {
-                breweryPlayer.showDrunkeness(player);
-            } else {
-                lang.sendEntry(sender, "CMD_Info_Drunk", playerName, "" + breweryPlayer.getDrunkeness(), "" + breweryPlayer.getQuality());
-            }
+            lang.sendEntry(sender, "CMD_Info_Drunk", playerName,
+                "" + breweryPlayer.getDrunkeness(), "" + breweryPlayer.getQuality());
         }
-
     }
 }

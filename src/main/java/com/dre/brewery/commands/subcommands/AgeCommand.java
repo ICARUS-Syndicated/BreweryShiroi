@@ -20,12 +20,12 @@
 
 package com.dre.brewery.commands.subcommands;
 
-import com.dre.brewery.BarrelWoodType;
+import com.dre.brewery.instruments.barrel.BarrelWoodType;
 import com.dre.brewery.Brew;
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.commands.SubCommand;
 import com.dre.brewery.configuration.files.Lang;
-import com.dre.brewery.utility.BUtil;
+import com.dre.brewery.utility.utils.BreweryUtil;
 import com.dre.brewery.utility.Logging;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
@@ -52,7 +52,7 @@ public class AgeCommand implements SubCommand {
             return;
         }
 
-        float ageTime = BUtil.parseFloat(args[2]).orElse(0);
+        float ageTime = BreweryUtil.parseFloat(args[2]).orElse(0);
         if (ageTime <= 0) {
             lang.sendEntry(sender, "CMD_Invalid_Age_Time", args[2]);
             return;

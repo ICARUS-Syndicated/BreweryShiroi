@@ -20,7 +20,7 @@
 
 package com.dre.brewery.listeners;
 
-import com.dre.brewery.Barrel;
+import com.dre.brewery.instruments.barrel.BreweryBarrel;
 import com.dre.brewery.storage.DataManager;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -35,12 +35,12 @@ public record WorldListener(DataManager dataManager) implements Listener {
         dataManager.getAllBarrels()
             .thenAcceptAsync(barrels -> barrels.stream()
                 .filter(barrel -> barrel.getSpigot().getWorld().equals(event.getWorld()))
-                .forEach(Barrel::registerBarrel)
+                .forEach(BreweryBarrel::registerBarrel)
             );
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onWorldLoad(WorldUnloadEvent event) {
-        Barrel.onUnload(event.getWorld());
+        BreweryBarrel.onUnload(event.getWorld());
     }
 }

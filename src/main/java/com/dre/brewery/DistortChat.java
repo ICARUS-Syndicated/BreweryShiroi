@@ -115,8 +115,8 @@ public class DistortChat {
 
     // Distort players words when he uses a command
     public static void playerCommand(PlayerCommandPreprocessEvent event) {
-        BPlayer bPlayer = BPlayer.get(event.getPlayer());
-        if (bPlayer == null) {
+        BreweryPlayer breweryPlayer = BreweryPlayer.get(event.getPlayer());
+        if (breweryPlayer == null) {
             return;
         }
         if (!commands.isEmpty() && !words.isEmpty()) {
@@ -136,8 +136,8 @@ public class DistortChat {
                                     ? chat.substring(chat.indexOf(' ', chat.indexOf(' ', 0) + 1) + 1).trim()
                                     : chat.substring(chat.indexOf(' ') + 1).trim();
 
-                                String distorted = distortMessage(message, bPlayer.getDrunkeness());
-                                PlayerChatDistortEvent call = new PlayerChatDistortEvent(event.isAsynchronous(), event.getPlayer(), bPlayer, message, distorted);
+                                String distorted = distortMessage(message, breweryPlayer.getDrunkeness());
+                                PlayerChatDistortEvent call = new PlayerChatDistortEvent(event.isAsynchronous(), event.getPlayer(), breweryPlayer, message, distorted);
                                 BreweryPlugin.getInstance().getServer().getPluginManager().callEvent(call);
                                 if (call.isCancelled()) {
                                     return;
@@ -161,14 +161,14 @@ public class DistortChat {
 
     // Distort players words when he uses a command
     public static void signWrite(SignChangeEvent event) {
-        BPlayer bPlayer = BPlayer.get(event.getPlayer());
-        if (bPlayer != null) {
+        BreweryPlayer breweryPlayer = BreweryPlayer.get(event.getPlayer());
+        if (breweryPlayer != null) {
             if (!words.isEmpty()) {
                 int index = 0;
                 for (String message : event.getLines()) {
                     if (message.length() > 1) {
-                        String distorted = distortMessage(message, bPlayer.getDrunkeness());
-                        PlayerChatDistortEvent call = new PlayerChatDistortEvent(event.isAsynchronous(), event.getPlayer(), bPlayer, message, distorted);
+                        String distorted = distortMessage(message, breweryPlayer.getDrunkeness());
+                        PlayerChatDistortEvent call = new PlayerChatDistortEvent(event.isAsynchronous(), event.getPlayer(), breweryPlayer, message, distorted);
                         BreweryPlugin.getInstance().getServer().getPluginManager().callEvent(call);
                         if (!call.isCancelled()) {
                             distorted = call.getDistortedMessage();
@@ -191,8 +191,8 @@ public class DistortChat {
             return;
         }
 
-        BPlayer bPlayer = BPlayer.get(event.getPlayer());
-        if (bPlayer == null || words.isEmpty())
+        BreweryPlayer breweryPlayer = BreweryPlayer.get(event.getPlayer());
+        if (breweryPlayer == null || words.isEmpty())
             return;
 
         String message = event.getMessage();
@@ -200,8 +200,8 @@ public class DistortChat {
             Logging.log(lang.getEntry("Player_TriedToSay", event.getPlayer().getName(), message));
         }
 
-        String distorted = distortMessage(message, bPlayer.getDrunkeness());
-        PlayerChatDistortEvent call = new PlayerChatDistortEvent(event.isAsynchronous(), event.getPlayer(), bPlayer, message, distorted);
+        String distorted = distortMessage(message, breweryPlayer.getDrunkeness());
+        PlayerChatDistortEvent call = new PlayerChatDistortEvent(event.isAsynchronous(), event.getPlayer(), breweryPlayer, message, distorted);
         BreweryPlugin.getInstance().getServer().getPluginManager().callEvent(call);
         if (call.isCancelled()) {
             return;

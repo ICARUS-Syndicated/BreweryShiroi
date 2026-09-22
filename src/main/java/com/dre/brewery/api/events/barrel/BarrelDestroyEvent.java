@@ -20,7 +20,7 @@
 
 package com.dre.brewery.api.events.barrel;
 
-import com.dre.brewery.Barrel;
+import com.dre.brewery.instruments.barrel.BreweryBarrel;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
@@ -41,8 +41,8 @@ public class BarrelDestroyEvent extends BarrelEvent implements Cancellable {
     private final Player player;
     private boolean cancelled;
 
-    public BarrelDestroyEvent(Barrel barrel, Block broken, Reason reason, Player player) {
-        super(barrel);
+    public BarrelDestroyEvent(BreweryBarrel breweryBarrel, Block broken, Reason reason, Player player) {
+        super(breweryBarrel);
         this.broken = broken;
         this.player = player;
         this.reason = reason;

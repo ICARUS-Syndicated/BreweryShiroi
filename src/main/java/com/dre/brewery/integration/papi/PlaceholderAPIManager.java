@@ -20,13 +20,12 @@
 
 package com.dre.brewery.integration.papi;
 
-import com.dre.brewery.BPlayer;
+import com.dre.brewery.BreweryPlayer;
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.integration.papi.placeholders.DrunkennessBarsPlaceholder;
 import com.dre.brewery.integration.papi.placeholders.DrunkennessPlaceholder;
 import com.dre.brewery.integration.papi.placeholders.QualityPlaceholder;
 import com.dre.brewery.integration.papi.placeholders.QualityStarsPlaceholder;
-import com.dre.brewery.utility.BUtil;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.NotNull;
@@ -68,14 +67,14 @@ public class PlaceholderAPIManager extends PlaceholderExpansion {
 
     @Override
     public String onRequest(OfflinePlayer player, @NotNull String params) {
-        BPlayer bPlayer = BPlayer.get(player);
-        if (bPlayer == null) bPlayer = new BPlayer(player.getUniqueId());
+        BreweryPlayer breweryPlayer = BreweryPlayer.get(player);
+        if (breweryPlayer == null) breweryPlayer = new BreweryPlayer(player.getUniqueId());
 
         String[] args = params.split("_");
 
         Placeholder placeholder = placeholders.get(args[0].toLowerCase());
         if (placeholder != null) {
-            return placeholder.onReceivedRequest(plugin, player, bPlayer, args);
+            return placeholder.onReceivedRequest(plugin, player, breweryPlayer, args);
         }
         return null;
     }

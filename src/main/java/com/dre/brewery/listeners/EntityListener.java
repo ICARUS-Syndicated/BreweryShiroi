@@ -20,12 +20,12 @@
 
 package com.dre.brewery.listeners;
 
-import com.dre.brewery.BCauldron;
-import com.dre.brewery.Barrel;
+import com.dre.brewery.instruments.BreweryCauldron;
+import com.dre.brewery.instruments.barrel.BreweryBarrel;
 import com.dre.brewery.Brew;
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.api.events.barrel.BarrelDestroyEvent;
-import com.dre.brewery.utility.BUtil;
+import com.dre.brewery.utility.utils.BreweryUtil;
 import com.dre.brewery.utility.MinecraftVersion;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -81,9 +81,9 @@ public class EntityListener implements Listener {
         blocks:
         while (iter.hasNext()) {
             block = iter.next();
-            BCauldron cauldron = BCauldron.get(block);
+            BreweryCauldron cauldron = BreweryCauldron.get(block);
             if (cauldron != null) {
-                BUtil.blockDestroy(block, null, BarrelDestroyEvent.Reason.EXPLODED);
+                BreweryUtil.blockDestroy(block, null, BarrelDestroyEvent.Reason.EXPLODED);
                 continue;
             }
             if (!breakEvents.isEmpty()) {
@@ -96,16 +96,16 @@ public class EntityListener implements Listener {
                     }
                 }
             }
-            Barrel barrel = Barrel.get(block);
-            if (barrel != null) {
-                BarrelDestroyEvent breakEvent = new BarrelDestroyEvent(barrel, block, BarrelDestroyEvent.Reason.EXPLODED, null);
+            BreweryBarrel breweryBarrel = BreweryBarrel.get(block);
+            if (breweryBarrel != null) {
+                BarrelDestroyEvent breakEvent = new BarrelDestroyEvent(breweryBarrel, block, BarrelDestroyEvent.Reason.EXPLODED, null);
                 // Listened to by LWCBarrel (IntegrationListener)
                 BreweryPlugin.getInstance().getServer().getPluginManager().callEvent(breakEvent);
                 breakEvents.add(breakEvent);
                 if (breakEvent.isCancelled()) {
                     iter.remove();
                 } else {
-                    barrel.remove(block, null, true);
+                    breweryBarrel.remove(block, null, true);
                 }
             }
         }
@@ -114,7 +114,7 @@ public class EntityListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onBlockChange(EntityChangeBlockEvent event) {
         if (event.getBlock().getType().name().toUpperCase().contains("CUT_COPPER")) return;
-        if (Barrel.get(event.getBlock()) == null) return;
+        if (BreweryBarrel.get(event.getBlock()) == null) return;
         event.setCancelled(true);
     }
 

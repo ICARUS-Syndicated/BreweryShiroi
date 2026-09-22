@@ -21,9 +21,10 @@
 package com.dre.brewery;
 
 import com.dre.brewery.configuration.files.Lang;
-import com.dre.brewery.recipe.DebuggableItem;
-import com.dre.brewery.recipe.Ingredient;
-import com.dre.brewery.utility.BUtil;
+import com.dre.brewery.instruments.barrel.BarrelWoodType;
+import com.dre.brewery.recipe.items.DebuggableItem;
+import com.dre.brewery.recipe.items.Ingredient;
+import com.dre.brewery.utility.utils.BreweryUtil;
 
 import java.util.List;
 import java.util.Locale;
@@ -143,7 +144,7 @@ public interface BrewDefect {
 
     record AgeMismatch(float actual, float needed, boolean alcoholic) implements BrewDefect {
         public AgeMismatch {
-            if (BUtil.isClose(actual, needed)) {
+            if (BreweryUtil.isClose(actual, needed)) {
                 throw new IllegalArgumentException("AgeMismatch actual and needed were equal");
             }
         }

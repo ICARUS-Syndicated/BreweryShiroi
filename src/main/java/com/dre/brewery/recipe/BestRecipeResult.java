@@ -21,7 +21,7 @@
 package com.dre.brewery.recipe;
 
 import com.dre.brewery.BrewDefect;
-import com.dre.brewery.utility.BUtil;
+import com.dre.brewery.utility.utils.BreweryUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.StringJoiner;
@@ -35,7 +35,7 @@ public sealed interface BestRecipeResult {
      * Gets the best recipe, if one with quality above 0 was found.
      * @return the recipe, or null if not found
      */
-    @Nullable BRecipe getSuccessRecipe();
+    @Nullable BreweryRecipe getSuccessRecipe();
 
     /**
      * If no recipe was found, gets the worst defect of the next best recipe.
@@ -49,10 +49,10 @@ public sealed interface BestRecipeResult {
      * @param recipe the best recipe with the highest quality
      * @param eval the recipe's evaluation
      */
-    record Found(BRecipe recipe, RecipeEvaluation eval) implements BestRecipeResult {
+    record Found(BreweryRecipe recipe, RecipeEvaluation eval) implements BestRecipeResult {
 
         @Override
-        public @Nullable BRecipe getSuccessRecipe() {
+        public @Nullable BreweryRecipe getSuccessRecipe() {
             return recipe;
         }
 
@@ -77,16 +77,16 @@ public sealed interface BestRecipeResult {
      *              a "best guess" of what the user was trying to brew
      * @param eval the recipe's evaluation
      */
-    record Error(BRecipe guess, RecipeEvaluation eval) implements BestRecipeResult {
+    record Error(BreweryRecipe guess, RecipeEvaluation eval) implements BestRecipeResult {
 
         @Override
-        public @Nullable BRecipe getSuccessRecipe() {
+        public @Nullable BreweryRecipe getSuccessRecipe() {
             return null;
         }
 
         @Override
         public @Nullable BrewDefect getWorstDefect() {
-            return BUtil.choose(eval.getWorstDefects());
+            return BreweryUtil.choose(eval.getWorstDefects());
         }
 
         @Override
@@ -105,7 +105,7 @@ public sealed interface BestRecipeResult {
     record NoRecipesRegistered() implements BestRecipeResult {
 
         @Override
-        public @Nullable BRecipe getSuccessRecipe() {
+        public @Nullable BreweryRecipe getSuccessRecipe() {
             return null;
         }
 

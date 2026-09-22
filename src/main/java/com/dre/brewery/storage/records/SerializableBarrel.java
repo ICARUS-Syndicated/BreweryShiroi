@@ -20,11 +20,11 @@
 
 package com.dre.brewery.storage.records;
 
-import com.dre.brewery.Barrel;
+import com.dre.brewery.instruments.barrel.BreweryBarrel;
 import com.dre.brewery.storage.DataManager;
 import com.dre.brewery.storage.interfaces.SerializableThing;
 import com.dre.brewery.storage.serialization.BukkitSerialization;
-import com.dre.brewery.utility.BUtil;
+import com.dre.brewery.utility.utils.BreweryUtil;
 import com.dre.brewery.utility.BoundingBox;
 import org.bukkit.Location;
 
@@ -43,17 +43,17 @@ import java.util.concurrent.CompletableFuture;
  */
 public record SerializableBarrel(String id, String serializedLocation, List<Integer> bounds, float time, byte sign,
                                  String serializedItems) implements SerializableThing {
-    public SerializableBarrel(Barrel barrel) {
-        this(barrel.getId().toString(), DataManager.serializeLocation(barrel.getSpigot().getLocation()), barrel.getBounds().serializeToIntList(), barrel.getTime(), barrel.getSignoffset(), BukkitSerialization.itemStackArrayToBase64(barrel.getInventory().getContents()));
+    public SerializableBarrel(BreweryBarrel breweryBarrel) {
+        this(breweryBarrel.getId().toString(), DataManager.serializeLocation(breweryBarrel.getSpigot().getLocation()), breweryBarrel.getBounds().serializeToIntList(), breweryBarrel.getTime(), breweryBarrel.getSignoffset(), BukkitSerialization.itemStackArrayToBase64(breweryBarrel.getInventory().getContents()));
     }
 
-    public CompletableFuture<Barrel> toBarrel() {
+    public CompletableFuture<BreweryBarrel> toBarrel() {
         Location loc = DataManager.deserializeLocation(serializedLocation);
         if (loc == null) {
             return CompletableFuture.completedFuture(null);
         }
-        return Barrel.computeSmall(loc).thenApplyAsync(small ->
-            new Barrel(loc.getBlock(), sign, BoundingBox.fromPoints(bounds), BukkitSerialization.itemStackArrayFromBase64(serializedItems), time, BUtil.uuidFromString(id), small)
+        return BreweryBarrel.computeSmall(loc).thenApplyAsync(small ->
+            new BreweryBarrel(loc.getBlock(), sign, BoundingBox.fromPoints(bounds), BukkitSerialization.itemStackArrayFromBase64(serializedItems), time, BreweryUtil.uuidFromString(id), small)
         );
     }
 

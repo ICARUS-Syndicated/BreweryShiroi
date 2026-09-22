@@ -20,7 +20,7 @@
 
 package com.dre.brewery.integration.listeners.movecraft;
 
-import com.dre.brewery.Barrel;
+import com.dre.brewery.instruments.barrel.BreweryBarrel;
 import com.dre.brewery.utility.BoundingBox;
 import net.countercraft.movecraft.MovecraftLocation;
 import net.countercraft.movecraft.craft.Craft;
@@ -44,13 +44,13 @@ public class TranslationListener implements Listener {
 
         Craft craft = event.getCraft();
         HitBox hitBox = craft.getHitBox();
-        for (Barrel barrel : MovecraftUtil.barrelsOnCraft(hitBox, craft.getWorld())) {
-            Location location = barrel.getSpigot().getLocation();
+        for (BreweryBarrel breweryBarrel : MovecraftUtil.barrelsOnCraft(hitBox, craft.getWorld())) {
+            Location location = breweryBarrel.getSpigot().getLocation();
 
-            BoundingBox box = barrel.getBounds();
+            BoundingBox box = breweryBarrel.getBounds();
             box.setMin(move(box.getMin(), delta));
             box.setMax(move(box.getMax(), delta));
-            barrel.setSpigot( location.add(delta.getX(), delta.getY(), delta.getZ()).getBlock() );
+            breweryBarrel.setSpigot( location.add(delta.getX(), delta.getY(), delta.getZ()).getBlock() );
         }
     }
 

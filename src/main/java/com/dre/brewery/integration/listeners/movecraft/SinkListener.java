@@ -20,7 +20,7 @@
 
 package com.dre.brewery.integration.listeners.movecraft;
 
-import com.dre.brewery.Barrel;
+import com.dre.brewery.instruments.barrel.BreweryBarrel;
 import net.countercraft.movecraft.MovecraftLocation;
 import net.countercraft.movecraft.events.CraftSinkEvent;
 import net.countercraft.movecraft.util.MathUtils;
@@ -35,14 +35,14 @@ public class SinkListener implements Listener {
     @EventHandler
     public void onSink(CraftSinkEvent event) {
         HitBox hitBox = event.getCraft().getHitBox();
-        ArrayList<Barrel> list = new ArrayList<>(Barrel.getBarrels(event.getCraft().getWorld().getUID()));
+        ArrayList<BreweryBarrel> list = new ArrayList<>(BreweryBarrel.getBarrels(event.getCraft().getWorld().getUID()));
 
-        for (Barrel barrel : list) {
-            Location location = barrel.getSpigot().getLocation().clone();
+        for (BreweryBarrel breweryBarrel : list) {
+            Location location = breweryBarrel.getSpigot().getLocation().clone();
             MovecraftLocation mvLocation = MathUtils.bukkit2MovecraftLoc(location);
 
             if (hitBox.contains(mvLocation)) {
-                barrel.remove(null, null, true);
+                breweryBarrel.remove(null, null, true);
             }
         }
     }

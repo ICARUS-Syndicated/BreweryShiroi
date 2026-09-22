@@ -20,8 +20,8 @@
 
 package com.dre.brewery.listeners;
 
-import com.dre.brewery.BCauldron;
-import com.dre.brewery.utility.MaterialUtil;
+import com.dre.brewery.instruments.BreweryCauldron;
+import com.dre.brewery.utility.utils.MaterialUtil;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
@@ -54,7 +54,7 @@ public class CauldronListener implements Listener {
             if (newType != Material.WATER_CAULDRON) {
                 // Change from water to anything else
                 if (event.getReason() != CauldronLevelChangeEvent.ChangeReason.BOTTLE_FILL) {
-                    BCauldron.remove(event.getBlock());
+                    BreweryCauldron.remove(event.getBlock());
                 }
             } else { // newType == Material.WATER_CAULDRON
                 // Water level change
@@ -64,7 +64,7 @@ public class CauldronListener implements Listener {
 
                 // Water Level increased somehow, might be Bucket, Bottle, Rain, etc.
                 if (newCauldron.getLevel() > oldCauldron.getLevel()) {
-                    BCauldron.remove(event.getBlock());
+                    BreweryCauldron.remove(event.getBlock());
                 }
             }
         }
@@ -76,8 +76,8 @@ public class CauldronListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPistonExtend(BlockPistonExtendEvent event) {
         for (Block block : event.getBlocks()) {
-            if (BCauldron.bcauldrons.containsKey(block)) {
-                BCauldron.remove(block);
+            if (BreweryCauldron.bcauldrons.containsKey(block)) {
+                BreweryCauldron.remove(block);
             }
         }
     }
@@ -88,9 +88,9 @@ public class CauldronListener implements Listener {
             if (event.getReason() == CauldronLevelChangeEvent.ChangeReason.BOTTLE_FILL) {
                 return;
             }
-            BCauldron.remove(event.getBlock());
+            BreweryCauldron.remove(event.getBlock());
         } else if (event.getNewLevel() == 3 && event.getOldLevel() != 3) {
-            BCauldron.remove(event.getBlock());
+            BreweryCauldron.remove(event.getBlock());
         }
     }
 }

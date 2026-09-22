@@ -20,12 +20,12 @@
 
 package com.dre.brewery.listeners;
 
-import com.dre.brewery.BDistiller;
-import com.dre.brewery.BSealer;
-import com.dre.brewery.Barrel;
+import com.dre.brewery.instruments.BreweryDistiller;
+import com.dre.brewery.instruments.BrewerySealer;
+import com.dre.brewery.instruments.barrel.BreweryBarrel;
 import com.dre.brewery.Brew;
 import com.dre.brewery.BreweryPlugin;
-import com.dre.brewery.MCBarrel;
+import com.dre.brewery.instruments.barrel.VanillaBarrel;
 import com.dre.brewery.configuration.ConfigManager;
 import com.dre.brewery.configuration.files.Config;
 import com.dre.brewery.lore.BrewLore;
@@ -146,18 +146,18 @@ public class InventoryListener implements Listener {
         if (InventoryType.BREWING != inv.getType()) return;
         if (event.getAction() == InventoryAction.NOTHING) return; // Ignore clicks that do nothing
 
-        BDistiller.distillerClick(event);
+        BreweryDistiller.distillerClick(event);
     }
 
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     public void onBrew(BrewEvent event) {
         if (VERSION.isOrLater(MinecraftVersion.V1_9)) {
-            if (BDistiller.hasBrew(event.getContents(), BDistiller.getDistillContents(event.getContents())) != 0) {
+            if (BreweryDistiller.hasBrew(event.getContents(), BreweryDistiller.getDistillContents(event.getContents())) != 0) {
                 event.setCancelled(true);
             }
             return;
         }
-        if (BDistiller.runDistill(event.getContents(), BDistiller.getDistillContents(event.getContents()))) {
+        if (BreweryDistiller.runDistill(event.getContents(), BreweryDistiller.getDistillContents(event.getContents()))) {
             event.setCancelled(true);
         }
     }
@@ -203,7 +203,7 @@ public class InventoryListener implements Listener {
         if (isVanillaBarrel && config.isExemptVanillaBarrels()) {
             return;
         }
-        if (!(holder instanceof Barrel) && !isVanillaBarrel) {
+        if (!(holder instanceof BreweryBarrel) && !isVanillaBarrel) {
             return;
         }
         InventoryAction action = event.getAction();
@@ -280,7 +280,7 @@ public class InventoryListener implements Listener {
         if (isVanillaBarrel && config.isExemptVanillaBarrels()) {
             return;
         }
-        if (!(holder instanceof Barrel) && !isVanillaBarrel) {
+        if (!(holder instanceof BreweryBarrel) && !isVanillaBarrel) {
             return;
         }
 
@@ -309,7 +309,7 @@ public class InventoryListener implements Listener {
         if (!config.isAgeInMCBarrels()) return;
 
         Inventory inv = event.getInventory();
-        MCBarrel barrel = MCBarrel.openBarrels.computeIfAbsent(inv, MCBarrel::new);
+        VanillaBarrel barrel = VanillaBarrel.openBarrels.computeIfAbsent(inv, VanillaBarrel::new);
         barrel.clickInv(event);
     }
 
@@ -318,10 +318,10 @@ public class InventoryListener implements Listener {
     public void onInventoryClickBSealer(InventoryClickEvent event) {
         if (VERSION.isOrEarlier(MinecraftVersion.V1_13)) return;
         InventoryHolder holder = PaperLib.getHolder(event.getInventory(), true).getHolder();
-        if (!(holder instanceof BSealer)) {
+        if (!(holder instanceof BrewerySealer)) {
             return;
         }
-        ((BSealer) holder).clickInv();
+        ((BrewerySealer) holder).clickInv();
     }
 
     //public static boolean opening = false;
@@ -355,7 +355,7 @@ public class InventoryListener implements Listener {
         // Check for MC Barrel
         if (event.getInventory().getType() == InventoryType.BARREL) {
             Inventory inv = event.getInventory();
-            MCBarrel barrel = MCBarrel.openBarrels.computeIfAbsent(inv, MCBarrel::new);
+            VanillaBarrel barrel = VanillaBarrel.openBarrels.computeIfAbsent(inv, VanillaBarrel::new);
             barrel.open();
         }
     }
@@ -373,7 +373,7 @@ public class InventoryListener implements Listener {
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
     public void onHopperMove(InventoryMoveItemEvent event) {
         if (event.getSource() instanceof BrewerInventory inv && PaperLib.getHolder(inv, true).getHolder() instanceof BrewingStand holder) {
-            if (BDistiller.isTrackingDistiller(holder.getBlock())) {
+            if (BreweryDistiller.isTrackingDistiller(holder.getBlock())) {
                 event.setCancelled(true);
             }
             return;
@@ -404,30 +404,30 @@ public class InventoryListener implements Listener {
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
         if (VERSION.isOrEarlier(MinecraftVersion.V1_13)) return;
-        if (PaperLib.getHolder(event.getInventory(), true).getHolder() instanceof BSealer holder) {
+        if (PaperLib.getHolder(event.getInventory(), true).getHolder() instanceof BrewerySealer holder) {
             holder.closeInv();
         }
 
         if (VERSION.isOrEarlier(MinecraftVersion.V1_14)) return;
 
         // Barrel Closing Sound
-        if (PaperLib.getHolder(event.getInventory(), true).getHolder() instanceof Barrel barrel) {
-            barrel.playClosingSound();
+        if (PaperLib.getHolder(event.getInventory(), true).getHolder() instanceof BreweryBarrel breweryBarrel) {
+            breweryBarrel.playClosingSound();
         }
 
         // Check for MC Barrel
         if (config.isAgeInMCBarrels() && event.getInventory().getType() == InventoryType.BARREL) {
             Inventory inv = event.getInventory();
-            MCBarrel barrel = MCBarrel.openBarrels.get(inv);
+            VanillaBarrel barrel = VanillaBarrel.openBarrels.get(inv);
             if (barrel != null) {
                 barrel.close();
                 if (inv.getViewers().size() == 1) {
                     // Last viewer, remove Barrel from open Barrel tracking
-                    MCBarrel.openBarrels.remove(inv, barrel);
+                    VanillaBarrel.openBarrels.remove(inv, barrel);
                 }
                 return;
             }
-            new MCBarrel(inv).close();
+            new VanillaBarrel(inv).close();
         }
     }
 }

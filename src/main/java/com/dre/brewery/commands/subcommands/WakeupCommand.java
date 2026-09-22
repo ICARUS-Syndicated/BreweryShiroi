@@ -25,7 +25,7 @@ import com.dre.brewery.Wakeup;
 import com.dre.brewery.commands.CommandUtil;
 import com.dre.brewery.commands.SubCommand;
 import com.dre.brewery.configuration.files.Lang;
-import com.dre.brewery.utility.BUtil;
+import com.dre.brewery.utility.utils.BreweryUtil;
 import org.bukkit.command.CommandSender;
 
 import java.util.List;
@@ -47,7 +47,7 @@ public class WakeupCommand implements SubCommand {
             int page = 1;
             String world = null;
             if (args.length > 2) {
-                page = BUtil.parseInt(args[2]).orElse(1);
+                page = BreweryUtil.parseInt(args[2]).orElse(1);
             }
             if (args.length > 3) {
                 world = args[3];
@@ -57,7 +57,7 @@ public class WakeupCommand implements SubCommand {
         } else if (args[1].equalsIgnoreCase("remove")) {
 
             if (args.length > 2) {
-                int id = BUtil.parseIntOrZero(args[2]);
+                int id = BreweryUtil.parseIntOrZero(args[2]);
                 Wakeup.remove(sender, id);
             } else {
                 lang.sendEntry(sender, "Etc_Usage");
@@ -68,7 +68,7 @@ public class WakeupCommand implements SubCommand {
 
             int id = -1;
             if (args.length > 2) {
-                id = BUtil.parseIntOrZero(args[2]);
+                id = BreweryUtil.parseIntOrZero(args[2]);
                 if (id < 0) {
                     id = 0;
                 }

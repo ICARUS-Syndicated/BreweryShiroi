@@ -20,7 +20,7 @@
 
 package com.dre.brewery.api.events;
 
-import com.dre.brewery.BPlayer;
+import com.dre.brewery.BreweryPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.HandlerList;
@@ -35,18 +35,18 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PlayerPushEvent extends PlayerEvent implements Cancellable {
     private static final HandlerList handlers = new HandlerList();
-    private final BPlayer bPlayer;
+    private final BreweryPlayer breweryPlayer;
     private Vector push;
     private boolean cancelled;
 
-    public PlayerPushEvent(Player who, Vector push, BPlayer bPlayer) {
+    public PlayerPushEvent(Player who, Vector push, BreweryPlayer breweryPlayer) {
         super(who);
         this.push = push;
-        this.bPlayer = bPlayer;
+        this.breweryPlayer = breweryPlayer;
     }
 
-    public BPlayer getBPlayer() {
-        return bPlayer;
+    public BreweryPlayer getBPlayer() {
+        return breweryPlayer;
     }
 
     /**

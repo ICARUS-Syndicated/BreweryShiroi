@@ -20,15 +20,14 @@
 
 package com.dre.brewery.commands.subcommands;
 
-import com.dre.brewery.BPlayer;
+import com.dre.brewery.BreweryPlayer;
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.commands.SubCommand;
 import com.dre.brewery.configuration.files.Lang;
-import com.dre.brewery.utility.BukkitConstants;
+import com.dre.brewery.utility.BukkitEffectConstants;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.potion.PotionEffectType;
 
 import java.util.List;
 
@@ -68,16 +67,16 @@ public class SetCommand implements SubCommand {
                 }
             }
 
-            BPlayer bPlayer = BPlayer.get(Bukkit.getOfflinePlayer(target.getUniqueId()));
-            if (bPlayer == null) bPlayer = BPlayer.addPlayer(Bukkit.getOfflinePlayer(target.getUniqueId()));
+            BreweryPlayer breweryPlayer = BreweryPlayer.get(Bukkit.getOfflinePlayer(target.getUniqueId()));
+            if (breweryPlayer == null) breweryPlayer = BreweryPlayer.addPlayer(Bukkit.getOfflinePlayer(target.getUniqueId()));
 
-            bPlayer.setDrunkeness(drunkenness);
-            bPlayer.setQuality(quality * drunkenness);
+            breweryPlayer.setDrunkeness(drunkenness);
+            breweryPlayer.setQuality(quality * drunkenness);
 
             lang.sendEntry(sender, "CMD_Set", args[1], String.valueOf(drunkenness), String.valueOf(quality));
 
             // Stop long nausea effects when drunkenness is 0
-            if (drunkenness == 0) target.removePotionEffect(BukkitConstants.NAUSEA);
+            if (drunkenness == 0) target.removePotionEffect(BukkitEffectConstants.NAUSEA);
 
         }
 

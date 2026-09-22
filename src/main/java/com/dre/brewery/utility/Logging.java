@@ -23,6 +23,7 @@ package com.dre.brewery.utility;
 import com.dre.brewery.commands.subcommands.ReloadCommand;
 import com.dre.brewery.configuration.ConfigManager;
 import com.dre.brewery.configuration.files.Config;
+import com.dre.brewery.utility.utils.BreweryUtil;
 import io.papermc.lib.PaperLib;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
@@ -40,11 +41,11 @@ public final class Logging {
     private static final Config config = ConfigManager.getConfig(Config.class);
 
     public static void msg(CommandSender sender, String msg) {
-        sender.sendMessage(BUtil.color(config.getPluginPrefix() + msg));
+        sender.sendMessage(BreweryUtil.color(config.getPluginPrefix() + msg));
     }
 
     public static void log(String msg) {
-        Bukkit.getConsoleSender().sendMessage(BUtil.color(config.getPluginPrefix() + msg));
+        Bukkit.getConsoleSender().sendMessage(BreweryUtil.color(config.getPluginPrefix() + msg));
     }
 
     public static void log(LogLevel level, String msg) {
@@ -73,11 +74,11 @@ public final class Logging {
     }
 
     public static void warningLog(String msg) {
-        Bukkit.getConsoleSender().sendMessage(BUtil.color("&e[BreweryX] WARNING: " + msg));
+        Bukkit.getConsoleSender().sendMessage(BreweryUtil.color("&e[BreweryX] WARNING: " + msg));
     }
 
     public static void errorLog(String msg) {
-        String str = BUtil.color("&c[BreweryX] ERROR: " + msg);
+        String str = BreweryUtil.color("&c[BreweryX] ERROR: " + msg);
         Bukkit.getConsoleSender().sendMessage(str);
         if (ReloadCommand.getReloader() != null) { // I hate this, but I'm too lazy to go change all of it - Jsinco
             ReloadCommand.getReloader().sendMessage(str);
@@ -97,13 +98,13 @@ public final class Logging {
         }
         Throwable cause = throwable.getCause();
         while (cause != null) {
-            Bukkit.getConsoleSender().sendMessage(BUtil.color("&c[BreweryX]&6 Caused by: " + cause));
+            Bukkit.getConsoleSender().sendMessage(BreweryUtil.color("&c[BreweryX]&6 Caused by: " + cause));
             for (StackTraceElement ste : cause.getStackTrace()) {
                 String str = ste.toString();
                 if (str.contains(".jar//")) {
                     str = str.substring(str.indexOf(".jar//") + 6);
                 }
-                Bukkit.getConsoleSender().sendMessage(BUtil.color("&c[BreweryX]&6      " + str));
+                Bukkit.getConsoleSender().sendMessage(BreweryUtil.color("&c[BreweryX]&6      " + str));
             }
             cause = cause.getCause();
         }

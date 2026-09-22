@@ -20,14 +20,14 @@
 
 package com.dre.brewery.commands.subcommands;
 
-import com.dre.brewery.BCauldron;
-import com.dre.brewery.BPlayer;
-import com.dre.brewery.Barrel;
+import com.dre.brewery.instruments.BreweryCauldron;
+import com.dre.brewery.BreweryPlayer;
+import com.dre.brewery.instruments.barrel.BreweryBarrel;
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.Wakeup;
 import com.dre.brewery.commands.SubCommand;
 import com.dre.brewery.configuration.files.Lang;
-import com.dre.brewery.recipe.BRecipe;
+import com.dre.brewery.recipe.BreweryRecipe;
 import com.dre.brewery.utility.Logging;
 import org.bukkit.command.CommandSender;
 
@@ -38,11 +38,11 @@ public class ShowStatsCommand implements SubCommand {
     public void execute(BreweryPlugin breweryPlugin, Lang lang, CommandSender sender, String label, String[] args) {
         //if (sender instanceof ConsoleCommandSender && !sender.isOp()) return;
 
-        Logging.msg(sender, "Drunk Players: " + BPlayer.numDrunkPlayers());
+        Logging.msg(sender, "Drunk Players: " + BreweryPlayer.numDrunkPlayers());
         Logging.msg(sender, "Brews created: " + BreweryPlugin.getInstance().getBreweryStats().brewsCreated);
-        Logging.msg(sender, "Barrels built: " + Barrel.getAllBarrels().size());
-        Logging.msg(sender, "Cauldrons boiling: " + BCauldron.bcauldrons.size());
-        Logging.msg(sender, "Number of Recipes: " + BRecipe.getAllRecipes().size());
+        Logging.msg(sender, "Barrels built: " + BreweryBarrel.getAllBarrels().size());
+        Logging.msg(sender, "Cauldrons boiling: " + BreweryCauldron.bcauldrons.size());
+        Logging.msg(sender, "Number of Recipes: " + BreweryRecipe.getAllRecipes().size());
         Logging.msg(sender, "Wakeups: " + Wakeup.wakeups.size());
     }
 

@@ -20,11 +20,11 @@
 
 package com.dre.brewery.listeners;
 
-import com.dre.brewery.BCauldron;
-import com.dre.brewery.BPlayer;
-import com.dre.brewery.BSealer;
-import com.dre.brewery.Barrel;
-import com.dre.brewery.BarrelAsset;
+import com.dre.brewery.instruments.BreweryCauldron;
+import com.dre.brewery.BreweryPlayer;
+import com.dre.brewery.instruments.BrewerySealer;
+import com.dre.brewery.instruments.barrel.BreweryBarrel;
+import com.dre.brewery.instruments.barrel.BarrelAsset;
 import com.dre.brewery.Brew;
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.DistortChat;
@@ -32,10 +32,10 @@ import com.dre.brewery.Wakeup;
 import com.dre.brewery.configuration.ConfigManager;
 import com.dre.brewery.configuration.files.Config;
 import com.dre.brewery.configuration.files.Lang;
-import com.dre.brewery.utility.BUtil;
-import com.dre.brewery.utility.MaterialUtil;
+import com.dre.brewery.utility.utils.BreweryUtil;
+import com.dre.brewery.utility.utils.MaterialUtil;
 import com.dre.brewery.utility.MinecraftVersion;
-import com.dre.brewery.utility.PermissionUtil;
+import com.dre.brewery.utility.utils.PermissionUtil;
 import com.dre.brewery.utility.releases.ReleaseChecker;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
@@ -89,7 +89,7 @@ public class PlayerListener implements Listener {
                     ItemStack item = event.getItem();
                     if (Brew.isBrew(item)) {
                         event.setCancelled(true);
-                        BUtil.setItemInHand(event, Material.GLASS_BOTTLE, false);
+                        BreweryUtil.setItemInHand(event, Material.GLASS_BOTTLE, false);
                         if (VERSION.isOrLater(MinecraftVersion.V1_11)) {
                             clickedBlock.getWorld().playSound(clickedBlock.getLocation(), Sound.ITEM_BOTTLE_EMPTY, 1f, 1f);
                         }
@@ -100,14 +100,14 @@ public class PlayerListener implements Listener {
         }
 
         // -- Opening a Sealing Table --
-        if (VERSION.isOrLater(MinecraftVersion.V1_14) && BSealer.isBSealer(clickedBlock)) {
+        if (VERSION.isOrLater(MinecraftVersion.V1_14) && BrewerySealer.isBSealer(clickedBlock)) {
             if (player.isSneaking()) {
                 event.setUseInteractedBlock(Event.Result.DENY);
                 return;
             }
             event.setCancelled(true);
             if (config.isEnableSealingTable()) {
-                BSealer sealer = new BSealer(player);
+                BrewerySealer sealer = new BrewerySealer(player);
                 event.getPlayer().openInventory(sealer.getInventory());
             } else {
                 lang.sendEntry(player, "Error_SealingTableDisabled");
@@ -124,7 +124,7 @@ public class PlayerListener implements Listener {
         if (MaterialUtil.isWaterCauldron(type) && !player.isSneaking()) {
             // Handle the Cauldron Interact
             // The Event might get cancelled in here
-            BCauldron.clickCauldron(event);
+            BreweryCauldron.clickCauldron(event);
             return;
         }
 
@@ -148,30 +148,30 @@ public class PlayerListener implements Listener {
         }
 
         // -- Access a Barrel --
-        Barrel barrel = null;
+        BreweryBarrel breweryBarrel = null;
         if (BarrelAsset.isBarrelAsset(BarrelAsset.PLANKS, type)) {
             if (config.isOpenLargeBarrelEverywhere()) {
-                barrel = Barrel.getByWood(clickedBlock);
+                breweryBarrel = BreweryBarrel.getByWood(clickedBlock);
             }
         } else if (BarrelAsset.isBarrelAsset(BarrelAsset.STAIRS, type)) {
-            barrel = Barrel.getByWood(clickedBlock);
-            if (barrel != null) {
-                if (!config.isOpenLargeBarrelEverywhere() && barrel.isLarge()) {
-                    barrel = null;
+            breweryBarrel = BreweryBarrel.getByWood(clickedBlock);
+            if (breweryBarrel != null) {
+                if (!config.isOpenLargeBarrelEverywhere() && breweryBarrel.isLarge()) {
+                    breweryBarrel = null;
                 }
             }
         } else if (BarrelAsset.isBarrelAsset(BarrelAsset.FENCE, type) || BarrelAsset.isBarrelAsset(BarrelAsset.SIGN, type)) {
-            barrel = Barrel.getBySpigot(clickedBlock);
+            breweryBarrel = BreweryBarrel.getBySpigot(clickedBlock);
         }
 
-        if (barrel != null) {
+        if (breweryBarrel != null) {
             event.setCancelled(true);
 
-            if (!barrel.hasPermsOpen(player, event)) {
+            if (!breweryBarrel.hasPermsOpen(player, event)) {
                 return;
             }
 
-            barrel.open(player);
+            breweryBarrel.open(player);
 
             if (VERSION.isOrLater(MinecraftVersion.V1_14)) {
 
@@ -202,7 +202,7 @@ public class PlayerListener implements Listener {
                     }
                 }
 
-                barrel.playOpeningSound();
+                breweryBarrel.playOpeningSound();
             }
         }
     }
@@ -228,7 +228,7 @@ public class PlayerListener implements Listener {
         if (item.getType() == Material.POTION) {
             Brew brew = Brew.get(item);
             if (brew != null) {
-                if (!BPlayer.drink(brew, player, item.getItemMeta(), event)) {
+                if (!BreweryPlayer.drink(brew, player, item.getItemMeta(), event)) {
                     event.setCancelled(true);
                     return;
                 }
@@ -245,8 +245,8 @@ public class PlayerListener implements Listener {
                     }
                 }
             }
-        } else if (BUtil.getMaterialMap(config.getDrainItems()).containsKey(item.getType())) {
-            BPlayer bplayer = BPlayer.get(player);
+        } else if (BreweryUtil.getMaterialMap(config.getDrainItems()).containsKey(item.getType())) {
+            BreweryPlayer bplayer = BreweryPlayer.get(player);
             if (bplayer != null) {
                 bplayer.drainByItem(player, item.getType());
                 if (config.isShowStatusOnDrink()) {
@@ -259,12 +259,12 @@ public class PlayerListener implements Listener {
     // Player has died! Decrease Drunkeness by 20
     @EventHandler
     public void onPlayerRespawn(PlayerRespawnEvent event) {
-        BPlayer bPlayer = BPlayer.get(event.getPlayer());
-        if (bPlayer != null) {
-            if (bPlayer.getDrunkeness() > 20) {
-                bPlayer.setData(bPlayer.getDrunkeness() - 20, 0);
+        BreweryPlayer breweryPlayer = BreweryPlayer.get(event.getPlayer());
+        if (breweryPlayer != null) {
+            if (breweryPlayer.getDrunkeness() > 20) {
+                breweryPlayer.setData(breweryPlayer.getDrunkeness() - 20, 0);
             } else {
-                BPlayer.remove(event.getPlayer());
+                BreweryPlayer.remove(event.getPlayer());
             }
         }
     }
@@ -272,8 +272,8 @@ public class PlayerListener implements Listener {
     // player walks while drunk, push him around!
     @EventHandler(priority = EventPriority.LOW)
     public void onPlayerMove(PlayerMoveEvent event) {
-        if (BPlayer.hasPlayer(event.getPlayer())) {
-            BPlayer.playerMove(event);
+        if (BreweryPlayer.hasPlayer(event.getPlayer())) {
+            BreweryPlayer.playerMove(event);
         }
     }
 
@@ -296,7 +296,7 @@ public class PlayerListener implements Listener {
             return;
         }
         Player player = event.getPlayer();
-        BPlayer bplayer = BPlayer.get(player);
+        BreweryPlayer bplayer = BreweryPlayer.get(player);
         if (bplayer == null) {
             return;
         }
@@ -314,7 +314,7 @@ public class PlayerListener implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        BPlayer bplayer = BPlayer.get(event.getPlayer());
+        BreweryPlayer bplayer = BreweryPlayer.get(event.getPlayer());
         if (bplayer != null) {
             bplayer.join(event.getPlayer());
         }
@@ -323,7 +323,7 @@ public class PlayerListener implements Listener {
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
-        BPlayer bplayer = BPlayer.get(event.getPlayer());
+        BreweryPlayer bplayer = BreweryPlayer.get(event.getPlayer());
         if (bplayer != null) {
             bplayer.disconnecting();
         }
@@ -332,7 +332,7 @@ public class PlayerListener implements Listener {
 
     @EventHandler
     public void onPlayerKick(PlayerKickEvent event) {
-        BPlayer bplayer = BPlayer.get(event.getPlayer());
+        BreweryPlayer bplayer = BreweryPlayer.get(event.getPlayer());
         if (bplayer != null) {
             bplayer.disconnecting();
         }

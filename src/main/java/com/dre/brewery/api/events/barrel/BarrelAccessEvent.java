@@ -20,7 +20,7 @@
 
 package com.dre.brewery.api.events.barrel;
 
-import com.dre.brewery.Barrel;
+import com.dre.brewery.instruments.barrel.BreweryBarrel;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
@@ -40,12 +40,12 @@ public class BarrelAccessEvent extends BarrelEvent implements Cancellable {
     private final BlockFace clickedBlockFace;
     private boolean isCancelled;
 
-    public BarrelAccessEvent(Barrel barrel, Player player, Block clickedBlock) {
-        this(barrel, player, clickedBlock, BlockFace.UP);
+    public BarrelAccessEvent(BreweryBarrel breweryBarrel, Player player, Block clickedBlock) {
+        this(breweryBarrel, player, clickedBlock, BlockFace.UP);
     }
 
-    public BarrelAccessEvent(Barrel barrel, Player player, Block clickedBlock, BlockFace clickedBlockFace) {
-        super(barrel);
+    public BarrelAccessEvent(BreweryBarrel breweryBarrel, Player player, Block clickedBlock, BlockFace clickedBlockFace) {
+        super(breweryBarrel);
         this.player = player;
         this.clickedBlock = clickedBlock;
         this.clickedBlockFace = clickedBlockFace;

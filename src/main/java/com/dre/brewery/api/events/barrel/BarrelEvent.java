@@ -20,30 +20,30 @@
 
 package com.dre.brewery.api.events.barrel;
 
-import com.dre.brewery.Barrel;
+import com.dre.brewery.instruments.barrel.BreweryBarrel;
 import org.bukkit.block.Block;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.Inventory;
 
 public abstract class BarrelEvent extends Event {
-    protected final Barrel barrel;
+    protected final BreweryBarrel breweryBarrel;
 
-    public BarrelEvent(Barrel barrel) {
-        this.barrel = barrel;
+    public BarrelEvent(BreweryBarrel breweryBarrel) {
+        this.breweryBarrel = breweryBarrel;
     }
 
-    public Barrel getBarrel() {
-        return barrel;
+    public BreweryBarrel getBarrel() {
+        return breweryBarrel;
     }
 
     public Inventory getInventory() {
-        return barrel.getInventory();
+        return breweryBarrel.getInventory();
     }
 
     /**
      * @return The Spigot Block of the Barrel, usually Sign or a Fence
      */
     public Block getSpigot() {
-        return barrel.getSpigot();
+        return breweryBarrel.getSpigot();
     }
 }

@@ -20,8 +20,8 @@
 
 package com.dre.brewery.integration.listeners.movecraft;
 
-import com.dre.brewery.Barrel;
-import com.dre.brewery.BarrelWoodType;
+import com.dre.brewery.instruments.barrel.BreweryBarrel;
+import com.dre.brewery.instruments.barrel.BarrelWoodType;
 import com.dre.brewery.integration.listeners.movecraft.properties.MaxBarrelEntry;
 import com.dre.brewery.integration.listeners.movecraft.properties.BreweryProperties;
 import net.countercraft.movecraft.craft.Craft;
@@ -46,16 +46,16 @@ public class CraftDetectListener implements Listener {
             return;
         }
 
-        Set<Barrel> barrels = MovecraftUtil.barrelsOnCraft(craft.getHitBox(), craft.getWorld());
+        Set<BreweryBarrel> breweryBarrels = MovecraftUtil.barrelsOnCraft(craft.getHitBox(), craft.getWorld());
         Set<?> maxBarrels = MovecraftUtil.getBarrelsProperty(type);
-        if (maxBarrels.isEmpty() && !barrels.isEmpty()) {
+        if (maxBarrels.isEmpty() && !breweryBarrels.isEmpty()) {
             event.setCancelled(true);
             event.setFailMessage("Detection Failed! Barrels aren't allowed on this craft!");
             return;
         }
 
         Map<BarrelWoodType, Integer> barrelCount = new EnumMap<>(BarrelWoodType.class);
-        for (var barrel : barrels) {
+        for (var barrel : breweryBarrels) {
             BarrelWoodType woodType = barrel.getWood();
             barrelCount.compute(woodType, (key, value) -> (value == null) ? 1 : value + 1);
         }

@@ -20,7 +20,7 @@
 
 package com.dre.brewery.commands.subcommands;
 
-import com.dre.brewery.BPlayer;
+import com.dre.brewery.BreweryPlayer;
 import com.dre.brewery.Brew;
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.commands.CommandUtil;
@@ -46,7 +46,7 @@ public class DrinkCommand implements SubCommand {
             Player player = brewForPlayer.b();
             Brew brew = brewForPlayer.a();
             String brewName = brew.getCurrentRecipe().getName(brew.getQuality());
-            BPlayer.drink(brew, player, null, null);
+            BreweryPlayer.drink(brew, player, null, null);
 
             lang.sendEntry(sender, "CMD_Drink", brewName);
             if (!sender.equals(player)) {

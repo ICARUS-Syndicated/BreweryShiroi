@@ -20,14 +20,14 @@
 
 package com.dre.brewery.api;
 
-import com.dre.brewery.BCauldron;
-import com.dre.brewery.BPlayer;
-import com.dre.brewery.Barrel;
+import com.dre.brewery.instruments.BreweryCauldron;
+import com.dre.brewery.BreweryPlayer;
+import com.dre.brewery.instruments.barrel.BreweryBarrel;
 import com.dre.brewery.Brew;
 import com.dre.brewery.configuration.ConfigManager;
 import com.dre.brewery.configuration.files.Config;
-import com.dre.brewery.recipe.BCauldronRecipe;
-import com.dre.brewery.recipe.BRecipe;
+import com.dre.brewery.recipe.BreweryCauldronRecipe;
+import com.dre.brewery.recipe.BreweryRecipe;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -85,8 +85,8 @@ public class BreweryApi {
     /**
      * Get the BPlayer for the given Player, containing drunkenness and hangover data.
      */
-    public static BPlayer getBPlayer(Player player) {
-        return BPlayer.get(player);
+    public static BreweryPlayer getBPlayer(Player player) {
+        return BreweryPlayer.get(player);
     }
 
     /**
@@ -104,29 +104,29 @@ public class BreweryApi {
         if (quality > 10) {
             throw new IllegalArgumentException("Quality can not be >10");
         }
-        BPlayer bPlayer = BPlayer.get(player);
-        if (bPlayer == null && player != null) {
+        BreweryPlayer breweryPlayer = BreweryPlayer.get(player);
+        if (breweryPlayer == null && player != null) {
             if (drunkenness == 0) {
                 return;
             }
-            bPlayer = BPlayer.addPlayer(player);
+            breweryPlayer = BreweryPlayer.addPlayer(player);
         }
-        if (bPlayer == null) {
+        if (breweryPlayer == null) {
             return;
         }
 
         if (drunkenness == 0) {
-            bPlayer.remove();
+            breweryPlayer.remove();
         } else {
-            bPlayer.setData(drunkenness, quality);
+            breweryPlayer.setData(drunkenness, quality);
         }
 
         if (drunkenness > 100) {
             if (player != null) {
-                bPlayer.drinkCap(player);
+                breweryPlayer.drinkCap(player);
             } else {
                 if (!ConfigManager.getConfig(Config.class).isEnableKickOnOverdrink()) {
-                    bPlayer.setData(100, 0);
+                    breweryPlayer.setData(100, 0);
                 }
             }
         }
@@ -176,7 +176,7 @@ public class BreweryApi {
      */
     @Nullable
     public static Brew createBrew(String recipeName, int quality) {
-        BRecipe matching = BRecipe.getMatching(recipeName);
+        BreweryRecipe matching = BreweryRecipe.getMatching(recipeName);
         if (matching != null) {
             return matching.createBrew(quality);
         }
@@ -189,7 +189,7 @@ public class BreweryApi {
      * @param recipe The Recipe to create a brew from
      * @return The Brew that was created. Can use brew.createItem() to get an ItemStack
      */
-    public static Brew createBrew(BRecipe recipe, int quality) {
+    public static Brew createBrew(BreweryRecipe recipe, int quality) {
         return recipe.createBrew(quality);
     }
 
@@ -208,7 +208,7 @@ public class BreweryApi {
 
     @Nullable
     public static ItemStack createBrewItem(String recipeName, int quality, Player player) {
-        BRecipe matching = BRecipe.getMatching(recipeName);
+        BreweryRecipe matching = BreweryRecipe.getMatching(recipeName);
         if (matching != null) {
             return matching.create(quality, player);
         }
@@ -223,7 +223,7 @@ public class BreweryApi {
      * @return The Brew- ItemStack with Brew information stored on it
      * @since v3.0 (Api 3)
      */
-    public static ItemStack createBrewItem(BRecipe recipe, int quality) {
+    public static ItemStack createBrewItem(BreweryRecipe recipe, int quality) {
         return recipe.create(quality);
     }
 
@@ -252,7 +252,7 @@ public class BreweryApi {
      */
     @Nullable
     public static String getRecipeName(Brew brew) {
-        BRecipe recipe = brew.getCurrentRecipe();
+        BreweryRecipe recipe = brew.getCurrentRecipe();
         if (recipe != null) {
             return recipe.getRecipeName();
         }
@@ -269,8 +269,8 @@ public class BreweryApi {
      * <p>Returns null if block is not part of a Barrel
      */
     @Nullable
-    public static Barrel getBarrel(Block block) {
-        return Barrel.get(block);
+    public static BreweryBarrel getBarrel(Block block) {
+        return BreweryBarrel.get(block);
     }
 
     /**
@@ -280,9 +280,9 @@ public class BreweryApi {
      */
     @Nullable
     public static Inventory getBarrelInventory(Block block) {
-        Barrel barrel = Barrel.get(block);
-        if (barrel != null) {
-            return barrel.getInventory();
+        BreweryBarrel breweryBarrel = BreweryBarrel.get(block);
+        if (breweryBarrel != null) {
+            return breweryBarrel.getInventory();
         }
         return null;
     }
@@ -309,9 +309,9 @@ public class BreweryApi {
      * @return True if a Barrel was removed
      */
     public static boolean removeBarrelByPlayer(Block block, Player player, boolean dropItems) {
-        Barrel barrel = Barrel.get(block);
-        if (barrel != null) {
-            barrel.remove(block, player, dropItems);
+        BreweryBarrel breweryBarrel = BreweryBarrel.get(block);
+        if (breweryBarrel != null) {
+            breweryBarrel.remove(block, player, dropItems);
             return true;
         }
         return false;
@@ -326,8 +326,8 @@ public class BreweryApi {
      * <p>Returns null if block is not a BCauldron
      */
     @Nullable
-    public static BCauldron getCauldron(Block block) {
-        return BCauldron.get(block);
+    public static BreweryCauldron getCauldron(Block block) {
+        return BreweryCauldron.get(block);
     }
 
     /**
@@ -336,7 +336,7 @@ public class BreweryApi {
      * <p>Does not remove the Block from the World
      */
     public static boolean removeCauldron(Block block) {
-        return BCauldron.remove(block);
+        return BreweryCauldron.remove(block);
     }
 
 
@@ -350,8 +350,8 @@ public class BreweryApi {
      * <p>Returns null if recipe with that name does not exist
      */
     @Nullable
-    public static BRecipe getRecipe(String name) {
-        return BRecipe.get(name);
+    public static BreweryRecipe getRecipe(String name) {
+        return BreweryRecipe.get(name);
     }
 
     /**
@@ -362,8 +362,8 @@ public class BreweryApi {
      * @since v3.0 (Api 3)
      */
     @Nullable
-    public static BRecipe getRecipeMatch(String name) {
-        return BRecipe.getMatching(name);
+    public static BreweryRecipe getRecipeMatch(String name) {
+        return BreweryRecipe.getMatching(name);
     }
 
     /**
@@ -378,12 +378,12 @@ public class BreweryApi {
      *                    <br>If False: Recipe will be removed when the Server restarts, existing potions using
      *                    <br>this Recipe will become bad after continued aging, if the recipe is not added again.
      */
-    public static void addRecipe(BRecipe recipe, boolean saveForever) {
+    public static void addRecipe(BreweryRecipe recipe, boolean saveForever) {
         //recipe.setSaveInData(saveForever);
         if (saveForever) {
             throw new UnsupportedOperationException("SaveForever is not implemented yet");
         }
-        BRecipe.getAddedRecipes().add(recipe);
+        BreweryRecipe.getAddedRecipes().add(recipe);
         recipe.updateAcceptedLists();
     }
 
@@ -395,14 +395,14 @@ public class BreweryApi {
      * @return The Recipe that was removed, null if none was removed
      */
     @Nullable
-    public static BRecipe removeRecipe(String name) {
-        List<BRecipe> recipes = BRecipe.getAllRecipes();
+    public static BreweryRecipe removeRecipe(String name) {
+        List<BreweryRecipe> recipes = BreweryRecipe.getAllRecipes();
         for (int i = 0; i < recipes.size(); i++) {
             if (recipes.get(i).getRecipeName().equalsIgnoreCase(name)) {
-                BRecipe remove = recipes.remove(i);
-                if (i < BRecipe.numConfigRecipes) {
+                BreweryRecipe remove = recipes.remove(i);
+                if (i < BreweryRecipe.numConfigRecipes) {
                     // We removed one of the Config Recipes
-                    BRecipe.numConfigRecipes--;
+                    BreweryRecipe.numConfigRecipes--;
                 }
                 return remove;
             }
@@ -416,8 +416,8 @@ public class BreweryApi {
      * @param recipeNames Either 1 or 3 names. Sets the Name for Quality (Bad, Normal, Good)
      * @return A Recipe Builder
      */
-    public static BRecipe.Builder recipeBuilder(String... recipeNames) {
-        return new BRecipe.Builder(recipeNames);
+    public static BreweryRecipe.Builder recipeBuilder(String... recipeNames) {
+        return new BreweryRecipe.Builder(recipeNames);
     }
 
 
@@ -430,8 +430,8 @@ public class BreweryApi {
      * <p>Returns null if recipe with that name does not exist
      */
     @Nullable
-    public static BCauldronRecipe getCauldronRecipe(String name) {
-        return BCauldronRecipe.get(name);
+    public static BreweryCauldronRecipe getCauldronRecipe(String name) {
+        return BreweryCauldronRecipe.get(name);
     }
 
     /**
@@ -445,12 +445,12 @@ public class BreweryApi {
      *                    <br>If True: Recipe will be saved until removed manually
      *                    <br>If False: Recipe will be removed when the Server restarts
      */
-    public static void addCauldronRecipe(BCauldronRecipe recipe, boolean saveForever) {
+    public static void addCauldronRecipe(BreweryCauldronRecipe recipe, boolean saveForever) {
         //recipe.setSaveInData(saveForever);
         if (saveForever) {
             throw new UnsupportedOperationException();
         }
-        BCauldronRecipe.getAddedRecipes().add(recipe);
+        BreweryCauldronRecipe.getAddedRecipes().add(recipe);
         recipe.updateAcceptedLists();
     }
 
@@ -463,14 +463,14 @@ public class BreweryApi {
      * @return The Cauldron Recipe that was removed, null if none was removed
      */
     @Nullable
-    public static BCauldronRecipe removeCauldronRecipe(String name) {
-        List<BCauldronRecipe> recipes = BCauldronRecipe.getAllRecipes();
+    public static BreweryCauldronRecipe removeCauldronRecipe(String name) {
+        List<BreweryCauldronRecipe> recipes = BreweryCauldronRecipe.getAllRecipes();
         for (int i = 0; i < recipes.size(); i++) {
             if (recipes.get(i).getName().equalsIgnoreCase(name)) {
-                BCauldronRecipe remove = recipes.remove(i);
-                if (i < BCauldronRecipe.numConfigRecipes) {
+                BreweryCauldronRecipe remove = recipes.remove(i);
+                if (i < BreweryCauldronRecipe.numConfigRecipes) {
                     // We removed one of the Config Recipes
-                    BCauldronRecipe.numConfigRecipes--;
+                    BreweryCauldronRecipe.numConfigRecipes--;
                 }
                 return remove;
             }
@@ -486,8 +486,8 @@ public class BreweryApi {
      * @return A Cauldron Recipe Builder
      */
     @Deprecated
-    public static BCauldronRecipe.Builder cauldronRecipeBuilder(String name) {
-        return new BCauldronRecipe.Builder(name, name);
+    public static BreweryCauldronRecipe.Builder cauldronRecipeBuilder(String name) {
+        return new BreweryCauldronRecipe.Builder(name, name);
     }
 
     /**
@@ -497,7 +497,7 @@ public class BreweryApi {
      * @param name The name of the new Cauldron Recipe
      * @return A Cauldron Recipe Builder
      */
-    public static BCauldronRecipe.Builder cauldronRecipeBuilder(String id, String name) {
-        return new BCauldronRecipe.Builder(id, name);
+    public static BreweryCauldronRecipe.Builder cauldronRecipeBuilder(String id, String name) {
+        return new BreweryCauldronRecipe.Builder(id, name);
     }
 }

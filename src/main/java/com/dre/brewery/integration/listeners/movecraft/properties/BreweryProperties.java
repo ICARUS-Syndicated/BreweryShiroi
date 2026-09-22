@@ -20,9 +20,8 @@
 
 package com.dre.brewery.integration.listeners.movecraft.properties;
 
-import com.dre.brewery.BarrelAsset;
-import com.dre.brewery.BarrelWoodType;
-import com.dre.brewery.integration.listeners.movecraft.MovecraftUtil;
+import com.dre.brewery.instruments.barrel.BarrelAsset;
+import com.dre.brewery.instruments.barrel.BarrelWoodType;
 import net.countercraft.movecraft.craft.type.CraftType;
 import net.countercraft.movecraft.craft.type.TypeData;
 import net.countercraft.movecraft.craft.type.property.BooleanProperty;
@@ -31,7 +30,6 @@ import net.countercraft.movecraft.craft.type.transform.MaterialSetTransform;
 import net.countercraft.movecraft.util.Pair;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import org.bukkit.Tag;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;

@@ -20,16 +20,16 @@
 
 package com.dre.brewery.commands.subcommands;
 
-import com.dre.brewery.BIngredients;
+import com.dre.brewery.BreweryIngredients;
 import com.dre.brewery.Brew;
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.commands.SubCommand;
 import com.dre.brewery.configuration.files.Lang;
-import com.dre.brewery.recipe.BRecipe;
+import com.dre.brewery.recipe.BreweryRecipe;
 import com.dre.brewery.recipe.BestRecipeResult;
-import com.dre.brewery.recipe.Ingredient;
+import com.dre.brewery.recipe.items.Ingredient;
 import com.dre.brewery.recipe.RecipeEvaluation;
-import com.dre.brewery.recipe.RecipeItem;
+import com.dre.brewery.recipe.items.RecipeItem;
 import com.dre.brewery.utility.Logging;
 import com.dre.brewery.utility.MinecraftVersion;
 import org.bukkit.ChatColor;
@@ -72,7 +72,7 @@ public class DebugInfoCommand implements SubCommand {
         if (brew == null) return;
 
         Logging.log(brew.toString());
-        BIngredients ingredients = brew.getIngredients();
+        BreweryIngredients ingredients = brew.getIngredients();
 
         if (recipeName == null) {
             logAllRecipes(ingredients, brew);
@@ -83,13 +83,13 @@ public class DebugInfoCommand implements SubCommand {
         Logging.msg(player, "Debug Info for item written into Log");
     }
 
-    private static void logAllRecipes(BIngredients ingredients, Brew brew) {
+    private static void logAllRecipes(BreweryIngredients ingredients, Brew brew) {
         Logging.log("&lIngredients:");
         for (Ingredient ing : ingredients.getIngredientList()) {
             Logging.log(ing.toString());
         }
         Logging.log("&lTesting Recipes");
-        for (BRecipe recipe : BRecipe.getAllRecipes()) {
+        for (BreweryRecipe recipe : BreweryRecipe.getAllRecipes()) {
             logRecipe(recipe, brew);
         }
         BestRecipeResult distill = ingredients.getBestRecipeFull(brew.getWood(), brew.getAgeTime(), true);
@@ -98,8 +98,8 @@ public class DebugInfoCommand implements SubCommand {
         Logging.log("&lRecipe: &r" + ChatColor.stripColor(nonDistill.toString()));
     }
 
-    private static void logSpecificRecipe(Player player, BIngredients ingredients, Brew brew, String recipeName) {
-        BRecipe recipe = BRecipe.getMatching(recipeName);
+    private static void logSpecificRecipe(Player player, BreweryIngredients ingredients, Brew brew, String recipeName) {
+        BreweryRecipe recipe = BreweryRecipe.getMatching(recipeName);
         if (recipe == null) {
             Logging.msg(player, "Could not find Recipe " + recipeName);
             return;
@@ -116,8 +116,8 @@ public class DebugInfoCommand implements SubCommand {
         logRecipe(recipe, brew);
     }
 
-    private static void logRecipe(BRecipe recipe, Brew brew) {
-        BIngredients ingredients = brew.getIngredients();
+    private static void logRecipe(BreweryRecipe recipe, Brew brew) {
+        BreweryIngredients ingredients = brew.getIngredients();
         RecipeEvaluation ingQ = ingredients.getIngredientQualityFull(recipe);
         Logging.log(String.format("%s&r ingQlty: %s", recipe.getRecipeName(), ingQ));
         RecipeEvaluation cookQ = ingredients.getCookingQualityFull(recipe, false);

@@ -20,12 +20,12 @@
 
 package com.dre.brewery.storage;
 
-import com.dre.brewery.BCauldron;
-import com.dre.brewery.BPlayer;
-import com.dre.brewery.Barrel;
+import com.dre.brewery.instruments.BreweryCauldron;
+import com.dre.brewery.BreweryPlayer;
+import com.dre.brewery.instruments.barrel.BreweryBarrel;
 import com.dre.brewery.Brew;
 import com.dre.brewery.BreweryPlugin;
-import com.dre.brewery.MCBarrel;
+import com.dre.brewery.instruments.barrel.VanillaBarrel;
 import com.dre.brewery.Wakeup;
 import com.dre.brewery.configuration.ConfigManager;
 import com.dre.brewery.configuration.files.Config;
@@ -82,35 +82,35 @@ public abstract class DataManager {
 
     public abstract void deleteGeneric(String id, String table);
 
-    public abstract CompletableFuture<Barrel> getBarrel(UUID id);
+    public abstract CompletableFuture<BreweryBarrel> getBarrel(UUID id);
 
-    public abstract CompletableFuture<List<Barrel>> getAllBarrels();
+    public abstract CompletableFuture<List<BreweryBarrel>> getAllBarrels();
 
-    public abstract void saveAllBarrels(Collection<Barrel> barrels);
+    public abstract void saveAllBarrels(Collection<BreweryBarrel> breweryBarrels);
 
-    public abstract void saveBarrel(Barrel barrel);
+    public abstract void saveBarrel(BreweryBarrel breweryBarrel);
 
     public abstract void deleteBarrel(UUID id);
 
 
-    public abstract BCauldron getCauldron(UUID id);
+    public abstract BreweryCauldron getCauldron(UUID id);
 
-    public abstract Collection<BCauldron> getAllCauldrons();
+    public abstract Collection<BreweryCauldron> getAllCauldrons();
 
-    public abstract void saveAllCauldrons(Collection<BCauldron> cauldrons);
+    public abstract void saveAllCauldrons(Collection<BreweryCauldron> cauldrons);
 
-    public abstract void saveCauldron(BCauldron cauldron);
+    public abstract void saveCauldron(BreweryCauldron cauldron);
 
     public abstract void deleteCauldron(UUID id);
 
 
-    public abstract BPlayer getPlayer(UUID playerUUID);
+    public abstract BreweryPlayer getPlayer(UUID playerUUID);
 
-    public abstract Collection<BPlayer> getAllPlayers();
+    public abstract Collection<BreweryPlayer> getAllPlayers();
 
-    public abstract void saveAllPlayers(Collection<BPlayer> players);
+    public abstract void saveAllPlayers(Collection<BreweryPlayer> players);
 
-    public abstract void savePlayer(BPlayer player);
+    public abstract void savePlayer(BreweryPlayer player);
 
     public abstract void deletePlayer(UUID playerUUID);
 
@@ -172,29 +172,29 @@ public abstract class DataManager {
     }
 
     public void saveAll(boolean async, Runnable callback) {
-        Collection<Barrel> barrels = Barrel.getAllBarrels();
-        Collection<BCauldron> cauldrons = BCauldron.getBcauldrons().values();
-        Collection<BPlayer> bPlayers = BPlayer.getPlayers().values();
+        Collection<BreweryBarrel> breweryBarrels = BreweryBarrel.getAllBarrels();
+        Collection<BreweryCauldron> cauldrons = BreweryCauldron.getBcauldrons().values();
+        Collection<BreweryPlayer> breweryPlayers = BreweryPlayer.getPlayers().values();
         Collection<Wakeup> wakeups = Wakeup.getWakeups();
 
         if (async) {
             BreweryPlugin.getScheduler().runTaskAsynchronously(() -> {
-                doSave(barrels, cauldrons, bPlayers, wakeups);
+                doSave(breweryBarrels, cauldrons, breweryPlayers, wakeups);
                 if (callback != null) {
                     callback.run();
                 }
             });
         } else {
-            doSave(barrels, cauldrons, bPlayers, wakeups);
+            doSave(breweryBarrels, cauldrons, breweryPlayers, wakeups);
             if (callback != null) {
                 callback.run();
             }
         }
     }
 
-    private void doSave(Collection<Barrel> barrels, Collection<BCauldron> cauldrons, Collection<BPlayer> players, Collection<Wakeup> wakeups) {
+    private void doSave(Collection<BreweryBarrel> breweryBarrels, Collection<BreweryCauldron> cauldrons, Collection<BreweryPlayer> players, Collection<Wakeup> wakeups) {
         this.saveBreweryMiscData(getLoadedMiscData());
-        this.saveAllBarrels(barrels);
+        this.saveAllBarrels(breweryBarrels);
         this.saveAllCauldrons(cauldrons);
         this.saveAllPlayers(players);
         this.saveAllWakeups(wakeups);
@@ -219,12 +219,12 @@ public abstract class DataManager {
         };
 
         // Legacy data migration
-        if (BData.checkForLegacyData()) {
+        if (BreweryData.checkForLegacyData()) {
             long start = System.currentTimeMillis();
             Logging.log("&5Brewery is loading data from a legacy format!");
 
-            BData.readData();
-            BData.finalizeLegacyDataMigration();
+            BreweryData.readData();
+            BreweryData.finalizeLegacyDataMigration();
 
             dataManager.saveAll(false);
 
@@ -258,7 +258,7 @@ public abstract class DataManager {
 
     public static void loadMiscData(BreweryMiscData miscData) {
         Brew.installTime = miscData.installTime();
-        MCBarrel.mcBarrelTime = miscData.mcBarrelTime();
+        VanillaBarrel.mcBarrelTime = miscData.mcBarrelTime();
         Brew.loadPrevSeeds(miscData.prevSaveSeeds());
 
 
@@ -283,7 +283,7 @@ public abstract class DataManager {
 
         return new BreweryMiscData(
             Brew.installTime,
-            MCBarrel.mcBarrelTime,
+            VanillaBarrel.mcBarrelTime,
             Brew.getPrevSeeds(),
             brewsCreated,
             brewsCreated.hashCode()

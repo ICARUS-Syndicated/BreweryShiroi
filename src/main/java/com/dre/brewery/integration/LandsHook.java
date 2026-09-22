@@ -23,8 +23,7 @@ package com.dre.brewery.integration;
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.configuration.ConfigManager;
 import com.dre.brewery.configuration.files.Lang;
-import com.dre.brewery.utility.BUtil;
-import com.dre.brewery.utility.Logging;
+import com.dre.brewery.utility.utils.BreweryUtil;
 import me.angeschossen.lands.api.LandsIntegration;
 import me.angeschossen.lands.api.flags.enums.FlagTarget;
 import me.angeschossen.lands.api.flags.enums.RoleFlagCategory;
@@ -58,8 +57,8 @@ public class LandsHook extends Hook {
 
         this.landsApi = LandsIntegration.of(BreweryPlugin.getInstance());
         this.barrelAccessFlag = RoleFlag.of(landsApi, FlagTarget.PLAYER, RoleFlagCategory.ACTION, "barrel_access")
-            .setDisplayName(BUtil.color(flag_title))
-            .setDescription(BUtil.colorArray(flag_description))
+            .setDisplayName(BreweryUtil.color(flag_title))
+            .setDescription(BreweryUtil.colorArray(flag_description))
             .setIcon(new ItemStack(Material.BARREL))
             .setDisplay(true);
     }

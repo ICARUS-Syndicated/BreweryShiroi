@@ -91,7 +91,7 @@ Perms_NoSmallBarrelCreate: '&c您無權創建小釀造桶！'
 
 # Player
 Player_BarrelCreated: 創造釀造桶
-Player_BarrelFull: '&cThis barrel can''t hold any more drinks'
+Player_BarrelFull: '&cThis breweryBarrel can''t hold any more drinks'
 Player_CantDrink: 你不能飲更多了.
 Player_CauldronInfo1: 這個鍋釜煮了 &v1 分鐘.
 Player_CauldronInfo2: 這個鍋釜剛開始沸騰.

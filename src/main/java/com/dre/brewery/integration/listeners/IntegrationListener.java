@@ -20,8 +20,8 @@
 
 package com.dre.brewery.integration.listeners;
 
-import com.dre.brewery.Barrel;
-import com.dre.brewery.BarrelAsset;
+import com.dre.brewery.instruments.barrel.BreweryBarrel;
+import com.dre.brewery.instruments.barrel.BarrelAsset;
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.api.events.barrel.BarrelAccessEvent;
 import com.dre.brewery.api.events.barrel.BarrelDestroyEvent;
@@ -40,10 +40,10 @@ import com.dre.brewery.integration.barrel.LogBlockBarrel;
 import com.dre.brewery.integration.barrel.TownyBarrel;
 import com.dre.brewery.integration.item.MMOItemsPluginItem;
 import com.dre.brewery.listeners.PlayerListener;
-import com.dre.brewery.recipe.BCauldronRecipe;
-import com.dre.brewery.recipe.RecipeItem;
+import com.dre.brewery.recipe.BreweryCauldronRecipe;
+import com.dre.brewery.recipe.items.RecipeItem;
 import com.dre.brewery.utility.Logging;
-import com.dre.brewery.utility.MaterialUtil;
+import com.dre.brewery.utility.utils.MaterialUtil;
 import com.dre.brewery.utility.MinecraftVersion;
 import io.lumine.mythic.lib.api.item.NBTItem;
 import io.papermc.lib.PaperLib;
@@ -329,7 +329,7 @@ public class IntegrationListener implements Listener {
         if (!Hook.LOGBLOCK.isEnabled()) {
             return;
         }
-        if (PaperLib.getHolder(event.getInventory(), true).getHolder() instanceof Barrel) {
+        if (PaperLib.getHolder(event.getInventory(), true).getHolder() instanceof BreweryBarrel) {
             try {
                 LogBlockBarrel.closeBarrel(event.getPlayer(), event.getInventory());
             } catch (Exception e) {
@@ -349,7 +349,7 @@ public class IntegrationListener implements Listener {
                 if (event.getClickedBlock() != null && MaterialUtil.isWaterCauldron(event.getClickedBlock().getType())) {
                     NBTItem item = NBTItem.get(event.getItem());
                     if (item.hasType()) {
-                        for (RecipeItem rItem : BCauldronRecipe.acceptedCustom) {
+                        for (RecipeItem rItem : BreweryCauldronRecipe.acceptedCustom) {
                             if (rItem instanceof MMOItemsPluginItem mmo) {
                                 if (mmo.matches(event.getItem())) {
                                     event.setCancelled(true);

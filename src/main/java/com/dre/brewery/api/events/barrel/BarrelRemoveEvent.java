@@ -20,7 +20,7 @@
 
 package com.dre.brewery.api.events.barrel;
 
-import com.dre.brewery.Barrel;
+import com.dre.brewery.instruments.barrel.BreweryBarrel;
 import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,8 +33,8 @@ public class BarrelRemoveEvent extends BarrelEvent {
     private static final HandlerList handlers = new HandlerList();
     private boolean dropItems;
 
-    public BarrelRemoveEvent(Barrel barrel, boolean dropItems) {
-        super(barrel);
+    public BarrelRemoveEvent(BreweryBarrel breweryBarrel, boolean dropItems) {
+        super(breweryBarrel);
         this.dropItems = dropItems;
     }
 

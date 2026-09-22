@@ -20,15 +20,16 @@
 
 package com.dre.brewery.lore;
 
-import com.dre.brewery.BIngredients;
+import com.dre.brewery.BreweryIngredients;
 import com.dre.brewery.Brew;
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.configuration.ConfigManager;
 import com.dre.brewery.configuration.files.Config;
 import com.dre.brewery.configuration.files.Lang;
-import com.dre.brewery.recipe.BEffect;
-import com.dre.brewery.recipe.BRecipe;
-import com.dre.brewery.utility.BUtil;
+import com.dre.brewery.lore.streams.LoreSaveStream;
+import com.dre.brewery.recipe.BreweryEffect;
+import com.dre.brewery.recipe.BreweryRecipe;
+import com.dre.brewery.utility.utils.BreweryUtil;
 import com.dre.brewery.utility.MinecraftVersion;
 import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.potion.PotionEffect;
@@ -140,7 +141,7 @@ public class BrewLore {
      */
     public void updateCookLore(boolean qualityColor) {
         if (qualityColor && brew.hasRecipe() && brew.getDistillRuns() > 0 == brew.getCurrentRecipe().needsDistilling() && !brew.isStripped()) {
-            BIngredients ingredients = brew.getIngredients();
+            BreweryIngredients ingredients = brew.getIngredients();
             int quality = ingredients.getCookingQuality(brew.getCurrentRecipe(), brew.getDistillRuns() > 0);
             String prefix = getQualityColor(quality) + ingredients.getCookedTime() + " " + lang.getEntry("Brew_minute");
             if (ingredients.getCookedTime() > 1) {
@@ -232,7 +233,7 @@ public class BrewLore {
     public void updateCustomLore() {
         removeLore(Type.CUSTOM);
 
-        BRecipe recipe = brew.getCurrentRecipe();
+        BreweryRecipe recipe = brew.getCurrentRecipe();
         if (recipe != null && recipe.hasLore()) {
             int index = -1;
             for (String line : recipe.getLoreForQuality(brew.getQuality())) {
@@ -389,7 +390,7 @@ public class BrewLore {
         }
 
         // Could not find Lore by type, find and replace by substring
-        index = BUtil.indexOfSubstring(lore, line);
+        index = BreweryUtil.indexOfSubstring(lore, line);
         if (index > -1) {
             lore.remove(index);
         }
@@ -424,7 +425,7 @@ public class BrewLore {
                 return i;
             }
         }
-        lore.add(type.id + prefix + BUtil.color(line) + suffix); // TODO: Color
+        lore.add(type.id + prefix + BreweryUtil.color(line) + suffix); // TODO: Color
         return lore.size() - 1;
     }
 
@@ -434,7 +435,7 @@ public class BrewLore {
     public void removeLore(Type type, String line) {
         int index = type.findInLore(lore);
         if (index == -1) {
-            index = BUtil.indexOfSubstring(lore, line);
+            index = BreweryUtil.indexOfSubstring(lore, line);
         }
         if (index > -1) {
             lineAddedOrRem = true;
@@ -478,9 +479,9 @@ public class BrewLore {
     /**
      * Adds the Effect names to the Items description
      */
-    public void addOrReplaceEffects(List<BEffect> effects, int quality) {
+    public void addOrReplaceEffects(List<BreweryEffect> effects, int quality) {
         if (BreweryPlugin.getMCVersion().isOrEarlier(MinecraftVersion.V1_9) && effects != null) {
-            for (BEffect effect : effects) {
+            for (BreweryEffect effect : effects) {
                 if (!effect.isHidden()) {
                     effect.writeInto(meta, quality);
                 }
@@ -530,7 +531,7 @@ public class BrewLore {
      * Remove any Brew Data from Lore
      */
     public void removeLoreData() {
-        int index = BUtil.indexOfStart(lore, LoreSaveStream.IDENTIFIER);
+        int index = BreweryUtil.indexOfStart(lore, LoreSaveStream.IDENTIFIER);
         if (index != -1) {
             lore.set(index, "");
             write();
@@ -574,7 +575,7 @@ public class BrewLore {
         } else {
             color = "&4";
         }
-        return BUtil.color(color);
+        return BreweryUtil.color(color);
     }
 
     /**
@@ -633,7 +634,7 @@ public class BrewLore {
          * @return index of this type in the lore, -1 if not found
          */
         public int findInLore(List<String> lore) {
-            return BUtil.indexOfStart(lore, id);
+            return BreweryUtil.indexOfStart(lore, id);
         }
 
         /**

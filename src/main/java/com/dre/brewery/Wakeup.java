@@ -22,7 +22,7 @@ package com.dre.brewery;
 
 import com.dre.brewery.configuration.ConfigManager;
 import com.dre.brewery.configuration.files.Lang;
-import com.dre.brewery.utility.BUtil;
+import com.dre.brewery.utility.utils.BreweryUtil;
 import com.dre.brewery.utility.Logging;
 import io.papermc.lib.PaperLib;
 import lombok.Getter;
@@ -124,9 +124,8 @@ public class Wakeup {
     }
 
     public static void set(CommandSender sender) {
-        if (sender instanceof Player) {
+        if (sender instanceof Player player) {
 
-            Player player = (Player) sender;
             wakeups.add(new Wakeup(player.getLocation()));
             lang.sendEntry(sender, "Player_WakeCreated", "" + (wakeups.size() - 1));
 
@@ -178,7 +177,7 @@ public class Wakeup {
                 locs.add("&6" + s + id + "&f" + s + ": " + world + " " + x + "," + y + "," + z);
             }
         }
-        BUtil.list(sender, locs, page);
+        BreweryUtil.list(sender, locs, page);
     }
 
     public static void check(CommandSender sender, int id, boolean all) {
@@ -266,7 +265,7 @@ public class Wakeup {
 
 
     public static void save(ConfigurationSection section, ConfigurationSection oldData) {
-        BUtil.createWorldSections(section);
+        BreweryUtil.createWorldSections(section);
 
         // loc is saved as a String in world sections with format x/y/z/pitch/yaw
         if (!wakeups.isEmpty()) {
@@ -283,7 +282,7 @@ public class Wakeup {
                 String prefix;
 
                 if (worldName.startsWith("DXL_")) {
-                    prefix = BUtil.getDxlName(worldName) + "." + id;
+                    prefix = BreweryUtil.getDxlName(worldName) + "." + id;
                 } else {
                     prefix = wakeup.loc.getWorld().getUID().toString() + "." + id;
                 }

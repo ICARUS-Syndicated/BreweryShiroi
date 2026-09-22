@@ -25,9 +25,11 @@ import com.dre.brewery.api.events.barrel.BarrelDestroyEvent;
 import com.dre.brewery.configuration.ConfigManager;
 import com.dre.brewery.configuration.files.Config;
 import com.dre.brewery.configuration.files.Lang;
+import com.dre.brewery.instruments.BrewerySealer;
+import com.dre.brewery.instruments.barrel.BreweryBarrel;
 import com.dre.brewery.integration.BlockLockerHook;
 import com.dre.brewery.integration.barrel.BlockLockerBarrel;
-import com.dre.brewery.utility.BUtil;
+import com.dre.brewery.utility.utils.BreweryUtil;
 import com.dre.brewery.utility.MinecraftVersion;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
@@ -52,7 +54,7 @@ public class BlockListener implements Listener {
                 lang.sendEntry(player, "Perms_NoBarrelCreate");
                 return;
             }
-            if (Barrel.create(event.getBlock(), player)) {
+            if (BreweryBarrel.create(event.getBlock(), player)) {
                 lang.sendEntry(player, "Player_BarrelCreated");
             }
         }
@@ -70,7 +72,7 @@ public class BlockListener implements Listener {
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     public void onSignChangeLow(SignChangeEvent event) {
         if (config.isDistortSignText()) {
-            if (BPlayer.hasPlayer(event.getPlayer())) {
+            if (BreweryPlayer.hasPlayer(event.getPlayer())) {
                 DistortChat.signWrite(event);
             }
         }
@@ -86,19 +88,19 @@ public class BlockListener implements Listener {
     public void onBlockPlace(BlockPlaceEvent event) {
         if (VERSION.isOrEarlier(MinecraftVersion.V1_14) || event.getBlock().getType() != config.getSealingTableBlock())
             return;
-        BSealer.blockPlace(event.getItemInHand(), event.getBlock());
+        BrewerySealer.blockPlace(event.getItemInHand(), event.getBlock());
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
-        if (!BUtil.blockDestroy(event.getBlock(), event.getPlayer(), BarrelDestroyEvent.Reason.PLAYER)) {
+        if (!BreweryUtil.blockDestroy(event.getBlock(), event.getPlayer(), BarrelDestroyEvent.Reason.PLAYER)) {
             event.setCancelled(true);
         }
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockBurn(BlockBurnEvent event) {
-        if (!BUtil.blockDestroy(event.getBlock(), null, BarrelDestroyEvent.Reason.BURNED)) {
+        if (!BreweryUtil.blockDestroy(event.getBlock(), null, BarrelDestroyEvent.Reason.BURNED)) {
             event.setCancelled(true);
         }
     }
@@ -107,7 +109,7 @@ public class BlockListener implements Listener {
     public void onPistonRetract(BlockPistonRetractEvent event) {
         if (event.isSticky()) {
             for (Block block : event.getBlocks()) {
-                if (Barrel.get(block) != null) {
+                if (BreweryBarrel.get(block) != null) {
                     event.setCancelled(true);
                     return;
                 }
@@ -118,7 +120,7 @@ public class BlockListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPistonExtend(BlockPistonExtendEvent event) {
         for (Block block : event.getBlocks()) {
-            if (Barrel.get(block) != null) {
+            if (BreweryBarrel.get(block) != null) {
                 event.setCancelled(true);
                 return;
             }

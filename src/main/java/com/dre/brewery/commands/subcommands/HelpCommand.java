@@ -24,7 +24,7 @@ import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.commands.CommandUtil;
 import com.dre.brewery.commands.SubCommand;
 import com.dre.brewery.configuration.files.Lang;
-import com.dre.brewery.utility.BUtil;
+import com.dre.brewery.utility.utils.BreweryUtil;
 import com.dre.brewery.utility.Logging;
 import org.bukkit.command.CommandSender;
 
@@ -37,7 +37,7 @@ public class HelpCommand implements SubCommand {
     public void execute(BreweryPlugin breweryPlugin, Lang lang, CommandSender sender, String label, String[] args) {
         int page = 1;
         if (args.length > 1) {
-            page = BUtil.parseInt(args[1]).orElse(1);
+            page = BreweryUtil.parseInt(args[1]).orElse(1);
         }
 
         ArrayList<String> commands = CommandUtil.getCommands(sender);
@@ -46,7 +46,7 @@ public class HelpCommand implements SubCommand {
             Logging.msg(sender, "&6" + breweryPlugin.getDescription().getName() + " v" + breweryPlugin.getDescription().getVersion());
         }
 
-        BUtil.list(sender, commands, page);
+        BreweryUtil.list(sender, commands, page);
     }
 
     @Override

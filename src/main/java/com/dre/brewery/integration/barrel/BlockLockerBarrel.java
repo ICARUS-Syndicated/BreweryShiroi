@@ -20,9 +20,9 @@
 
 package com.dre.brewery.integration.barrel;
 
-import com.dre.brewery.Barrel;
-import com.dre.brewery.BarrelAsset;
-import com.dre.brewery.BarrelBody;
+import com.dre.brewery.instruments.barrel.BreweryBarrel;
+import com.dre.brewery.instruments.barrel.BarrelAsset;
+import com.dre.brewery.instruments.barrel.BarrelBody;
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.api.events.barrel.BarrelAccessEvent;
 import com.dre.brewery.integration.BlockLockerHook;
@@ -58,7 +58,7 @@ public class BlockLockerBarrel implements ProtectableBlocksSettings {
             // Can only be a barrel if it's a planks block
             return false;
         }
-        if (Barrel.getByWood(block) != null) {
+        if (BreweryBarrel.getByWood(block) != null) {
             // Barrel already exists
             return true;
         }
@@ -74,9 +74,9 @@ public class BlockLockerBarrel implements ProtectableBlocksSettings {
                 if (!spigot.equals(sign)) {
                     signoffset = (byte) (sign.getY() - spigot.getY());
                 }
-                Barrel barrel = new Barrel(spigot, signoffset, true); // Barrel is temporary, size does not matter
+                BreweryBarrel breweryBarrel = new BreweryBarrel(spigot, signoffset, true); // Barrel is temporary, size does not matter
 
-                return barrel.getBrokenBlock(true) == null;
+                return breweryBarrel.getBrokenBlock(true) == null;
             }
         }
         return false;

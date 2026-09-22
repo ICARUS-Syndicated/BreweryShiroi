@@ -24,7 +24,7 @@ import com.dre.brewery.Brew;
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.commands.SubCommand;
 import com.dre.brewery.configuration.files.Lang;
-import com.dre.brewery.utility.BUtil;
+import com.dre.brewery.utility.utils.BreweryUtil;
 import com.dre.brewery.utility.Logging;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
@@ -41,7 +41,7 @@ public class DistillCommand implements SubCommand {
         if (args.length < 2) {
             cmdDistill(lang, (Player) sender, 1);
         } else {
-            int distillRuns = BUtil.parseInt(args[1]).orElse(0);
+            int distillRuns = BreweryUtil.parseInt(args[1]).orElse(0);
             if (distillRuns <= 0) {
                 lang.sendEntry(sender, "CMD_Invalid_Distill_Runs", args[1]);
                 return;

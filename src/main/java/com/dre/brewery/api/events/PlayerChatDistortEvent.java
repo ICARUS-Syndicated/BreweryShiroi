@@ -20,7 +20,7 @@
 
 package com.dre.brewery.api.events;
 
-import com.dre.brewery.BPlayer;
+import com.dre.brewery.BreweryPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
@@ -38,15 +38,15 @@ public class PlayerChatDistortEvent extends Event implements Cancellable {
     private static final HandlerList handlers = new HandlerList();
 
     private final Player player;
-    private final BPlayer bPlayer;
+    private final BreweryPlayer breweryPlayer;
     private final String prevMsg;
     private String distortMsg;
     private boolean cancelled;
 
-    public PlayerChatDistortEvent(boolean async, Player player, BPlayer bPlayer, String prevMsg, String distortMsg) {
+    public PlayerChatDistortEvent(boolean async, Player player, BreweryPlayer breweryPlayer, String prevMsg, String distortMsg) {
         super(async);
         this.player = player;
-        this.bPlayer = bPlayer;
+        this.breweryPlayer = breweryPlayer;
         this.prevMsg = prevMsg;
         this.distortMsg = distortMsg;
     }
@@ -57,8 +57,8 @@ public class PlayerChatDistortEvent extends Event implements Cancellable {
     }
 
     @NotNull
-    public BPlayer getbPlayer() {
-        return bPlayer;
+    public BreweryPlayer getbPlayer() {
+        return breweryPlayer;
     }
 
     /**
@@ -81,7 +81,7 @@ public class PlayerChatDistortEvent extends Event implements Cancellable {
      * @return The drunkenness of the player that is writing the message
      */
     public int getDrunkeness() {
-        return bPlayer.getDrunkeness();
+        return breweryPlayer.getDrunkeness();
     }
 
     /**

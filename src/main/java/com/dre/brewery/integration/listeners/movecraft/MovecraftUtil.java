@@ -20,7 +20,7 @@
 
 package com.dre.brewery.integration.listeners.movecraft;
 
-import com.dre.brewery.Barrel;
+import com.dre.brewery.instruments.barrel.BreweryBarrel;
 import com.dre.brewery.integration.listeners.movecraft.properties.BreweryProperties;
 import com.dre.brewery.integration.listeners.movecraft.properties.MaxBarrelEntry;
 import net.countercraft.movecraft.MovecraftLocation;
@@ -36,11 +36,11 @@ import java.util.Set;
 
 public class MovecraftUtil {
 
-    public static Set<Barrel> barrelsOnCraft(HitBox hitBox, World craftWorld) {
-        Set<Barrel> output = new HashSet<>();
+    public static Set<BreweryBarrel> barrelsOnCraft(HitBox hitBox, World craftWorld) {
+        Set<BreweryBarrel> output = new HashSet<>();
 
-        for (Barrel barrel : Barrel.getBarrels(craftWorld.getUID())) {
-            Location location = barrel.getSpigot().getLocation();
+        for (BreweryBarrel breweryBarrel : BreweryBarrel.getBarrels(craftWorld.getUID())) {
+            Location location = breweryBarrel.getSpigot().getLocation();
 
             if (!Objects.equals(location.getWorld(), craftWorld)) {
                 continue;
@@ -49,7 +49,7 @@ public class MovecraftUtil {
             MovecraftLocation mvLocation = MathUtils.bukkit2MovecraftLoc(location);
 
             if (hitBox.contains(mvLocation)) {
-                output.add(barrel);
+                output.add(breweryBarrel);
             }
         }
 

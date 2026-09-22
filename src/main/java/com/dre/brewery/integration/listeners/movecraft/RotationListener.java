@@ -20,7 +20,7 @@
 
 package com.dre.brewery.integration.listeners.movecraft;
 
-import com.dre.brewery.Barrel;
+import com.dre.brewery.instruments.barrel.BreweryBarrel;
 import com.dre.brewery.utility.BoundingBox;
 import net.countercraft.movecraft.MovecraftLocation;
 import net.countercraft.movecraft.MovecraftRotation;
@@ -42,19 +42,19 @@ public class RotationListener implements Listener {
         MovecraftLocation originPoint = event.getOriginPoint();
 
         HitBox hitBox = craft.getHitBox();
-        for (Barrel barrel : MovecraftUtil.barrelsOnCraft(hitBox, craft.getWorld())) {
-            rotate(barrel, rotation, originPoint);
+        for (BreweryBarrel breweryBarrel : MovecraftUtil.barrelsOnCraft(hitBox, craft.getWorld())) {
+            rotate(breweryBarrel, rotation, originPoint);
         }
     }
 
-    public void rotate(Barrel barrel, MovecraftRotation rotation, MovecraftLocation origin) {
-        BoundingBox box = barrel.getBounds();
-        World world = barrel.getSpigot().getWorld();
+    public void rotate(BreweryBarrel breweryBarrel, MovecraftRotation rotation, MovecraftLocation origin) {
+        BoundingBox box = breweryBarrel.getBounds();
+        World world = breweryBarrel.getSpigot().getWorld();
 
-        Location spigot = barrel.getSpigot().getLocation();
+        Location spigot = breweryBarrel.getSpigot().getLocation();
         MovecraftLocation mvSpigot = MathUtils.bukkit2MovecraftLoc(spigot);
         MovecraftLocation rtSpigot = rotateCentered(rotation, mvSpigot, origin);
-        barrel.setSpigot( rtSpigot.toBukkit(world).getBlock() );
+        breweryBarrel.setSpigot( rtSpigot.toBukkit(world).getBlock() );
 
         BoundingBox.BlockPos min = box.getMin();
         MovecraftLocation mvMin = new MovecraftLocation(min.x(), min.y(), min.z());

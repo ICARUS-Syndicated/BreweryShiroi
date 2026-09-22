@@ -18,6 +18,7 @@
 /.idea/modules
 /.idea/shelf
 /*.iml
+/.idea/.name
 
 # various other potential build files
 /build

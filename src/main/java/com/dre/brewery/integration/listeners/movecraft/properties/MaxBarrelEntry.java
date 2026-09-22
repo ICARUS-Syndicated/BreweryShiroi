@@ -20,7 +20,7 @@
 
 package com.dre.brewery.integration.listeners.movecraft.properties;
 
-import com.dre.brewery.BarrelWoodType;
+import com.dre.brewery.instruments.barrel.BarrelWoodType;
 import net.countercraft.movecraft.util.Pair;
 import org.jetbrains.annotations.NotNull;
 

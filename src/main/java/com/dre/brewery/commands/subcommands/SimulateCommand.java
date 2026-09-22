@@ -20,18 +20,18 @@
 
 package com.dre.brewery.commands.subcommands;
 
-import com.dre.brewery.BIngredients;
-import com.dre.brewery.BarrelWoodType;
+import com.dre.brewery.BreweryIngredients;
+import com.dre.brewery.instruments.barrel.BarrelWoodType;
 import com.dre.brewery.Brew;
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.Translatable;
 import com.dre.brewery.commands.SubCommand;
 import com.dre.brewery.configuration.ConfigManager;
 import com.dre.brewery.configuration.files.Lang;
-import com.dre.brewery.recipe.BCauldronRecipe;
-import com.dre.brewery.recipe.BRecipe;
-import com.dre.brewery.recipe.RecipeItem;
-import com.dre.brewery.utility.BUtil;
+import com.dre.brewery.recipe.BreweryCauldronRecipe;
+import com.dre.brewery.recipe.BreweryRecipe;
+import com.dre.brewery.recipe.items.RecipeItem;
+import com.dre.brewery.utility.utils.BreweryUtil;
 import com.dre.brewery.utility.Logging;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -55,7 +55,7 @@ public class SimulateCommand implements SubCommand {
 
     @Override
     public void execute(BreweryPlugin breweryPlugin, Lang lang, CommandSender sender, String label, String[] args) {
-        List<String> arguments = BUtil.splitStringKeepingQuotes(String.join(" ", args));
+        List<String> arguments = BreweryUtil.splitStringKeepingQuotes(String.join(" ", args));
 
         SimulationParser parser = new SimulationParser();
         for (int i = 1; i <= arguments.size(); i++) {
@@ -94,7 +94,7 @@ public class SimulateCommand implements SubCommand {
     }
 
     private static void simulate(Lang lang, CommandSender sender, SimulationParameters simulation) {
-        BIngredients ingredients = new BIngredients();
+        BreweryIngredients ingredients = new BreweryIngredients();
         for (RecipeItem item : simulation.ingredients()) {
             for (int i = 0; i < item.getAmount(); i++) {
                 ingredients.addGeneric(item);
@@ -165,7 +165,7 @@ public class SimulateCommand implements SubCommand {
 
     @Override
     public List<String> tabComplete(BreweryPlugin breweryPlugin, CommandSender sender, String label, String[] args) {
-        List<String> arguments = BUtil.splitStringKeepingQuotes(String.join(" ", args));
+        List<String> arguments = BreweryUtil.splitStringKeepingQuotes(String.join(" ", args));
 
         SimulationParser parser = new SimulationParser();
         for (int i = 1; i <= arguments.size(); i++) {
@@ -212,7 +212,7 @@ public class SimulateCommand implements SubCommand {
         private static final List<String> helpStrings = List.of("help", "-h", "--help");
 
         @Nullable
-        private BRecipe recipe = null;
+        private BreweryRecipe recipe = null;
         private int cookedTime = -1;
         private int distillRuns = -1;
         @Nullable
@@ -261,7 +261,7 @@ public class SimulateCommand implements SubCommand {
                 }
 
                 case RECIPE -> {
-                    BRecipe recipe = BRecipe.getMatching(arg);
+                    BreweryRecipe recipe = BreweryRecipe.getMatching(arg);
                     if (recipe == null) {
                         return new Status.Error(ErrorType.RECIPE, arg);
                     }
@@ -270,7 +270,7 @@ public class SimulateCommand implements SubCommand {
                 }
 
                 case COOK -> {
-                    int cookedTime = BUtil.parseInt(arg).orElse(-1);
+                    int cookedTime = BreweryUtil.parseInt(arg).orElse(-1);
                     if (cookedTime < 0) {
                         return new Status.Error(ErrorType.COOK, arg);
                     }
@@ -279,7 +279,7 @@ public class SimulateCommand implements SubCommand {
                 }
 
                 case DISTILL -> {
-                    int distillRuns = BUtil.parseInt(arg).orElse(-1);
+                    int distillRuns = BreweryUtil.parseInt(arg).orElse(-1);
                     if (distillRuns <= 0) {
                         return new Status.Error(ErrorType.DISTILL_RUNS, arg);
                     }
@@ -296,7 +296,7 @@ public class SimulateCommand implements SubCommand {
                     state = State.AGE;
                 }
                 case AGE -> {
-                    float ageTime = BUtil.parseFloat(arg).orElse(-1);
+                    float ageTime = BreweryUtil.parseFloat(arg).orElse(-1);
                     if (ageTime <= 0) {
                         return new Status.Error(ErrorType.AGE_TIME, arg);
                     }
@@ -305,7 +305,7 @@ public class SimulateCommand implements SubCommand {
                 }
 
                 case BREWER -> {
-                    Player brewer = BUtil.getPlayerfromString(arg);
+                    Player brewer = BreweryUtil.getPlayerfromString(arg);
                     if (brewer == null) {
                         return new Status.Error(ErrorType.PLAYER, arg);
                     }
@@ -314,7 +314,7 @@ public class SimulateCommand implements SubCommand {
                 }
 
                 case PLAYER -> {
-                    Player player = BUtil.getPlayerfromString(arg);
+                    Player player = BreweryUtil.getPlayerfromString(arg);
                     if (player == null) {
                         return new Status.Error(ErrorType.PLAYER, arg);
                     }
@@ -332,16 +332,16 @@ public class SimulateCommand implements SubCommand {
 
         private Status parseIngredient(String arg) {
             // user probably meant "ingredient/#" instead of "ingredient #"
-            if (BUtil.isInt(arg)) {
+            if (BreweryUtil.isInt(arg)) {
                 String prevIngredient = prevArg != null ? prevArg : ConfigManager.getConfig(Lang.class).getEntry("CMD_Ingredient");
                 return new Status.Error(ErrorType.INVALID_INGREDIENT, arg, prevIngredient);
             }
 
-            BRecipe.IngredientResult result = BRecipe.loadIngredientVerbose(arg);
-            if (result instanceof BRecipe.IngredientResult.Error error) {
+            BreweryRecipe.IngredientResult result = BreweryRecipe.loadIngredientVerbose(arg);
+            if (result instanceof BreweryRecipe.IngredientResult.Error error) {
                 return new Status.Error(error.error(), error.invalidPart());
             }
-            ingredients.add(((BRecipe.IngredientResult.Success) result).ingredient());
+            ingredients.add(((BreweryRecipe.IngredientResult.Success) result).ingredient());
 
             return update(arg);
         }
@@ -408,10 +408,10 @@ public class SimulateCommand implements SubCommand {
                 }
 
                 case RECIPE -> getRecipeCompletions();
-                case COOK -> BUtil.numberRange(1, 30);
-                case DISTILL -> BUtil.numberRange(1, 10);
+                case COOK -> BreweryUtil.numberRange(1, 30);
+                case DISTILL -> BreweryUtil.numberRange(1, 10);
                 case WOOD -> BarrelWoodType.TAB_COMPLETIONS;
-                case AGE -> BUtil.numberRange(1, 50);
+                case AGE -> BreweryUtil.numberRange(1, 50);
                 case BREWER, PLAYER -> null;
                 case INGREDIENTS -> getIngredientCompletions();
 
@@ -482,7 +482,7 @@ public class SimulateCommand implements SubCommand {
         @Nullable Player player
     ) {}
     private record Age(BarrelWoodType barrelType, float ageTime) {
-        public static @Nullable Age of(BRecipe recipe) {
+        public static @Nullable Age of(BreweryRecipe recipe) {
             if (recipe.needsToAge()) {
                 BarrelWoodType barrelType = recipe.getWood();
                 return new Age(barrelType.isSpecific() ? barrelType : BarrelWoodType.OAK, recipe.getAge());
@@ -514,30 +514,30 @@ public class SimulateCommand implements SubCommand {
 
     private static List<String> getRecipeCompletions() {
         return Stream.concat(
-            BCauldronRecipe.getAllRecipes().stream()
-                .map(BCauldronRecipe::getName),
-            BRecipe.getAllRecipes().stream()
+            BreweryCauldronRecipe.getAllRecipes().stream()
+                .map(BreweryCauldronRecipe::getName),
+            BreweryRecipe.getAllRecipes().stream()
                 .mapMulti((recipe, consumer) -> {
                     consumer.accept(recipe.getRecipeName());
                     consumer.accept(recipe.getId());
                 })
         ).sorted()
             .distinct()
-            .map(BUtil::quote)
+            .map(BreweryUtil::quote)
             .toList();
     }
 
     private static List<String> getIngredientCompletions() {
         return Stream.concat(
-                BCauldronRecipe.getAllRecipes().stream()
-                    .map(BCauldronRecipe::getIngredients),
-                BRecipe.getAllRecipes().stream()
-                    .map(BRecipe::getIngredients)
+                BreweryCauldronRecipe.getAllRecipes().stream()
+                    .map(BreweryCauldronRecipe::getIngredients),
+                BreweryRecipe.getAllRecipes().stream()
+                    .map(BreweryRecipe::getIngredients)
             ).flatMap(List::stream)
             .map(RecipeItem::toConfigStringNoAmount)
             .sorted()
             .distinct()
-            .map(BUtil::quote)
+            .map(BreweryUtil::quote)
             .toList();
     }
 

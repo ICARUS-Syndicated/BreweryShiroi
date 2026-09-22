@@ -20,8 +20,8 @@
 
 package com.dre.brewery.commands.subcommands;
 
-import com.dre.brewery.BCauldron;
-import com.dre.brewery.BSealer;
+import com.dre.brewery.instruments.BreweryCauldron;
+import com.dre.brewery.instruments.BrewerySealer;
 import com.dre.brewery.Brew;
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.commands.CommandUtil;
@@ -72,13 +72,13 @@ public class ReloadCommand implements SubCommand {
             ConfigManager.loadSeed();
 
             // Reload Cauldron Particle Recipes
-            BCauldron.reload();
+            BreweryCauldron.reload();
 
             // Clear Recipe completions
             CommandUtil.reloadTabCompleter();
 
             // Sealing table recipe
-            BSealer.registerRecipe();
+            BrewerySealer.registerRecipe();
 
             // Let addons know this command was executed
             BreweryPlugin.getAddonManager().reloadAddons();

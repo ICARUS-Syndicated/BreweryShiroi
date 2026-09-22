@@ -20,9 +20,9 @@
 
 package com.dre.brewery.integration.bstats;
 
-import com.dre.brewery.BCauldron;
-import com.dre.brewery.BPlayer;
-import com.dre.brewery.Barrel;
+import com.dre.brewery.instruments.BreweryCauldron;
+import com.dre.brewery.BreweryPlayer;
+import com.dre.brewery.instruments.barrel.BreweryBarrel;
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.configuration.ConfigManager;
 import com.dre.brewery.configuration.files.Config;
@@ -30,7 +30,7 @@ import com.dre.brewery.integration.bstats.Metrics.AdvancedPie;
 import com.dre.brewery.integration.bstats.Metrics.DrilldownPie;
 import com.dre.brewery.integration.bstats.Metrics.SimplePie;
 import com.dre.brewery.integration.bstats.Metrics.SingleLineChart;
-import com.dre.brewery.recipe.BRecipe;
+import com.dre.brewery.recipe.BreweryRecipe;
 import com.dre.brewery.utility.Logging;
 
 import java.util.HashMap;
@@ -68,7 +68,7 @@ public class BreweryXStats {
             }));
             metrics.addCustomChart(new AdvancedPie("recipe_count", () -> {
                 Map<String, Integer> valueMap = new HashMap<>();
-                int recipeCount = BRecipe.getAllRecipes().size();
+                int recipeCount = BreweryRecipe.getAllRecipes().size();
                 if (recipeCount >= 150) {
                     valueMap.put("150+", recipeCount);
                 } else if (recipeCount >= 100) {
@@ -107,9 +107,9 @@ public class BreweryXStats {
             metrics.addCustomChart(new SimplePie("language", config::getLanguage));
             metrics.addCustomChart(new SimplePie("branch", this::getBranch));
 
-            metrics.addCustomChart(new SingleLineChart("drunk_players", BPlayer::numDrunkPlayers));
-            metrics.addCustomChart(new SingleLineChart("barrels_built", Barrel.getAllBarrels()::size));
-            metrics.addCustomChart(new SingleLineChart("cauldrons_boiling", BCauldron.bcauldrons::size));
+            metrics.addCustomChart(new SingleLineChart("drunk_players", BreweryPlayer::numDrunkPlayers));
+            metrics.addCustomChart(new SingleLineChart("barrels_built", BreweryBarrel.getAllBarrels()::size));
+            metrics.addCustomChart(new SingleLineChart("cauldrons_boiling", BreweryCauldron.bcauldrons::size));
 
         } catch (Exception | LinkageError e) {
             Logging.errorLog("Failed to submit stats data to bStats.org (BreweryXStats)", e);

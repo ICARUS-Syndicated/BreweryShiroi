@@ -21,7 +21,7 @@
 package com.dre.brewery.integration.item;
 
 import com.dre.brewery.integration.Hook;
-import com.dre.brewery.recipe.PluginItem;
+import com.dre.brewery.recipe.items.PluginItem;
 import com.dre.brewery.utility.Logging;
 import io.lumine.mythic.lib.api.item.NBTItem;
 import org.bukkit.inventory.ItemStack;

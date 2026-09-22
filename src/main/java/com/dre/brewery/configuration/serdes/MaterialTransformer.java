@@ -20,7 +20,7 @@
 
 package com.dre.brewery.configuration.serdes;
 
-import com.dre.brewery.utility.MaterialUtil;
+import com.dre.brewery.utility.utils.MaterialUtil;
 import eu.okaeri.configs.schema.GenericsPair;
 import eu.okaeri.configs.serdes.BidirectionalTransformer;
 import eu.okaeri.configs.serdes.SerdesContext;

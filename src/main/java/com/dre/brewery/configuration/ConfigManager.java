@@ -25,7 +25,7 @@ import com.dre.brewery.DistortChat;
 import com.dre.brewery.configuration.annotation.OkaeriConfigFileOptions;
 import com.dre.brewery.configuration.files.CauldronFile;
 import com.dre.brewery.configuration.files.Config;
-import com.dre.brewery.configuration.files.RecipesFile;
+import com.dre.brewery.configuration.recipes.RecipeLoader;
 import com.dre.brewery.configuration.sector.capsule.ConfigDistortWord;
 import com.dre.brewery.integration.Hook;
 import com.dre.brewery.integration.item.BreweryPluginItem;
@@ -34,9 +34,9 @@ import com.dre.brewery.integration.item.MMOItemsPluginItem;
 import com.dre.brewery.integration.item.NexoPluginItem;
 import com.dre.brewery.integration.item.OraxenPluginItem;
 import com.dre.brewery.integration.item.SlimefunPluginItem;
-import com.dre.brewery.recipe.BCauldronRecipe;
-import com.dre.brewery.recipe.BRecipe;
-import com.dre.brewery.recipe.PluginItem;
+import com.dre.brewery.recipe.BreweryCauldronRecipe;
+import com.dre.brewery.recipe.BreweryRecipe;
+import com.dre.brewery.recipe.items.PluginItem;
 import com.dre.brewery.utility.Logging;
 import eu.okaeri.configs.configurer.Configurer;
 import eu.okaeri.configs.serdes.OkaeriSerdesPack;
@@ -132,44 +132,31 @@ public class ConfigManager {
     // Not really what I want to do, but I have to move these from BConfig right now
 
     public static void loadRecipes() {
-        // loading recipes
-        List<BRecipe> configRecipes = BRecipe.getConfigRecipes();
-        configRecipes.clear();
-
-        for (var recipeEntry : getConfig(RecipesFile.class).getRecipes().entrySet()) {
-            BRecipe recipe = BRecipe.fromConfig(recipeEntry.getKey(), recipeEntry.getValue());
-            if (recipe != null && recipe.isValid()) {
-                configRecipes.add(recipe);
-            } else {
-                Logging.errorLog("Loading the Recipe with id: '" + recipeEntry.getKey() + "' failed!");
-            }
-
-            BRecipe.setNumConfigRecipes(configRecipes.size());
-        }
+        RecipeLoader.loadRecipes();
     }
 
 
     public static void loadCauldronIngredients() {
         // Loading Cauldron Recipes
 
-        List<BCauldronRecipe> configRecipes = BCauldronRecipe.getConfigRecipes();
+        List<BreweryCauldronRecipe> configRecipes = BreweryCauldronRecipe.getConfigRecipes();
         configRecipes.clear();
 
         for (var cauldronEntry : getConfig(CauldronFile.class).getCauldronIngredients().entrySet()) {
-            BCauldronRecipe recipe = BCauldronRecipe.fromConfig(cauldronEntry.getKey(), cauldronEntry.getValue());
+            BreweryCauldronRecipe recipe = BreweryCauldronRecipe.fromConfig(cauldronEntry.getKey(), cauldronEntry.getValue());
             if (recipe != null) {
                 configRecipes.add(recipe);
             } else {
                 Logging.errorLog("Loading the Cauldron-Recipe with id: '" + cauldronEntry.getKey() + "' failed!");
             }
         }
-        BCauldronRecipe.setNumConfigRecipes(configRecipes.size());
+        BreweryCauldronRecipe.setNumConfigRecipes(configRecipes.size());
 
         // Recalculating Cauldron-Accepted Items for non-config recipes
-        for (BRecipe recipe : BRecipe.getAddedRecipes()) {
+        for (BreweryRecipe recipe : BreweryRecipe.getAddedRecipes()) {
             recipe.updateAcceptedLists();
         }
-        for (BCauldronRecipe recipe : BCauldronRecipe.getAddedRecipes()) {
+        for (BreweryCauldronRecipe recipe : BreweryCauldronRecipe.getAddedRecipes()) {
             recipe.updateAcceptedLists();
         }
     }

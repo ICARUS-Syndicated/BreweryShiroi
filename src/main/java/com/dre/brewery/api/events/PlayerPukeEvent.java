@@ -20,7 +20,7 @@
 
 package com.dre.brewery.api.events;
 
-import com.dre.brewery.BPlayer;
+import com.dre.brewery.BreweryPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.HandlerList;
@@ -36,7 +36,7 @@ public class PlayerPukeEvent extends PlayerEvent implements Cancellable {
     private static final HandlerList handlers = new HandlerList();
     private int count;
     private boolean cancelled;
-    private BPlayer bPlayer;
+    private BreweryPlayer breweryPlayer;
 
 
     public PlayerPukeEvent(Player who, int count) {
@@ -58,11 +58,11 @@ public class PlayerPukeEvent extends PlayerEvent implements Cancellable {
         this.count = count;
     }
 
-    public BPlayer getBPlayer() {
-        if (bPlayer == null) {
-            bPlayer = BPlayer.get(player);
+    public BreweryPlayer getBPlayer() {
+        if (breweryPlayer == null) {
+            breweryPlayer = BreweryPlayer.get(player);
         }
-        return bPlayer;
+        return breweryPlayer;
     }
 
     @Override

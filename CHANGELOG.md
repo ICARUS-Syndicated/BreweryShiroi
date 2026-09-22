@@ -7,7 +7,7 @@
 
 
 ## Additions
-- You can now configure barrel inventory sizes **~ by Mitality**
+- You can now configure breweryBarrel inventory sizes **~ by Mitality**
 - BreweryX now hooks into the [Lands](https://www.spigotmc.org/resources/53313) plugin. **~ by Mitality**
 - You can now configure your own custom translations in BreweryX **~ by Thorinwasher**
 - Added a Ukranian translation **~ by Thorinwasher**

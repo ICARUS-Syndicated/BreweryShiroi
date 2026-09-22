@@ -25,7 +25,7 @@ import com.dre.brewery.configuration.AbstractOkaeriConfigFile;
 import com.dre.brewery.configuration.ConfigManager;
 import com.dre.brewery.configuration.annotation.DefaultCommentSpace;
 import com.dre.brewery.configuration.annotation.OkaeriConfigFileOptions;
-import com.dre.brewery.utility.BUtil;
+import com.dre.brewery.utility.utils.BreweryUtil;
 import com.dre.brewery.utility.Logging;
 import eu.okaeri.configs.annotation.Comment;
 import eu.okaeri.configs.annotation.CustomKey;
@@ -118,7 +118,7 @@ public class Lang extends AbstractOkaeriConfigFile {
     }
 
     public void sendEntry(CommandSender recipient, String key, Object... args) {
-        recipient.sendMessage(BUtil.color(config.getPluginPrefix() + this.getEntry(key, false, args)));
+        recipient.sendMessage(BreweryUtil.color(config.getPluginPrefix() + this.getEntry(key, false, args)));
     }
 
     public void logEntry(Logging.LogLevel level, String key, Object... args) {
@@ -143,7 +143,7 @@ public class Lang extends AbstractOkaeriConfigFile {
         } else {
             msg = "&c[LanguageReader] Failed to retrieve a config entry for key '" + key + "'!";
         }
-        return color ? BUtil.color(msg) : msg;
+        return color ? BreweryUtil.color(msg) : msg;
     }
 
     public List<String> getEntries(String key, Object... args) {
@@ -167,7 +167,7 @@ public class Lang extends AbstractOkaeriConfigFile {
         }
         return msgs.stream()
             .map(s -> format(s, args))
-            .map(s -> color ? BUtil.color(s) : s)
+            .map(s -> color ? BreweryUtil.color(s) : s)
             .toList();
     }
 

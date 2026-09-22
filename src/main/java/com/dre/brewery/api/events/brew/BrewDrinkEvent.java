@@ -20,9 +20,9 @@
 
 package com.dre.brewery.api.events.brew;
 
-import com.dre.brewery.BPlayer;
+import com.dre.brewery.BreweryPlayer;
 import com.dre.brewery.Brew;
-import com.dre.brewery.utility.PermissionUtil;
+import com.dre.brewery.utility.utils.PermissionUtil;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.entity.Player;
@@ -44,7 +44,7 @@ import org.jetbrains.annotations.Nullable;
 public class BrewDrinkEvent extends BrewEvent implements Cancellable {
     private static final HandlerList handlers = new HandlerList();
     private final Player player;
-    private final BPlayer bPlayer;
+    private final BreweryPlayer breweryPlayer;
     private int addedAlcohol;
     private int quality;
     private boolean cancelled;
@@ -52,10 +52,10 @@ public class BrewDrinkEvent extends BrewEvent implements Cancellable {
     @Nullable // Null if drinking from command
     private PlayerItemConsumeEvent predecessorEvent;
 
-    public BrewDrinkEvent(Brew brew, ItemMeta meta, Player player, BPlayer bPlayer, @Nullable PlayerItemConsumeEvent predecessor) {
+    public BrewDrinkEvent(Brew brew, ItemMeta meta, Player player, BreweryPlayer breweryPlayer, @Nullable PlayerItemConsumeEvent predecessor) {
         super(brew, meta);
         this.player = player;
-        this.bPlayer = bPlayer;
+        this.breweryPlayer = breweryPlayer;
         addedAlcohol = calcAlcWSensitivity(brew.getOrCalcAlc());
         quality = brew.getQuality();
         predecessorEvent = predecessor;

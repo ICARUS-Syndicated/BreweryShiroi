@@ -23,7 +23,7 @@ package com.dre.brewery.storage.records;
 import com.dre.brewery.Wakeup;
 import com.dre.brewery.storage.DataManager;
 import com.dre.brewery.storage.interfaces.SerializableThing;
-import com.dre.brewery.utility.BUtil;
+import com.dre.brewery.utility.utils.BreweryUtil;
 import org.bukkit.Location;
 
 /**
@@ -42,7 +42,7 @@ public record SerializableWakeup(String id, String serializedLocation) implement
         if (loc == null) {
             return null;
         }
-        return new Wakeup(loc, BUtil.uuidFromString(id));
+        return new Wakeup(loc, BreweryUtil.uuidFromString(id));
     }
 
     @Override

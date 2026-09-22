@@ -20,7 +20,7 @@
 
 package com.dre.brewery.commands.subcommands;
 
-import com.dre.brewery.BSealer;
+import com.dre.brewery.instruments.BrewerySealer;
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.commands.SubCommand;
 import com.dre.brewery.configuration.files.Lang;
@@ -40,7 +40,7 @@ public class SealCommand implements SubCommand {
         }
         Player player = (Player) sender;
 
-        player.openInventory(new BSealer(player).getInventory());
+        player.openInventory(new BrewerySealer(player).getInventory());
     }
 
     @Override

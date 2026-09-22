@@ -20,11 +20,11 @@
 
 package com.dre.brewery.storage.records;
 
-import com.dre.brewery.BCauldron;
-import com.dre.brewery.BIngredients;
+import com.dre.brewery.instruments.BreweryCauldron;
+import com.dre.brewery.BreweryIngredients;
 import com.dre.brewery.storage.DataManager;
 import com.dre.brewery.storage.interfaces.SerializableThing;
-import com.dre.brewery.utility.BUtil;
+import com.dre.brewery.utility.utils.BreweryUtil;
 import org.bukkit.Location;
 
 /**
@@ -37,16 +37,16 @@ import org.bukkit.Location;
  */
 public record SerializableCauldron(String id, String serializedLocation, String serializedIngredients,
                                    int state) implements SerializableThing {
-    public SerializableCauldron(BCauldron cauldron) {
+    public SerializableCauldron(BreweryCauldron cauldron) {
         this(cauldron.getId().toString(), DataManager.serializeLocation(cauldron.getBlock().getLocation()), cauldron.getIngredients().serializeIngredients(), cauldron.getState());
     }
 
-    public BCauldron toCauldron() {
+    public BreweryCauldron toCauldron() {
         Location loc = DataManager.deserializeLocation(serializedLocation);
         if (loc == null) {
             return null;
         }
-        return new BCauldron(loc.getBlock(), BIngredients.deserializeIngredients(serializedIngredients), state, BUtil.uuidFromString(id));
+        return new BreweryCauldron(loc.getBlock(), BreweryIngredients.deserializeIngredients(serializedIngredients), state, BreweryUtil.uuidFromString(id));
     }
 
     @Override

@@ -26,6 +26,10 @@ import com.dre.brewery.configuration.ConfigManager;
 import com.dre.brewery.configuration.configurer.TranslationManager;
 import com.dre.brewery.configuration.files.Config;
 import com.dre.brewery.configuration.files.Lang;
+import com.dre.brewery.instruments.BreweryCauldron;
+import com.dre.brewery.instruments.BrewerySealer;
+import com.dre.brewery.instruments.barrel.BreweryBarrel;
+import com.dre.brewery.instruments.barrel.VanillaBarrel;
 import com.dre.brewery.integration.BlockLockerHook;
 import com.dre.brewery.integration.Hook;
 import com.dre.brewery.integration.LandsHook;
@@ -47,11 +51,11 @@ import com.dre.brewery.listeners.CauldronListener;
 import com.dre.brewery.listeners.EntityListener;
 import com.dre.brewery.listeners.InventoryListener;
 import com.dre.brewery.listeners.PlayerListener;
-import com.dre.brewery.recipe.CustomItem;
-import com.dre.brewery.recipe.Ingredient;
-import com.dre.brewery.recipe.ItemLoader;
-import com.dre.brewery.recipe.PluginItem;
-import com.dre.brewery.recipe.SimpleItem;
+import com.dre.brewery.recipe.items.CustomItem;
+import com.dre.brewery.recipe.items.Ingredient;
+import com.dre.brewery.recipe.items.ItemLoader;
+import com.dre.brewery.recipe.items.PluginItem;
+import com.dre.brewery.recipe.items.SimpleItem;
 import com.dre.brewery.storage.DataManager;
 import com.dre.brewery.storage.StorageInitException;
 import com.dre.brewery.utility.Logging;
@@ -142,7 +146,7 @@ public final class BreweryPlugin extends JavaPlugin {
         TranslationManager.getInstance().updateTranslationFiles();
         ConfigManager.newInstance(Lang.class, false);
 
-        BSealer.registerRecipe(); // Sealing table recipe
+        BrewerySealer.registerRecipe(); // Sealing table recipe
         ConfigManager.registerDefaultPluginItems(); // Register plugin items
 
         // Load Addons
@@ -175,20 +179,20 @@ public final class BreweryPlugin extends JavaPlugin {
         DataManager.loadMiscData(dataManager.getBreweryMiscData());
         dataManager.getAllBarrels().thenAcceptAsync(barrels -> barrels.stream()
             .filter(Objects::nonNull)
-            .forEach(Barrel::registerBarrel)
+            .forEach(BreweryBarrel::registerBarrel)
         );
-        BCauldron.getBcauldrons().putAll(dataManager.getAllCauldrons().stream()
+        BreweryCauldron.getBcauldrons().putAll(dataManager.getAllCauldrons().stream()
             .filter(Objects::nonNull)
             .collect(Collectors.toMap(
-                BCauldron::getBlock, Function.identity(),
+                BreweryCauldron::getBlock, Function.identity(),
                 (existing, replacement) -> replacement // Issues#68
             )));
-        BCauldron.startAllFoliaParticleTasks();
-        BPlayer.getPlayers().putAll(dataManager.getAllPlayers()
+        BreweryCauldron.startAllFoliaParticleTasks();
+        BreweryPlayer.getPlayers().putAll(dataManager.getAllPlayers()
             .stream()
             .filter(Objects::nonNull)
             .collect(Collectors.toMap(
-                BPlayer::getUuid,
+                BreweryPlayer::getUuid,
                 Function.identity()
             )));
         Wakeup.getWakeups().addAll(dataManager.getAllWakeups()
@@ -273,7 +277,7 @@ public final class BreweryPlugin extends JavaPlugin {
         // Disable listeners
         HandlerList.unregisterAll(this);
 
-        BCauldron.stopAllFoliaParticleTasks();
+        BreweryCauldron.stopAllFoliaParticleTasks();
 
         // Stop schedulers
         BreweryPlugin.getScheduler().cancelTasks(this);
@@ -318,8 +322,8 @@ public final class BreweryPlugin extends JavaPlugin {
     public static class DrunkRunnable implements Runnable {
         @Override
         public void run() {
-            if (!BPlayer.isEmpty()) {
-                BPlayer.drunkenness();
+            if (!BreweryPlayer.isEmpty()) {
+                BreweryPlayer.drunkenness();
             }
         }
     }
@@ -331,21 +335,21 @@ public final class BreweryPlugin extends JavaPlugin {
 
             // runs every min to update cooking time
 
-            for (BCauldron bCauldron : BCauldron.bcauldrons.values()) {
-                BreweryPlugin.getScheduler().runTask(bCauldron.getBlock().getLocation(), () -> {
-                    if (!bCauldron.onUpdate()) {
-                        BCauldron.remove(bCauldron.getBlock());
+            for (BreweryCauldron breweryCauldron : BreweryCauldron.bcauldrons.values()) {
+                BreweryPlugin.getScheduler().runTask(breweryCauldron.getBlock().getLocation(), () -> {
+                    if (!breweryCauldron.onUpdate()) {
+                        BreweryCauldron.remove(breweryCauldron.getBlock());
                     }
                 });
             }
 
 
-            Barrel.onUpdate();// runs every min to check and update ageing time
+            BreweryBarrel.onUpdate();// runs every min to check and update ageing time
 
-            if (getMCVersion().isOrLater(MinecraftVersion.V1_14)) MCBarrel.onUpdate();
+            if (getMCVersion().isOrLater(MinecraftVersion.V1_14)) VanillaBarrel.onUpdate();
             if (BlockLockerHook.BLOCKLOCKER.isEnabled()) BlockLockerBarrel.clearBarrelSign();
 
-            BPlayer.onUpdate();// updates players drunkenness
+            BreweryPlayer.onUpdate();// updates players drunkenness
 
 
             //DataSave.autoSave();
@@ -367,7 +371,7 @@ public final class BreweryPlugin extends JavaPlugin {
             if (config.isMinimalParticles() && ThreadLocalRandom.current().nextFloat() > 0.5f) {
                 return;
             }
-            BCauldron.processCookEffects();
+            BreweryCauldron.processCookEffects();
         }
     }
 

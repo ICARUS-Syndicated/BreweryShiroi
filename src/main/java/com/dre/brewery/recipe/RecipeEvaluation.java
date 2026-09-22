@@ -21,7 +21,7 @@
 package com.dre.brewery.recipe;
 
 import com.dre.brewery.BrewDefect;
-import com.dre.brewery.utility.BUtil;
+import com.dre.brewery.utility.utils.BreweryUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -135,7 +135,7 @@ public class RecipeEvaluation {
                 .map(QualityDeduction::getDefect)
                 .toList();
         } else {
-            return BUtil.multiMin(deductions).stream()
+            return BreweryUtil.multiMin(deductions).stream()
                 .map(QualityDeduction::getDefect)
                 .toList();
         }

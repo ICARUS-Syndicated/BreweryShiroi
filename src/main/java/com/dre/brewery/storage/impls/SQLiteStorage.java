@@ -20,21 +20,21 @@
 
 package com.dre.brewery.storage.impls;
 
-import com.dre.brewery.BCauldron;
-import com.dre.brewery.BPlayer;
-import com.dre.brewery.Barrel;
+import com.dre.brewery.instruments.BreweryCauldron;
+import com.dre.brewery.BreweryPlayer;
+import com.dre.brewery.instruments.barrel.BreweryBarrel;
 import com.dre.brewery.Wakeup;
 import com.dre.brewery.configuration.sector.capsule.ConfiguredDataManager;
 import com.dre.brewery.storage.DataManager;
 import com.dre.brewery.storage.StorageInitException;
 import com.dre.brewery.storage.interfaces.SerializableThing;
 import com.dre.brewery.storage.records.BreweryMiscData;
-import com.dre.brewery.storage.records.SerializableBPlayer;
+import com.dre.brewery.storage.records.SerializableBreweryPlayer;
 import com.dre.brewery.storage.records.SerializableBarrel;
 import com.dre.brewery.storage.records.SerializableCauldron;
 import com.dre.brewery.storage.records.SerializableWakeup;
 import com.dre.brewery.storage.serialization.SQLDataSerializer;
-import com.dre.brewery.utility.FutureUtil;
+import com.dre.brewery.utility.utils.FutureUtil;
 import com.dre.brewery.utility.Logging;
 import org.jetbrains.annotations.Nullable;
 
@@ -245,7 +245,7 @@ public class SQLiteStorage extends DataManager {
     }
 
     @Override
-    public CompletableFuture<Barrel> getBarrel(UUID id) {
+    public CompletableFuture<BreweryBarrel> getBarrel(UUID id) {
         SerializableBarrel serializableBarrel = getGeneric(id.toString(), "barrels", SerializableBarrel.class);
         if (serializableBarrel != null) {
             return serializableBarrel.toBarrel();
@@ -254,7 +254,7 @@ public class SQLiteStorage extends DataManager {
     }
 
     @Override
-    public CompletableFuture<List<Barrel>> getAllBarrels() {
+    public CompletableFuture<List<BreweryBarrel>> getAllBarrels() {
         return FutureUtil.mergeFutures(
             getAllGeneric("barrels", SerializableBarrel.class).stream()
                 .map(SerializableBarrel::toBarrel)
@@ -263,8 +263,8 @@ public class SQLiteStorage extends DataManager {
     }
 
     @Override
-    public void saveAllBarrels(Collection<Barrel> barrels) {
-        List<SerializableBarrel> serializableBarrels = barrels.stream()
+    public void saveAllBarrels(Collection<BreweryBarrel> breweryBarrels) {
+        List<SerializableBarrel> serializableBarrels = breweryBarrels.stream()
             .filter(it -> it.getBounds() != null)
             .map(SerializableBarrel::new)
             .toList();
@@ -272,8 +272,8 @@ public class SQLiteStorage extends DataManager {
     }
 
     @Override
-    public void saveBarrel(Barrel barrel) {
-        saveGeneric(new SerializableBarrel(barrel), "barrels");
+    public void saveBarrel(BreweryBarrel breweryBarrel) {
+        saveGeneric(new SerializableBarrel(breweryBarrel), "barrels");
     }
 
     @Override
@@ -282,7 +282,7 @@ public class SQLiteStorage extends DataManager {
     }
 
     @Override
-    public BCauldron getCauldron(UUID id) {
+    public BreweryCauldron getCauldron(UUID id) {
         SerializableCauldron serializableCauldron = getGeneric(id.toString(), "cauldrons", SerializableCauldron.class);
         if (serializableCauldron != null) {
             return serializableCauldron.toCauldron();
@@ -291,14 +291,14 @@ public class SQLiteStorage extends DataManager {
     }
 
     @Override
-    public Collection<BCauldron> getAllCauldrons() {
+    public Collection<BreweryCauldron> getAllCauldrons() {
         return getAllGeneric("cauldrons", SerializableCauldron.class).stream()
             .map(SerializableCauldron::toCauldron)
             .toList();
     }
 
     @Override
-    public void saveAllCauldrons(Collection<BCauldron> cauldrons) {
+    public void saveAllCauldrons(Collection<BreweryCauldron> cauldrons) {
         List<SerializableCauldron> serializableCauldrons = cauldrons.stream()
             .map(SerializableCauldron::new)
             .toList();
@@ -306,7 +306,7 @@ public class SQLiteStorage extends DataManager {
     }
 
     @Override
-    public void saveCauldron(BCauldron cauldron) {
+    public void saveCauldron(BreweryCauldron cauldron) {
         saveGeneric(new SerializableCauldron(cauldron), "cauldrons");
     }
 
@@ -316,32 +316,32 @@ public class SQLiteStorage extends DataManager {
     }
 
     @Override
-    public BPlayer getPlayer(UUID playerUUID) {
-        SerializableBPlayer serializableBPlayer = getGeneric(playerUUID.toString(), "players", SerializableBPlayer.class);
-        if (serializableBPlayer != null) {
-            return serializableBPlayer.toBPlayer();
+    public BreweryPlayer getPlayer(UUID playerUUID) {
+        SerializableBreweryPlayer serializableBreweryPlayer = getGeneric(playerUUID.toString(), "players", SerializableBreweryPlayer.class);
+        if (serializableBreweryPlayer != null) {
+            return serializableBreweryPlayer.toBPlayer();
         }
         return null;
     }
 
     @Override
-    public Collection<BPlayer> getAllPlayers() {
-        return getAllGeneric("players", SerializableBPlayer.class).stream()
-            .map(SerializableBPlayer::toBPlayer)
+    public Collection<BreweryPlayer> getAllPlayers() {
+        return getAllGeneric("players", SerializableBreweryPlayer.class).stream()
+            .map(SerializableBreweryPlayer::toBPlayer)
             .toList();
     }
 
     @Override
-    public void saveAllPlayers(Collection<BPlayer> players) {
-        List<SerializableBPlayer> serializableBPlayers = players.stream()
-            .map(SerializableBPlayer::new)
+    public void saveAllPlayers(Collection<BreweryPlayer> players) {
+        List<SerializableBreweryPlayer> serializableBreweryPlayers = players.stream()
+            .map(SerializableBreweryPlayer::new)
             .toList();
-        saveAllGeneric(serializableBPlayers, "players");
+        saveAllGeneric(serializableBreweryPlayers, "players");
     }
 
     @Override
-    public void savePlayer(BPlayer player) {
-        saveGeneric(new SerializableBPlayer(player), "players");
+    public void savePlayer(BreweryPlayer player) {
+        saveGeneric(new SerializableBreweryPlayer(player), "players");
     }
 
     @Override

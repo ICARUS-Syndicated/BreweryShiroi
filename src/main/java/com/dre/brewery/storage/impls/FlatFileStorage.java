@@ -20,10 +20,10 @@
 
 package com.dre.brewery.storage.impls;
 
-import com.dre.brewery.BCauldron;
-import com.dre.brewery.BIngredients;
-import com.dre.brewery.BPlayer;
-import com.dre.brewery.Barrel;
+import com.dre.brewery.instruments.BreweryCauldron;
+import com.dre.brewery.BreweryIngredients;
+import com.dre.brewery.BreweryPlayer;
+import com.dre.brewery.instruments.barrel.BreweryBarrel;
 import com.dre.brewery.Wakeup;
 import com.dre.brewery.configuration.sector.capsule.ConfiguredDataManager;
 import com.dre.brewery.storage.DataManager;
@@ -32,9 +32,9 @@ import com.dre.brewery.storage.interfaces.SerializableThing;
 import com.dre.brewery.storage.records.BreweryMiscData;
 import com.dre.brewery.storage.serialization.BukkitSerialization;
 import com.dre.brewery.storage.serialization.SQLDataSerializer;
-import com.dre.brewery.utility.BUtil;
+import com.dre.brewery.utility.utils.BreweryUtil;
 import com.dre.brewery.utility.BoundingBox;
-import com.dre.brewery.utility.FutureUtil;
+import com.dre.brewery.utility.utils.FutureUtil;
 import com.dre.brewery.utility.Logging;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -182,7 +182,7 @@ public class FlatFileStorage extends DataManager {
     }
 
     @Override
-    public CompletableFuture<Barrel> getBarrel(UUID id) {
+    public CompletableFuture<BreweryBarrel> getBarrel(UUID id) {
         String path = "barrels." + id;
 
         Location spigotLoc = deserializeLocation(dataFile.getString(path + ".spigot"));
@@ -201,22 +201,22 @@ public class FlatFileStorage extends DataManager {
         ItemStack[] items = BukkitSerialization.itemStackArrayFromBase64(dataFile.getString(path + ".items", null));
 
 
-        return Barrel.computeSmall(spigotLoc).thenApplyAsync(small ->
-            new Barrel(spigotLoc.getBlock(), sign, boundingBox, items, time, id, small)
+        return BreweryBarrel.computeSmall(spigotLoc).thenApplyAsync(small ->
+            new BreweryBarrel(spigotLoc.getBlock(), sign, boundingBox, items, time, id, small)
         );
     }
 
     @Override
-    public CompletableFuture<List<Barrel>> getAllBarrels() {
+    public CompletableFuture<List<BreweryBarrel>> getAllBarrels() {
         ConfigurationSection section = dataFile.getConfigurationSection("barrels");
         if (section == null) {
             return CompletableFuture.completedFuture(Collections.emptyList());
         }
 
-        List<CompletableFuture<Barrel>> barrels = new ArrayList<>();
+        List<CompletableFuture<BreweryBarrel>> barrels = new ArrayList<>();
 
         for (String key : section.getKeys(false)) {
-            CompletableFuture<Barrel> barrel = getBarrel(BUtil.uuidFromString(key));
+            CompletableFuture<BreweryBarrel> barrel = getBarrel(BreweryUtil.uuidFromString(key));
             if (barrel != null) {
                 barrels.add(barrel);
             }
@@ -225,25 +225,25 @@ public class FlatFileStorage extends DataManager {
     }
 
     @Override
-    public void saveAllBarrels(Collection<Barrel> barrels) {
+    public void saveAllBarrels(Collection<BreweryBarrel> breweryBarrels) {
         dataFile.set("barrels", null);
-        for (Barrel barrel : barrels) {
-            saveBarrel(barrel);
+        for (BreweryBarrel breweryBarrel : breweryBarrels) {
+            saveBarrel(breweryBarrel);
         }
     }
 
     @Override
-    public void saveBarrel(Barrel barrel) {
-        if (barrel.getBounds() == null) {
+    public void saveBarrel(BreweryBarrel breweryBarrel) {
+        if (breweryBarrel.getBounds() == null) {
             return;
         }
-        String path = "barrels." + barrel.getId();
+        String path = "barrels." + breweryBarrel.getId();
 
-        dataFile.set(path + ".spigot", serializeLocation(barrel.getSpigot().getLocation()));
-        dataFile.set(path + ".bounds", barrel.getBounds().serialize());
-        dataFile.set(path + ".time", barrel.getTime());
-        dataFile.set(path + ".sign", barrel.getSignoffset());
-        dataFile.set(path + ".items", BukkitSerialization.itemStackArrayToBase64(barrel.getInventory().getContents()));
+        dataFile.set(path + ".spigot", serializeLocation(breweryBarrel.getSpigot().getLocation()));
+        dataFile.set(path + ".bounds", breweryBarrel.getBounds().serialize());
+        dataFile.set(path + ".time", breweryBarrel.getTime());
+        dataFile.set(path + ".sign", breweryBarrel.getSignoffset());
+        dataFile.set(path + ".items", BukkitSerialization.itemStackArrayToBase64(breweryBarrel.getInventory().getContents()));
         save();
     }
 
@@ -254,31 +254,31 @@ public class FlatFileStorage extends DataManager {
     }
 
     @Override
-    public BCauldron getCauldron(UUID id) {
+    public BreweryCauldron getCauldron(UUID id) {
         String path = "cauldrons." + id;
 
         Location loc = deserializeLocation(dataFile.getString(path + ".block"));
         if (loc == null) {
             return null;
         }
-        BIngredients ingredients = BIngredients.deserializeIngredients(dataFile.getString(path + ".ingredients"));
+        BreweryIngredients ingredients = BreweryIngredients.deserializeIngredients(dataFile.getString(path + ".ingredients"));
         int state = dataFile.getInt(path + ".state", 0);
 
-        return new BCauldron(loc.getBlock(), ingredients, state, id);
+        return new BreweryCauldron(loc.getBlock(), ingredients, state, id);
     }
 
     @Override
-    public Collection<BCauldron> getAllCauldrons() {
+    public Collection<BreweryCauldron> getAllCauldrons() {
         ConfigurationSection section = dataFile.getConfigurationSection("cauldrons");
 
         if (section == null) {
             return Collections.emptyList();
         }
 
-        List<BCauldron> cauldrons = new ArrayList<>();
+        List<BreweryCauldron> cauldrons = new ArrayList<>();
 
         for (String key : section.getKeys(false)) {
-            BCauldron cauldron = getCauldron(BUtil.uuidFromString(key));
+            BreweryCauldron cauldron = getCauldron(BreweryUtil.uuidFromString(key));
             if (cauldron != null) {
                 cauldrons.add(cauldron);
             }
@@ -287,15 +287,15 @@ public class FlatFileStorage extends DataManager {
     }
 
     @Override
-    public void saveAllCauldrons(Collection<BCauldron> cauldrons) {
+    public void saveAllCauldrons(Collection<BreweryCauldron> cauldrons) {
         dataFile.set("cauldrons", null);
-        for (BCauldron cauldron : cauldrons) {
+        for (BreweryCauldron cauldron : cauldrons) {
             saveCauldron(cauldron);
         }
     }
 
     @Override
-    public void saveCauldron(BCauldron cauldron) {
+    public void saveCauldron(BreweryCauldron cauldron) {
         String path = "cauldrons." + cauldron.getId();
 
         dataFile.set(path + ".block", serializeLocation(cauldron.getBlock().getLocation()));
@@ -313,27 +313,27 @@ public class FlatFileStorage extends DataManager {
 
 
     @Override
-    public BPlayer getPlayer(UUID playerUUID) {
+    public BreweryPlayer getPlayer(UUID playerUUID) {
         String path = "players." + playerUUID;
 
         int quality = dataFile.getInt(path + ".quality", 0);
         int drunkenness = dataFile.getInt(path + ".drunkenness", 0);
         int offlineDrunkenness = dataFile.getInt(path + ".offlineDrunkenness", 0);
-        return new BPlayer(playerUUID, quality, drunkenness, offlineDrunkenness);
+        return new BreweryPlayer(playerUUID, quality, drunkenness, offlineDrunkenness);
     }
 
     @Override
-    public Collection<BPlayer> getAllPlayers() {
+    public Collection<BreweryPlayer> getAllPlayers() {
         ConfigurationSection section = dataFile.getConfigurationSection("players");
 
         if (section == null) {
             return Collections.emptyList();
         }
 
-        List<BPlayer> players = new ArrayList<>();
+        List<BreweryPlayer> players = new ArrayList<>();
 
         for (String key : section.getKeys(false)) {
-            BPlayer player = getPlayer(BUtil.uuidFromString(key));
+            BreweryPlayer player = getPlayer(BreweryUtil.uuidFromString(key));
             if (player != null) {
                 players.add(player);
             }
@@ -342,15 +342,15 @@ public class FlatFileStorage extends DataManager {
     }
 
     @Override
-    public void saveAllPlayers(Collection<BPlayer> players) {
+    public void saveAllPlayers(Collection<BreweryPlayer> players) {
         dataFile.set("players", null);
-        for (BPlayer player : players) {
+        for (BreweryPlayer player : players) {
             savePlayer(player);
         }
     }
 
     @Override
-    public void savePlayer(BPlayer player) {
+    public void savePlayer(BreweryPlayer player) {
         String path = "players." + player.getUuid();
 
         dataFile.set(path + ".quality", player.getQuality());
@@ -386,7 +386,7 @@ public class FlatFileStorage extends DataManager {
         List<Wakeup> wakeups = new ArrayList<>();
 
         for (String key : section.getKeys(false)) {
-            Wakeup wakeup = getWakeup(BUtil.uuidFromString(key));
+            Wakeup wakeup = getWakeup(BreweryUtil.uuidFromString(key));
             if (wakeup != null) {
                 wakeups.add(wakeup);
             }

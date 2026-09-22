@@ -26,7 +26,7 @@ import com.dre.brewery.configuration.annotation.LocalizedComment;
 import com.dre.brewery.configuration.annotation.OkaeriConfigFileOptions;
 import com.dre.brewery.configuration.sector.CustomItemsSector;
 import com.dre.brewery.configuration.sector.capsule.ConfigCustomItem;
-import com.dre.brewery.recipe.RecipeItem;
+import com.dre.brewery.recipe.items.RecipeItem;
 import eu.okaeri.configs.annotation.Header;
 import lombok.Setter;
 

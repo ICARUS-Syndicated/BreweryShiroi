@@ -21,8 +21,8 @@
 package com.dre.brewery.integration.item;
 
 import com.dre.brewery.Brew;
-import com.dre.brewery.recipe.BRecipe;
-import com.dre.brewery.recipe.PluginItem;
+import com.dre.brewery.recipe.BreweryRecipe;
+import com.dre.brewery.recipe.items.PluginItem;
 import org.bukkit.ChatColor;
 import org.bukkit.inventory.ItemStack;
 
@@ -46,7 +46,7 @@ public class BreweryPluginItem extends PluginItem {
 
     // Checks if an ItemStack is a Brewery Brew with the correct recipe by comparing the ids/names
     private boolean isMatchingBrew(Brew brew) {
-        BRecipe recipe = brew.getCurrentRecipe();
+        BreweryRecipe recipe = brew.getCurrentRecipe();
         if (recipe != null) {
             // We *could* add support for names instead of just using the ids
             return this.getItemId().equalsIgnoreCase(recipe.getId()) ||

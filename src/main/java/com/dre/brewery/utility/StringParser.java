@@ -20,10 +20,12 @@
 
 package com.dre.brewery.utility;
 
+import com.dre.brewery.utility.utils.BreweryUtil;
+
 public class StringParser {
 
     public static Tuple<Integer, String> parseQuality(String line, ParseType type) {
-        line = BUtil.color(line);
+        line = BreweryUtil.color(line);
         int plus = 0;
         if (line.startsWith("+++")) {
             plus = 3;

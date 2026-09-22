@@ -20,7 +20,7 @@
 
 package com.dre.brewery.integration.barrel;
 
-import com.dre.brewery.Barrel;
+import com.dre.brewery.instruments.barrel.BreweryBarrel;
 import com.dre.brewery.utility.Logging;
 import com.griefcraft.listeners.LWCPlayerListener;
 import com.griefcraft.lwc.LWC;
@@ -42,9 +42,9 @@ import org.bukkit.plugin.RegisteredListener;
 public class LWCBarrel {
 
 
-    public static boolean denyDestroy(Player player, Barrel barrel) {
+    public static boolean denyDestroy(Player player, BreweryBarrel breweryBarrel) {
         LWC lwc = LWC.getInstance();
-        Block sign = barrel.getSignOfSpigot();
+        Block sign = breweryBarrel.getSignOfSpigot();
         //if (!Boolean.parseBoolean(lwc.resolveProtectionConfiguration(sign, "ignoreBlockDestruction"))) {
         Protection protection = lwc.findProtection(sign);
         if (protection != null) {
@@ -101,22 +101,22 @@ public class LWCBarrel {
     }
 
     // If a Barrel is destroyed without player
-    public static void remove(Barrel barrel) {
-        Protection protection = LWC.getInstance().findProtection(barrel.getSignOfSpigot());
+    public static void remove(BreweryBarrel breweryBarrel) {
+        Protection protection = LWC.getInstance().findProtection(breweryBarrel.getSignOfSpigot());
         if (protection != null) {
             protection.remove();
         }
     }
 
     // Returns true if the block that exploded should not be removed
-    public static boolean denyExplosion(Barrel barrel) {
-        Protection protection = LWC.getInstance().findProtection(barrel.getSignOfSpigot());
+    public static boolean denyExplosion(BreweryBarrel breweryBarrel) {
+        Protection protection = LWC.getInstance().findProtection(breweryBarrel.getSignOfSpigot());
 
         return protection != null && !protection.hasFlag(Flag.Type.ALLOWEXPLOSIONS);
     }
 
     // Returns true if the block that was destroyed should not be removed
-    public static boolean denyDestroyOther(Barrel barrel) {
-        return LWC.getInstance().findProtection(barrel.getSignOfSpigot()) != null;
+    public static boolean denyDestroyOther(BreweryBarrel breweryBarrel) {
+        return LWC.getInstance().findProtection(breweryBarrel.getSignOfSpigot()) != null;
     }
 }

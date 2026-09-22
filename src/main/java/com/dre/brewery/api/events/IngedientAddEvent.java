@@ -20,9 +20,9 @@
 
 package com.dre.brewery.api.events;
 
-import com.dre.brewery.BCauldron;
-import com.dre.brewery.recipe.RecipeItem;
-import com.dre.brewery.utility.MaterialUtil;
+import com.dre.brewery.instruments.BreweryCauldron;
+import com.dre.brewery.recipe.items.RecipeItem;
+import com.dre.brewery.utility.utils.MaterialUtil;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Levelled;
@@ -42,16 +42,16 @@ import org.jetbrains.annotations.Nullable;
 public class IngedientAddEvent extends PlayerEvent implements Cancellable {
     private static final HandlerList handlers = new HandlerList();
     private final Block block;
-    private final BCauldron cauldron;
+    private final BreweryCauldron cauldron;
     private ItemStack ingredient;
     private RecipeItem rItem;
     private boolean cancelled;
     private boolean takeItem = true;
 
-    public IngedientAddEvent(Player who, Block block, BCauldron bCauldron, ItemStack ingredient, RecipeItem rItem) {
+    public IngedientAddEvent(Player who, Block block, BreweryCauldron breweryCauldron, ItemStack ingredient, RecipeItem rItem) {
         super(who);
         this.block = block;
-        cauldron = bCauldron;
+        cauldron = breweryCauldron;
         this.rItem = rItem;
         this.ingredient = ingredient;
     }
@@ -60,7 +60,7 @@ public class IngedientAddEvent extends PlayerEvent implements Cancellable {
         return block;
     }
 
-    public BCauldron getCauldron() {
+    public BreweryCauldron getCauldron() {
         return cauldron;
     }
 

@@ -24,11 +24,11 @@ import com.dre.brewery.Brew;
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.configuration.ConfigManager;
 import com.dre.brewery.configuration.files.Lang;
-import com.dre.brewery.recipe.BRecipe;
-import com.dre.brewery.utility.BUtil;
+import com.dre.brewery.recipe.BreweryRecipe;
+import com.dre.brewery.utility.utils.BreweryUtil;
 import com.dre.brewery.utility.Logging;
 import com.dre.brewery.utility.MinecraftVersion;
-import com.dre.brewery.utility.PermissionUtil;
+import com.dre.brewery.utility.utils.PermissionUtil;
 import com.dre.brewery.utility.Tuple;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -41,21 +41,21 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.dre.brewery.utility.PermissionUtil.BPermission.COPY;
-import static com.dre.brewery.utility.PermissionUtil.BPermission.CREATE;
-import static com.dre.brewery.utility.PermissionUtil.BPermission.DELETE;
-import static com.dre.brewery.utility.PermissionUtil.BPermission.DRINK;
-import static com.dre.brewery.utility.PermissionUtil.BPermission.DRINK_OTHER;
-import static com.dre.brewery.utility.PermissionUtil.BPermission.INFO;
-import static com.dre.brewery.utility.PermissionUtil.BPermission.INFO_OTHER;
-import static com.dre.brewery.utility.PermissionUtil.BPermission.PUKE;
-import static com.dre.brewery.utility.PermissionUtil.BPermission.PUKE_OTHER;
-import static com.dre.brewery.utility.PermissionUtil.BPermission.RELOAD;
-import static com.dre.brewery.utility.PermissionUtil.BPermission.SEAL;
-import static com.dre.brewery.utility.PermissionUtil.BPermission.SET;
-import static com.dre.brewery.utility.PermissionUtil.BPermission.STATIC;
-import static com.dre.brewery.utility.PermissionUtil.BPermission.UNLABEL;
-import static com.dre.brewery.utility.PermissionUtil.BPermission.WAKEUP;
+import static com.dre.brewery.utility.utils.PermissionUtil.BPermission.COPY;
+import static com.dre.brewery.utility.utils.PermissionUtil.BPermission.CREATE;
+import static com.dre.brewery.utility.utils.PermissionUtil.BPermission.DELETE;
+import static com.dre.brewery.utility.utils.PermissionUtil.BPermission.DRINK;
+import static com.dre.brewery.utility.utils.PermissionUtil.BPermission.DRINK_OTHER;
+import static com.dre.brewery.utility.utils.PermissionUtil.BPermission.INFO;
+import static com.dre.brewery.utility.utils.PermissionUtil.BPermission.INFO_OTHER;
+import static com.dre.brewery.utility.utils.PermissionUtil.BPermission.PUKE;
+import static com.dre.brewery.utility.utils.PermissionUtil.BPermission.PUKE_OTHER;
+import static com.dre.brewery.utility.utils.PermissionUtil.BPermission.RELOAD;
+import static com.dre.brewery.utility.utils.PermissionUtil.BPermission.SEAL;
+import static com.dre.brewery.utility.utils.PermissionUtil.BPermission.SET;
+import static com.dre.brewery.utility.utils.PermissionUtil.BPermission.STATIC;
+import static com.dre.brewery.utility.utils.PermissionUtil.BPermission.UNLABEL;
+import static com.dre.brewery.utility.utils.PermissionUtil.BPermission.WAKEUP;
 
 public class CommandUtil {
 
@@ -73,7 +73,7 @@ public class CommandUtil {
 
         int page = 1;
         if (args.length > 1) {
-            page = BUtil.parseInt(args[1]).orElse(1);
+            page = BreweryUtil.parseInt(args[1]).orElse(1);
         }
 
         ArrayList<String> commands = getCommands(sender);
@@ -82,7 +82,7 @@ public class CommandUtil {
             Logging.msg(sender, "&6" + plugin.getDescription().getName() + " v" + plugin.getDescription().getVersion());
         }
 
-        BUtil.list(sender, commands, page);
+        BreweryUtil.list(sender, commands, page);
 
     }
 
@@ -96,12 +96,12 @@ public class CommandUtil {
         boolean hasQuality = false;
         String pName = null;
         if (args.length > 2) {
-            quality = BUtil.getRandomIntInRange(args[args.length - 1]);
+            quality = BreweryUtil.getRandomIntInRange(args[args.length - 1]);
 
             if (quality <= 0 || quality > 10) {
                 pName = args[args.length - 1];
                 if (args.length > 3) {
-                    quality = BUtil.getRandomIntInRange(args[args.length - 2]);
+                    quality = BreweryUtil.getRandomIntInRange(args[args.length - 2]);
                 }
             }
             if (quality > 0 && quality <= 10) {
@@ -145,7 +145,7 @@ public class CommandUtil {
         }
         name = name.replaceAll("\"", "");
 
-        BRecipe recipe = BRecipe.getMatching(name);
+        BreweryRecipe recipe = BreweryRecipe.getMatching(name);
         if (recipe != null) {
             return new Tuple<>(recipe.createBrew(quality), player);
         } else {
@@ -246,7 +246,7 @@ public class CommandUtil {
         if (mainSet == null) {
             mainSet = new HashSet<>();
             altSet = new HashSet<>();
-            for (BRecipe recipe : BRecipe.getAllRecipes()) {
+            for (BreweryRecipe recipe : BreweryRecipe.getAllRecipes()) {
                 mainSet.addAll(createLookupFromName(recipe.getName(5)));
 
                 Set<String> altNames = new HashSet<>(3);

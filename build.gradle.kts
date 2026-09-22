@@ -42,7 +42,7 @@ group = "com.dre.brewery"
 version = "3.7.0"
 
 val langVersion: Int = 21
-val runTaskJavaVersion: Int = 25
+val runTaskJavaVersion: Int = 21
 val encoding: String = "UTF-8"
 
 repositories {
@@ -100,6 +100,10 @@ dependencies {
                 reject("1.33")
             }
         }
+    }
+    // Jackson: YAML parsing for the recipe system (relocated below to avoid clashing with other plugins)
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.18.2") {
+        exclude("org.yaml", "snakeyaml") // Provided by the server, same as for Okaeri
     }
 
     // Plugin Compatability
@@ -163,6 +167,7 @@ tasks {
         relocate("com.google.errorprone", "$pack.google.errorprone")
         relocate("com.github.Anon8281.universalScheduler", "$pack.universalScheduler")
         relocate("eu.okaeri", "$pack.okaeri")
+        relocate("com.fasterxml.jackson", "$pack.jackson")
         relocate("com.mongodb", "$pack.mongodb")
         relocate("org.bson", "$pack.bson")
         relocate("io.papermc.lib", "$pack.paperlib")
@@ -190,7 +195,7 @@ tasks {
     }
 
     runServer {
-        minecraftVersion("26.1.2")
+        minecraftVersion("1.21.11")
     }
 
     register("publishToDiscord") {
@@ -204,7 +209,7 @@ tasks {
 
 tasks.withType(xyz.jpenilla.runtask.task.AbstractRun::class) {
     javaLauncher = javaToolchains.launcherFor {
-        vendor = JvmVendorSpec.ADOPTIUM
+        // Any vendor, otherwise the run tasks can not start unless Temurin is installed (and reachable)
         languageVersion = JavaLanguageVersion.of(runTaskJavaVersion)
     }
 }

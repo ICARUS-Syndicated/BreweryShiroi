@@ -20,7 +20,7 @@
 
 package com.dre.brewery.commands.subcommands;
 
-import com.dre.brewery.BPlayer;
+import com.dre.brewery.BreweryPlayer;
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.commands.SubCommand;
 import com.dre.brewery.configuration.files.Lang;
@@ -77,19 +77,19 @@ public class InfoCommand implements SubCommand {
         }
 
         Player player = BreweryPlugin.getInstance().getServer().getPlayerExact(playerName);
-        BPlayer bPlayer;
+        BreweryPlayer breweryPlayer;
         if (player == null) {
-            bPlayer = BPlayer.getByName(playerName);
+            breweryPlayer = BreweryPlayer.getByName(playerName);
         } else {
-            bPlayer = BPlayer.get(player);
+            breweryPlayer = BreweryPlayer.get(player);
         }
-        if (bPlayer == null) {
+        if (breweryPlayer == null) {
             lang.sendEntry(sender, "CMD_Info_NotDrunk", playerName);
         } else {
             if (selfInfo) {
-                bPlayer.showDrunkeness(player);
+                breweryPlayer.showDrunkeness(player);
             } else {
-                lang.sendEntry(sender, "CMD_Info_Drunk", playerName, "" + bPlayer.getDrunkeness(), "" + bPlayer.getQuality());
+                lang.sendEntry(sender, "CMD_Info_Drunk", playerName, "" + breweryPlayer.getDrunkeness(), "" + breweryPlayer.getQuality());
             }
         }
 

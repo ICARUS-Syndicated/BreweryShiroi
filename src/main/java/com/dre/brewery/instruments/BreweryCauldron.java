@@ -71,10 +71,10 @@ public class BreweryCauldron {
     private static final MinecraftVersion VERSION = BreweryPlugin.getMCVersion();
     private static final Config config = ConfigManager.getConfig(Config.class);
     private static final Lang lang = ConfigManager.getConfig(Lang.class);
-    public static final int PARTICLEPAUSE = 15;
-    private static final Set<UUID> plInteracted = new HashSet<>(); // Interact Event helper
+    public static final int PARTICLE_PAUSE = 15;
+    private static final Set<UUID> playerInteracted = new HashSet<>(); // Interact Event helper
     @Getter
-    public static Map<Block, BreweryCauldron> bcauldrons = new ConcurrentHashMap<>(); // All active cauldrons. Mapped to their block for fast retrieve
+    public static Map<Block, BreweryCauldron> breweryCauldrons = new ConcurrentHashMap<>(); // All active cauldrons. Mapped to their block for fast retrieve
 
     private BreweryIngredients ingredients = new BreweryIngredients();
     private final Block block;
@@ -102,7 +102,7 @@ public class BreweryCauldron {
     }
 
     /**
-     * Updates this Cauldron, increasing the cook time and checking for Heatsource
+     * Updates this Cauldron, increasing the cook time and checking for heat source
      *
      * @return false if Cauldron needs to be removed
      */
@@ -161,11 +161,11 @@ public class BreweryCauldron {
     // get cauldron by Block
     @Nullable
     public static BreweryCauldron get(Block block) {
-        return bcauldrons.get(block);
+        return breweryCauldrons.get(block);
     }
 
     // get cauldron from block and add given ingredient
-    // Calls the IngredientAddEvent and may be cancelled or changed
+    // Calls the IngredientAddEvent and may be canceled or changed
     public static boolean ingredientAdd(Block block, ItemStack ingredient, Player player) {
         // if not empty
         if (MaterialUtil.getFillLevel(block) != MaterialUtil.EMPTY) {
@@ -180,17 +180,17 @@ public class BreweryCauldron {
                 return false;
             }
 
-            BreweryCauldron bcauldron = get(block);
-            if (bcauldron == null) {
-                bcauldron = new BreweryCauldron(block);
-                BreweryCauldron.bcauldrons.put(block, bcauldron);
-                bcauldron.startFoliaParticleTask();
+            BreweryCauldron breweryCauldron = get(block);
+            if (breweryCauldron == null) {
+                breweryCauldron = new BreweryCauldron(block);
+                BreweryCauldron.breweryCauldrons.put(block, breweryCauldron);
+                breweryCauldron.startFoliaParticleTask();
             }
 
-            IngredientAddEvent event = new IngredientAddEvent(player, block, bcauldron, ingredient.clone(), rItem);
+            IngredientAddEvent event = new IngredientAddEvent(player, block, breweryCauldron, ingredient.clone(), rItem);
             BreweryPlugin.getInstance().getServer().getPluginManager().callEvent(event);
             if (!event.isCancelled()) {
-                bcauldron.add(event.getIngredient(), event.getRecipeItem());
+                breweryCauldron.add(event.getIngredient(), event.getRecipeItem());
                 //P.p.debugLog("Cauldron add: t2 " + ((t2 - t1) / 1000) + " t3: " + ((t3 - t2) / 1000) + " t4: " + ((t4 - t3) / 1000) + " t5: " + ((t5 - t4) / 1000) + "µs");
                 return event.willTakeItem();
             } else {
@@ -227,7 +227,7 @@ public class BreweryCauldron {
             cauldron.setLevel(cauldron.getLevel() - 1);
 
             // Update the new Level to the Block
-            // We have to use the BlockData variable "data" here instead of the casted "cauldron"
+            // We have to use the BlockData variable "data" here instead of the cast "cauldron"
             block.setBlockData(data);
 
             if (cauldron.getLevel() <= 0) {
@@ -252,10 +252,10 @@ public class BreweryCauldron {
             lang.sendEntry(player, "Error_NoPermissions");
             return;
         }
-        BreweryCauldron bcauldron = get(block);
-        if (bcauldron != null) {
-            if (bcauldron.state > 1) {
-                lang.sendEntry(player, "Player_CauldronInfo1", "" + bcauldron.state);
+        BreweryCauldron breweryCauldron = get(block);
+        if (breweryCauldron != null) {
+            if (breweryCauldron.state > 1) {
+                lang.sendEntry(player, "Player_CauldronInfo1", "" + breweryCauldron.state);
             } else {
                 lang.sendEntry(player, "Player_CauldronInfo2");
             }
@@ -263,7 +263,7 @@ public class BreweryCauldron {
     }
 
     public void cookEffect() {
-        assert !VERSION.isFolia() || BreweryPlugin.getScheduler().isRegionThread(block.getLocation())
+        assert !MinecraftVersion.isFolia() || BreweryPlugin.getScheduler().isRegionThread(block.getLocation())
             : "cookEffect must run on owning region thread";
         if (!BreweryUtil.isChunkLoaded(block) || !MaterialUtil.isCauldronHeatSource(block.getRelative(BlockFace.DOWN))) {
             return;
@@ -338,7 +338,7 @@ public class BreweryCauldron {
             int previousPosition;
             Color previousColor;
             if (index > 0) {
-                // has previous colours
+                // has previous colors
                 previousPosition = colorList.get(index - 1).first();
                 previousColor = colorList.get(index - 1).second();
             } else {
@@ -373,14 +373,14 @@ public class BreweryCauldron {
     }
 
     public static void processCookEffects() {
-        if (VERSION.isFolia()) return;
+        if (MinecraftVersion.isFolia()) return;
         if (!config.isEnableCauldronParticles()) return;
-        if (bcauldrons.isEmpty()) {
+        if (breweryCauldrons.isEmpty()) {
             return;
         }
-        final float chance = 1f / PARTICLEPAUSE;
+        final float chance = 1f / PARTICLE_PAUSE;
 
-        for (BreweryCauldron cauldron : bcauldrons.values()) {
+        for (BreweryCauldron cauldron : breweryCauldrons.values()) {
             if (ThreadLocalRandom.current().nextFloat() < chance) {
                 BreweryPlugin.getScheduler().runTask(cauldron.block.getLocation(), cauldron::cookEffect);
             }
@@ -388,7 +388,7 @@ public class BreweryCauldron {
     }
 
     private synchronized void startFoliaParticleTask() {
-        if (!VERSION.isFolia()) {
+        if (!MinecraftVersion.isFolia()) {
             return;
         }
         if (!config.isEnableCauldronParticles()) {
@@ -398,17 +398,17 @@ public class BreweryCauldron {
         if (foliaParticleTask != null && !foliaParticleTask.isCancelled()) {
             return;
         }
-        long delay = ThreadLocalRandom.current().nextLong(1, PARTICLEPAUSE + 1L);
+        long delay = ThreadLocalRandom.current().nextLong(1, PARTICLE_PAUSE + 1L);
         foliaParticleTask = BreweryPlugin.getScheduler().runTaskTimer(block.getLocation(), () -> {
             if (config.isMinimalParticles() && ThreadLocalRandom.current().nextFloat() > 0.5f) {
                 return;
             }
             cookEffect();
-        }, delay, PARTICLEPAUSE);
+        }, delay, PARTICLE_PAUSE);
     }
 
     private synchronized void stopFoliaParticleTask() {
-        if (!VERSION.isFolia()) {
+        if (!MinecraftVersion.isFolia()) {
             return;
         }
         if (foliaParticleTask != null) {
@@ -418,23 +418,23 @@ public class BreweryCauldron {
     }
 
     public static void startAllFoliaParticleTasks() {
-        if (!VERSION.isFolia()) {
+        if (!MinecraftVersion.isFolia()) {
             return;
         }
         if (!config.isEnableCauldronParticles()) {
             stopAllFoliaParticleTasks();
             return;
         }
-        for (BreweryCauldron cauldron : bcauldrons.values()) {
+        for (BreweryCauldron cauldron : breweryCauldrons.values()) {
             cauldron.startFoliaParticleTask();
         }
     }
 
     public static void stopAllFoliaParticleTasks() {
-        if (!VERSION.isFolia()) {
+        if (!MinecraftVersion.isFolia()) {
             return;
         }
-        for (BreweryCauldron cauldron : bcauldrons.values()) {
+        for (BreweryCauldron cauldron : breweryCauldrons.values()) {
             cauldron.stopFoliaParticleTask();
         }
     }
@@ -446,92 +446,97 @@ public class BreweryCauldron {
         Block clickedBlock = event.getClickedBlock();
         assert clickedBlock != null;
 
-        if (materialInHand == Material.AIR || materialInHand == Material.BUCKET) {
-            return;
+        switch (materialInHand) {
+            // Skip if empty or using buckets
+            case Material.AIR, Material.BUCKET, Material.WATER_BUCKET -> {
+                return;
+            }
 
-        } else if (materialInHand == MaterialUtil.CLOCK) {
-            printTime(player, clickedBlock);
-            return;
+            case Material.CLOCK -> {
+                printTime(player, clickedBlock);
+                return;
+            }
 
-            // fill a glass bottle with potion
-        } else if (materialInHand == Material.GLASS_BOTTLE) {
-            assert item != null;
-            if (player.getInventory().firstEmpty() != -1 || item.getAmount() == 1) {
-                BreweryCauldron bcauldron = get(clickedBlock);
-                if (bcauldron != null) {
-                    if (bcauldron.fill(player, clickedBlock)) {
-                        event.setCancelled(true);
-                        if (player.hasPermission("brewery.cauldron.fill")) {
-                            if (item.getAmount() > 1) {
-                                item.setAmount(item.getAmount() - 1);
-                            } else {
-                                BreweryUtil.setItemInHand(event, Material.AIR, false);
-                            }
-                        }
+            case Material.GLASS_BOTTLE -> {
+                assert item != null;
+
+                // Are you guys couldn't write even a line of early-exit???
+                if (player.getInventory().firstEmpty() == -1 && item.getAmount() != 1) {
+                    event.setCancelled(true);
+                    return;
+                }
+
+                BreweryCauldron breweryCauldron = get(clickedBlock);
+                if (breweryCauldron == null) return;
+                if (!breweryCauldron.fill(player, clickedBlock)) return;
+
+                event.setCancelled(true);
+                if (player.hasPermission("brewery.cauldron.fill")) {
+                    if (item.getAmount() > 1) {
+                        item.setAmount(item.getAmount() - 1);
+                    } else {
+                        BreweryUtil.setItemInHand(event, Material.AIR, false);
                     }
                 }
-            } else {
-                event.setCancelled(true);
-            }
-            return;
 
-            // Ignore Water Buckets
-        } else if (materialInHand == Material.WATER_BUCKET) {
-            return;
+                return;
+            }
         }
 
         // Check if fire alive below cauldron when adding ingredients
         Block down = clickedBlock.getRelative(BlockFace.DOWN);
-        if (MaterialUtil.isCauldronHeatSource(down)) {
+        // Early-exit
+        if (!MaterialUtil.isCauldronHeatSource(down)) return;
 
-            event.setCancelled(true);
-            boolean handSwap = false;
+        event.setCancelled(true);
+        boolean handSwap = false;
 
-            // Interact event is called twice, once for each hand.
-            // Certain Items in Hand cause one of them to be cancelled or not called at all sometimes.
-            // We mark if a player had the event for the main hand
-            // If not, we handle the main hand in the event for the offhand
-            if (event.getHand() == EquipmentSlot.HAND) {
-                final UUID id = player.getUniqueId();
-                plInteracted.add(id);
-                BreweryPlugin.getScheduler().runTask(() -> plInteracted.remove(id));
-            } else if (event.getHand() == EquipmentSlot.OFF_HAND) {
-                if (!plInteracted.remove(player.getUniqueId())) {
-                    item = player.getInventory().getItemInMainHand();
-                    if (item.getType() != Material.AIR) {
-                        materialInHand = item.getType();
-                        handSwap = true;
-                    } else {
-                        item = config.isUseOffhandForCauldron() ? event.getItem() : null;
-                    }
-                }
-            }
-            if (item == null) return;
+        // Check permission first to return faster
+        if (!player.hasPermission("brewery.cauldron.insert")) {
+            lang.sendEntry(player, "Perms_NoCauldronInsert");
+            return;
+        }
 
-            if (!player.hasPermission("brewery.cauldron.insert")) {
-                lang.sendEntry(player, "Perms_NoCauldronInsert");
-                return;
-            }
-            if (ingredientAdd(clickedBlock, item, player)) {
-                boolean isBucket = item.getType().name().endsWith("_BUCKET");
-                boolean isBottle = MaterialUtil.isBottle(item.getType());
-                if (item.getAmount() > 1) {
-                    item.setAmount(item.getAmount() - 1);
-
-                    if (isBucket) {
-                        giveItem(player, new ItemStack(Material.BUCKET));
-                    } else if (isBottle) {
-                        giveItem(player, new ItemStack(Material.GLASS_BOTTLE));
-                    }
+        // Interact event is called twice, once for each hand.
+        // Certain Items in Hand cause one of them to be canceled or not called at all sometimes.
+        // We mark if a player had the event for the main hand
+        // If not, we handle the main hand in the event for the offhand
+        if (event.getHand() == EquipmentSlot.HAND) {
+            final UUID id = player.getUniqueId();
+            playerInteracted.add(id);
+            BreweryPlugin.getScheduler().runTask(() -> playerInteracted.remove(id));
+        } else if (event.getHand() == EquipmentSlot.OFF_HAND) {
+            if (!playerInteracted.remove(player.getUniqueId())) {
+                item = player.getInventory().getItemInMainHand();
+                if (item.getType() != Material.AIR) {
+                    item.getType();
+                    handSwap = true;
                 } else {
-                    if (isBucket) {
-                        BreweryUtil.setItemInHand(event, Material.BUCKET, handSwap);
-                    } else if (isBottle) {
-                        BreweryUtil.setItemInHand(event, Material.GLASS_BOTTLE, handSwap);
-                    } else {
-                        item.setAmount(0);
-                    }
+                    item = config.isUseOffhandForCauldron() ? event.getItem() : null;
                 }
+            }
+        }
+
+        // Return if item is invalid or non-exist
+        if (item == null) return;
+        if (!ingredientAdd(clickedBlock, item, player)) return;
+
+        boolean isBucket = item.getType().name().endsWith("_BUCKET");
+        boolean isBottle = MaterialUtil.isBottle(item.getType());
+        if (item.getAmount() > 1) {
+            item.setAmount(item.getAmount() - 1);
+            if (isBucket) {
+                giveItem(player, new ItemStack(Material.BUCKET));
+            } else if (isBottle) {
+                giveItem(player, new ItemStack(Material.GLASS_BOTTLE));
+            }
+        } else {
+            if (isBucket) {
+                BreweryUtil.setItemInHand(event, Material.BUCKET, handSwap);
+            } else if (isBottle) {
+                BreweryUtil.setItemInHand(event, Material.GLASS_BOTTLE, handSwap);
+            } else {
+                item.setAmount(0);
             }
         }
     }
@@ -547,7 +552,7 @@ public class BreweryCauldron {
         startAllFoliaParticleTasks();
 
         var scheduler = BreweryPlugin.getScheduler();
-        for (BreweryCauldron cauldron : bcauldrons.values()) {
+        for (BreweryCauldron cauldron : breweryCauldrons.values()) {
             cauldron.particleRecipe = null;
             cauldron.particleColor = null;
 
@@ -563,7 +568,7 @@ public class BreweryCauldron {
      * reset to normal cauldron
      */
     public static boolean remove(Block block) {
-        BreweryCauldron removed = bcauldrons.remove(block);
+        BreweryCauldron removed = breweryCauldrons.remove(block);
         if (removed != null) {
             removed.stopFoliaParticleTask();
             return true;
@@ -575,24 +580,24 @@ public class BreweryCauldron {
      * Are any Cauldrons in that World
      */
     public static boolean hasDataInWorld(World world) {
-        return bcauldrons.keySet().stream().anyMatch(block -> block.getWorld().equals(world));
+        return breweryCauldrons.keySet().stream().anyMatch(block -> block.getWorld().equals(world));
     }
 
-    // unloads cauldrons that are in a unloading world
+    // unloads cauldrons that are in an unloading world
     // as they were written to file just before, this is safe to do
     public static void onUnload(World world) {
-        List<Block> blocksToRemove = bcauldrons.keySet().stream()
+        List<Block> blocksToRemove = breweryCauldrons.keySet().stream()
             .filter(block -> block.getWorld().equals(world))
             .toList();
         blocksToRemove.forEach(BreweryCauldron::remove);
     }
 
     /**
-     * Unload all Cauldrons that have are in a unloaded World
+     * Unload all Cauldrons that have are in an unloaded World
      */
     public static void unloadWorlds() {
         List<World> worlds = BreweryPlugin.getInstance().getServer().getWorlds();
-        List<Block> blocksToRemove = bcauldrons.keySet().stream()
+        List<Block> blocksToRemove = breweryCauldrons.keySet().stream()
             .filter(block -> !worlds.contains(block.getWorld()))
             .toList();
         blocksToRemove.forEach(BreweryCauldron::remove);
@@ -601,9 +606,9 @@ public class BreweryCauldron {
     public static void save(ConfigurationSection config, ConfigurationSection oldData) {
         BreweryUtil.createWorldSections(config);
 
-        if (!bcauldrons.isEmpty()) {
+        if (!breweryCauldrons.isEmpty()) {
             int id = 0;
-            for (BreweryCauldron cauldron : bcauldrons.values()) {
+            for (BreweryCauldron cauldron : breweryCauldrons.values()) {
                 String worldName = cauldron.block.getWorld().getName();
                 String prefix;
 

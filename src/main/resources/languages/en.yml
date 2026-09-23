@@ -180,6 +180,7 @@ Help_Version: '&6/brew version &9Displays version information and the loaded add
 Help_ShowStats: '&6/brew showstats &9Displays statistics about the brewing process'
 Help_DebugInfo: '&6/brew debuginfo [Recipe] &9Writes debugging information about the item in your hand into the log'
 Help_Data: '&6/brew data <save|reload> &9Saves or reloads the data of the DataManager'
+Help_Bench: '&6/brew bench <timings|verify> [Recipes] [Iterations] &9Measures and verifies the recipe lookup'
 Help_ReloadAddons: '&6/brew reloadaddons &9Reloads all addons'
 Help_ItemName: '&6/brew ItemName &9Display name of item in hand for the config'
 

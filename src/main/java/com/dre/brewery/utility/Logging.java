@@ -29,6 +29,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Supplier;
+
 public final class Logging {
 
     public enum LogLevel {
@@ -80,9 +82,53 @@ public final class Logging {
         }
     }
 
+    /**
+     * How many nested {@link #withoutDebugLogging} scopes are currently active.
+     */
+    private static int debugSuppressionDepth;
+
+    /**
+     * Whether debug logging is turned on. Callers on a hot path should check this before building a
+     * message, or use {@link #debugLog(Supplier)} which does it for them.
+     */
+    public static boolean isDebugEnabled() {
+        return debugSuppressionDepth == 0 && config().isDebug();
+    }
+
     public static void debugLog(String message) {
-        if (config().isDebug()) {
+        if (isDebugEnabled()) {
             log("&2[Debug] &f" + message);
+        }
+    }
+
+    /**
+     * Logs a debug message that is only built when debug logging is enabled.
+     * <p>
+     * Prefer this over {@link #debugLog(String)} for anything expensive to assemble, since the string
+     * concatenation of the plain overload happens before the method is even entered.
+     *
+     * @param messageSupplier Supplies the message, only called when debug logging is enabled
+     */
+    public static void debugLog(Supplier<String> messageSupplier) {
+        if (isDebugEnabled()) {
+            log("&2[Debug] &f" + messageSupplier.get());
+        }
+    }
+
+    /**
+     * Runs the given action with debug logging suppressed, restoring the previous state afterwards.
+     * <p>
+     * Used by the benchmark, so its timings reflect the work the code does rather than the cost of writing
+     * a log line per recipe. With debug logging on, a single recipe lookup can emit hundreds of lines.
+     *
+     * @param action The action to run without debug logging
+     */
+    public static void withoutDebugLogging(Runnable action) {
+        debugSuppressionDepth++;
+        try {
+            action.run();
+        } finally {
+            debugSuppressionDepth--;
         }
     }
 

@@ -456,6 +456,8 @@ public class Lang extends AbstractOkaeriConfigFile {
     private String helpDebugInfo;
     @CustomKey("Help_Data")
     private String helpData;
+    @CustomKey("Help_Bench")
+    private String helpBench;
     @CustomKey("Help_Distill")
     private String helpDistill;
     @CustomKey("Help_Drink")

@@ -181,7 +181,7 @@ public final class BreweryPlugin extends JavaPlugin {
             .filter(Objects::nonNull)
             .forEach(BreweryBarrel::registerBarrel)
         );
-        BreweryCauldron.getBcauldrons().putAll(dataManager.getAllCauldrons().stream()
+        BreweryCauldron.getBreweryCauldrons().putAll(dataManager.getAllCauldrons().stream()
             .filter(Objects::nonNull)
             .collect(Collectors.toMap(
                 BreweryCauldron::getBlock, Function.identity(),
@@ -319,7 +319,7 @@ public final class BreweryPlugin extends JavaPlugin {
 
             // runs every min to update cooking time
 
-            for (BreweryCauldron breweryCauldron : BreweryCauldron.bcauldrons.values()) {
+            for (BreweryCauldron breweryCauldron : BreweryCauldron.breweryCauldrons.values()) {
                 BreweryPlugin.getScheduler().runTask(breweryCauldron.getBlock().getLocation(), () -> {
                     if (!breweryCauldron.onUpdate()) {
                         BreweryCauldron.remove(breweryCauldron.getBlock());

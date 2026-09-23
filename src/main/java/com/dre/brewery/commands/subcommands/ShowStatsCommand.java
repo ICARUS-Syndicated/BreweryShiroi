@@ -47,7 +47,7 @@ public class ShowStatsCommand {
         Logging.message(sender, "Drunk Players: " + BreweryPlayer.numDrunkPlayers());
         Logging.message(sender, "Brews created: " + BreweryPlugin.getInstance().getBreweryStats().brewsCreated);
         Logging.message(sender, "Barrels built: " + BreweryBarrel.getAllBarrels().size());
-        Logging.message(sender, "Cauldrons boiling: " + BreweryCauldron.bcauldrons.size());
+        Logging.message(sender, "Cauldrons boiling: " + BreweryCauldron.breweryCauldrons.size());
         Logging.message(sender, "Number of Recipes: " + BreweryRecipe.getAllRecipes().size());
         Logging.message(sender, "Wakeups: " + Wakeup.wakeups.size());
     }

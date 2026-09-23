@@ -76,7 +76,7 @@ public class CauldronListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPistonExtend(BlockPistonExtendEvent event) {
         for (Block block : event.getBlocks()) {
-            if (BreweryCauldron.bcauldrons.containsKey(block)) {
+            if (BreweryCauldron.breweryCauldrons.containsKey(block)) {
                 BreweryCauldron.remove(block);
             }
         }

@@ -31,10 +31,23 @@ import java.util.stream.Collectors;
 /**
  * Helper class that keeps track of {@link BrewDefect BrewDefects} and their quality deductions.
  * Quality starts at 10, and is reduced by each defect.
+ * <p>
+ * The aggregate values behind {@link #getQuality()} and {@link #compareMostToLeastComplexity} are
+ * maintained as deductions are added, because both are called once per loaded recipe on the recipe lookup
+ * path. Recomputing them from the deduction list on every call meant walking a stream pipeline per recipe.
  */
 public class RecipeEvaluation {
 
     private final List<QualityDeduction> deductions = new ArrayList<>();
+
+    /**
+     * The quality left after subtracting every non-fatal deduction, in the order they were added. Kept in
+     * step with the list rather than recomputed, and deliberately subtracted one by one: adding the
+     * deductions up first and subtracting the total would round differently and could flip a comparison.
+     */
+    private float runningQuality = 10f;
+
+    private int fatalCount;
 
     /**
      * Deducts quality by the specified amount.
@@ -46,7 +59,7 @@ public class RecipeEvaluation {
         if (qualityDeduction < 0) {
             throw new IllegalArgumentException("qualityDeduction cannot be negative");
         }
-        deductions.add(QualityDeduction.deduction(defect, qualityDeduction));
+        add(QualityDeduction.deduction(defect, qualityDeduction));
     }
 
     /**
@@ -54,7 +67,19 @@ public class RecipeEvaluation {
      * @param defect the defect
      */
     public void fatal(BrewDefect defect) {
-        deductions.add(QualityDeduction.fatal(defect));
+        add(QualityDeduction.fatal(defect));
+    }
+
+    /**
+     * The only way a deduction enters this evaluation, so the aggregates cannot drift from the list.
+     */
+    private void add(QualityDeduction deduction) {
+        deductions.add(deduction);
+        if (deduction.isFatal()) {
+            fatalCount++;
+        } else {
+            runningQuality -= deduction.getQualityDeduction();
+        }
     }
 
     /**
@@ -65,11 +90,11 @@ public class RecipeEvaluation {
      */
     public static RecipeEvaluation combine(RecipeEvaluation... evals) {
         RecipeEvaluation combined = new RecipeEvaluation();
+        float factor = 1.0f / evals.length;
         for (RecipeEvaluation evaluation : evals) {
-            List<QualityDeduction> scaledDown = evaluation.deductions.stream()
-                .map(d -> d.scale(1.0f / evals.length))
-                .toList();
-            combined.deductions.addAll(scaledDown);
+            for (QualityDeduction deduction : evaluation.deductions) {
+                combined.add(deduction.scale(factor));
+            }
         }
         return combined;
     }
@@ -82,16 +107,23 @@ public class RecipeEvaluation {
     }
 
     /**
-     * @return whether there are any fatal defects
+     * @return whether this evaluation found no defects at all, i.e. the recipe matches perfectly
      */
-    private boolean hasFatalDefect() {
-        return deductions.stream().anyMatch(QualityDeduction::isFatal);
+    public boolean isPerfect() {
+        return deductions.isEmpty();
     }
 
     /**
-     * Gets the quality of the recipe. Will be between 0 and 10 inclusive and rounded.
-     * If there are fatal defects, or if the quality is deducted to less than 0,the quality will be -1.
-     * @return the quality
+     * @return whether there are any fatal defects
+     */
+    private boolean hasFatalDefect() {
+        return fatalCount > 0;
+    }
+
+    /**
+     * Gets the quality of the recipe.
+     * If there are fatal defects, or if the quality is deducted to less than 0, the quality will be -1.
+     * @return the quality, or -1 if the recipe is not usable
      */
     public float getQuality() {
         float quality = getTrueQuality();
@@ -107,12 +139,7 @@ public class RecipeEvaluation {
      * @return the true quality
      */
     public float getTrueQuality() {
-        if (hasFatalDefect()) {
-            return Float.NEGATIVE_INFINITY;
-        }
-        return deductions.stream()
-            .map(QualityDeduction::getQualityDeduction)
-            .reduce(10f, (q1, q2) -> q1 - q2);
+        return hasFatalDefect() ? Float.NEGATIVE_INFINITY : runningQuality;
     }
 
     /**
@@ -141,13 +168,18 @@ public class RecipeEvaluation {
     }
 
     /**
-     * Compares two RecipeEvaluations, in order of most complexity to least complexity.
-     * Recipe evaluations are sorted by, in order:
+     * Compares two RecipeEvaluations. A positive result means this evaluation is the better recipe, decided
+     * by, in order:
      * <ul>
-     *     <li>Number of total defects, most to fewest</li>
-     *     <li>Number of fatal defects, most to fewest</li>
-     *     <li>{@link #getTrueQuality()}, lowest to highest</li>
+     *     <li>Number of total defects, fewest first</li>
+     *     <li>Whether the evaluation has fatal defects, non-fatal first</li>
+     *     <li>Number of fatal defects, fewest first</li>
+     *     <li>{@link #getTrueQuality()}, highest first</li>
      * </ul>
+     * Note that the name describes the order these keys are declared in, not the preference: the caller
+     * wants the recipe with the <em>fewest</em> defects, so a positive result is the less complex evaluation.
+     * The ordering itself lives in {@link ComparisonKeys#isBetterThan}, so that the recipe lookup and this
+     * method cannot drift apart.
      * @param other the other evaluation
      * @return -1, 0, or 1 if <, =, or >
      * @throws NullPointerException if other is null
@@ -156,26 +188,87 @@ public class RecipeEvaluation {
         if (other == null) {
             throw new NullPointerException("other cannot be null");
         }
-        int numDefectsCompare = -Integer.compare(deductions.size(), other.deductions.size());
-        if (numDefectsCompare != 0) {
-            return numDefectsCompare;
+        ComparisonKeys thisKeys = new ComparisonKeys();
+        thisKeys.combine(this);
+        ComparisonKeys otherKeys = new ComparisonKeys();
+        otherKeys.combine(other);
+        if (thisKeys.isBetterThan(otherKeys)) {
+            return 1;
         }
-        int thisFatalCount = fatalCount();
-        boolean thisFatal = thisFatalCount > 0;
-        int otherFatalCount = other.fatalCount();
-        boolean otherFatal = otherFatalCount > 0;
-        if (!thisFatal && !otherFatal) {
-            return Float.compare(getTrueQuality(), other.getTrueQuality());
+        if (otherKeys.isBetterThan(thisKeys)) {
+            return -1;
         }
-        if (thisFatal && otherFatal) {
-            return -Integer.compare(thisFatalCount, otherFatalCount);
-        }
-        return -Boolean.compare(thisFatal, otherFatal);
+        return 0;
     }
-    private int fatalCount() {
-        return (int) deductions.stream()
-            .filter(QualityDeduction::isFatal)
-            .count();
+
+    /**
+     * The three aggregates {@link #compareMostToLeastComplexity} decides on, for a combination of
+     * evaluations, computed without building the combined deduction list.
+     * <p>
+     * Scoring one recipe against every loaded recipe has to rank each combination before it knows whether
+     * the combination wins. Producing an evaluation for the losers too would mean copying their deductions
+     * into scaled duplicates for nothing, so the ranking is done on these keys and only the winning
+     * combination is turned into an evaluation at the end.
+     * <p>
+     * Instances are meant to be reused: {@link #combine} overwrites the previous values.
+     */
+    public static final class ComparisonKeys {
+
+        private int defectCount;
+        private int fatalCount;
+        private float trueQuality;
+
+        /**
+         * Recomputes the keys for the given evaluations.
+         * @param evals the evaluations to combine, must not be empty
+         */
+        public void combine(RecipeEvaluation... evals) {
+            int defects = 0;
+            int fatals = 0;
+            float quality = 10f;
+            float factor = 1.0f / evals.length;
+            for (RecipeEvaluation evaluation : evals) {
+                for (QualityDeduction deduction : evaluation.deductions) {
+                    defects++;
+                    if (deduction.isFatal()) {
+                        fatals++;
+                    } else {
+                        quality -= deduction.getQualityDeduction() * factor;
+                    }
+                }
+            }
+            this.defectCount = defects;
+            this.fatalCount = fatals;
+            this.trueQuality = quality;
+        }
+
+        /**
+         * @return whether the combination has no defects at all
+         */
+        public boolean isPerfect() {
+            return defectCount == 0;
+        }
+
+        /**
+         * The same comparison as {@link RecipeEvaluation#compareMostToLeastComplexity}, reduced to the
+         * question of whether these keys beat the other ones.
+         * @param other the keys to compare against
+         * @return whether the combination behind these keys is the better one
+         */
+        public boolean isBetterThan(ComparisonKeys other) {
+            if (defectCount != other.defectCount) {
+                return defectCount < other.defectCount;
+            }
+            boolean thisFatal = fatalCount > 0;
+            boolean otherFatal = other.fatalCount > 0;
+            if (!thisFatal && !otherFatal) {
+                return Float.compare(trueQuality, other.trueQuality) > 0;
+            }
+            if (thisFatal && otherFatal) {
+                return fatalCount < other.fatalCount;
+            }
+            return !thisFatal;
+        }
     }
 
     @Override

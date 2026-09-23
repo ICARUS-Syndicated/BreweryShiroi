@@ -471,7 +471,7 @@ public class BreweryData {
             return;
         }
         if (!initCauldrons.isEmpty()) {
-            BreweryCauldron.bcauldrons.putAll(initCauldrons);
+            BreweryCauldron.breweryCauldrons.putAll(initCauldrons);
         }
         if (!initBarrelFutures.isEmpty()) {
             FutureUtil.mergeFutures(initBarrelFutures)

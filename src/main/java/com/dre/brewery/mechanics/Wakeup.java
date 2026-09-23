@@ -182,8 +182,7 @@ public class Wakeup {
     }
 
     public static void check(CommandSender sender, int id, boolean all) {
-        if (sender instanceof Player) {
-            Player player = (Player) sender;
+        if (sender instanceof Player player) {
 
             if (!all) {
                 if (wakeups.isEmpty() || id >= wakeups.size()) {

@@ -71,6 +71,7 @@ permissions:
       brewery.cmd.itemname: true
       brewery.cmd.reloadaddons: true
       brewery.cmd.datamanager: true
+      brewery.cmd.bench: true
   # *
   brewery.*:
     description: Gives Access to every Permission, including bypasses and overrides
@@ -122,6 +123,8 @@ permissions:
     description: See misc info about BreweryShiroi
   brewery.cmd.datamanager:
     description: DataManager stuff
+  brewery.cmd.bench:
+    description: Measure and verify the recipe lookup
 
 # -- Barrel --
   brewery.createbarrel:

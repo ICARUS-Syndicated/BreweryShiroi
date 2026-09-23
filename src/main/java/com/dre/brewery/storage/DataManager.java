@@ -173,7 +173,7 @@ public abstract class DataManager {
 
     public void saveAll(boolean async, Runnable callback) {
         Collection<BreweryBarrel> breweryBarrels = BreweryBarrel.getAllBarrels();
-        Collection<BreweryCauldron> cauldrons = BreweryCauldron.getBcauldrons().values();
+        Collection<BreweryCauldron> cauldrons = BreweryCauldron.getBreweryCauldrons().values();
         Collection<BreweryPlayer> breweryPlayers = BreweryPlayer.getPlayers().values();
         Collection<Wakeup> wakeups = Wakeup.getWakeups();
 

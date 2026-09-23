@@ -21,6 +21,7 @@
 package com.dre.brewery.commands;
 
 import com.dre.brewery.commands.subcommands.AgeCommand;
+import com.dre.brewery.commands.subcommands.BenchCommand;
 import com.dre.brewery.commands.subcommands.CopyCommand;
 import com.dre.brewery.commands.subcommands.CreateCommand;
 import com.dre.brewery.commands.subcommands.DataManagerCommand;
@@ -78,6 +79,7 @@ public final class BreweryCommands {
         DataManagerCommand.register(commands);
         WakeupCommand.register(commands);
         SetCommand.register(commands);
+        BenchCommand.register(commands);
         VersionCommand.register(commands);
     }
 }

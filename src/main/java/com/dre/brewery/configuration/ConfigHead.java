@@ -107,10 +107,11 @@ public class ConfigHead {
      */
     public <T extends AbstractOkaeriConfigFile> T getConfig(Class<T> configClass) {
         try {
-            for (var mapEntry : LOADED_CONFIGS.entrySet()) {
-                if (mapEntry.getKey().equals(configClass)) {
-                    return (T) mapEntry.getValue();
-                }
+            // LOADED_CONFIGS is a HashMap, so this is a single lookup rather than a scan.
+            // This method sits on hot paths (every debug log call), so it needs to stay cheap.
+            AbstractOkaeriConfigFile loaded = LOADED_CONFIGS.get(configClass);
+            if (loaded != null) {
+                return (T) loaded;
             }
             return createConfig(configClass);
         } catch (Throwable e) {

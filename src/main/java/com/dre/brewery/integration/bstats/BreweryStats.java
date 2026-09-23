@@ -80,7 +80,7 @@ public class BreweryStats {
             metrics.addCustomChart(new SingleLineChart("drunk_players", BreweryPlayer::numDrunkPlayers));
             metrics.addCustomChart(new SingleLineChart("brews_in_existence", () -> brewsCreated));
             metrics.addCustomChart(new SingleLineChart("barrels_built", BreweryBarrel.getAllBarrels()::size));
-            metrics.addCustomChart(new SingleLineChart("cauldrons_boiling", BreweryCauldron.bcauldrons::size));
+            metrics.addCustomChart(new SingleLineChart("cauldrons_boiling", BreweryCauldron.breweryCauldrons::size));
             metrics.addCustomChart(new AdvancedPie("brew_quality", () -> {
                 Map<String, Integer> map = new HashMap<>(8);
                 map.put("excellent", exc);

@@ -109,7 +109,7 @@ public class BreweryXStats {
 
             metrics.addCustomChart(new SingleLineChart("drunk_players", BreweryPlayer::numDrunkPlayers));
             metrics.addCustomChart(new SingleLineChart("barrels_built", BreweryBarrel.getAllBarrels()::size));
-            metrics.addCustomChart(new SingleLineChart("cauldrons_boiling", BreweryCauldron.bcauldrons::size));
+            metrics.addCustomChart(new SingleLineChart("cauldrons_boiling", BreweryCauldron.breweryCauldrons::size));
 
         } catch (Exception | LinkageError e) {
             Logging.errorLog("Failed to submit stats data to bStats.org (BreweryXStats)", e);

@@ -38,7 +38,6 @@ import com.dre.brewery.utility.Logging;
 import com.dre.brewery.utility.utils.MaterialUtil;
 import com.dre.brewery.utility.StringParser;
 import com.dre.brewery.utility.BinaryTuple;
-import net.kyori.adventure.title.Title;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -55,6 +54,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * A Recipe used to Brew a Brewery Potion.
@@ -131,8 +131,8 @@ public class BreweryRecipe implements Cloneable {
         List<RecipeItem> ingredients = new ArrayList<>();
         for (String s : stringList) {
             IngredientResult result = loadIngredientVerbose(s);
-            if (result instanceof IngredientResult.Success success) {
-                ingredients.add(success.ingredient);
+            if (result instanceof IngredientResult.Success(RecipeItem ingredient)) {
+                ingredients.add(ingredient);
             } else {
                 IngredientResult.Error error = (IngredientResult.Error) result;
                 Lang lang = ConfigManager.getConfig(Lang.class);
@@ -185,7 +185,7 @@ public class BreweryRecipe implements Cloneable {
                 custom.setAmount(amount);
                 custom.makeImmutable();
                 if (custom.hasMaterials()) {
-                    BreweryCauldronRecipe.acceptedMaterials.addAll(custom.getMaterials());
+                    BreweryCauldronRecipe.acceptedMaterials.addAll(Objects.requireNonNull(custom.getMaterials()));
                 }
                 // Add it as acceptedCustom
                 if (!BreweryCauldronRecipe.acceptedCustom.contains(custom)) {
@@ -322,7 +322,7 @@ public class BreweryRecipe implements Cloneable {
      * @see #getBarrelTypes() for the full list
      */
     public BarrelWoodType getWood() {
-        return barrelTypes.isEmpty() ? BarrelWoodType.ANY : barrelTypes.get(0);
+        return barrelTypes.isEmpty() ? BarrelWoodType.ANY : barrelTypes.getFirst();
     }
 
     public boolean usesAnyWood() {
@@ -514,7 +514,7 @@ public class BreweryRecipe implements Cloneable {
     private void updateLists() {
         for (RecipeItem ingredient : getIngredients()) {
             if (ingredient.hasMaterials()) {
-                BreweryCauldronRecipe.acceptedMaterials.addAll(ingredient.getMaterials());
+                BreweryCauldronRecipe.acceptedMaterials.addAll(Objects.requireNonNull(ingredient.getMaterials()));
             }
             if (ingredient instanceof SimpleItem) {
                 BreweryCauldronRecipe.acceptedSimple.add(((SimpleItem) ingredient).getMaterial());
@@ -799,7 +799,7 @@ public class BreweryRecipe implements Cloneable {
      * Builder to easily create Recipes
      */
     public static class Builder {
-        private BreweryRecipe recipe;
+        private final BreweryRecipe recipe;
 
         public Builder(String name) {
             recipe = new BreweryRecipe(name, PotionColor.WATER);

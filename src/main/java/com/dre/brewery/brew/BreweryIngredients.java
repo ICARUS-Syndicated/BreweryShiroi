@@ -154,7 +154,7 @@ public class BreweryIngredients {
     }
 
     /**
-     * returns an Potion item with cooked ingredients
+     * returns a Potion item with cooked ingredients
      */
     public ItemStack cook(int state, Player brewer) {
 
@@ -237,7 +237,7 @@ public class BreweryIngredients {
     }
 
     /**
-     * The durability damage of an item, replacing the deprecated {@code ItemStack#getDurability()}.
+     * The durability damage to an item, replacing the deprecated {@code ItemStack#getDurability()}.
      */
     private static short damageOf(ItemStack item) {
         return item.getItemMeta() instanceof Damageable damageable ? (short) damageable.getDamage() : 0;
@@ -276,20 +276,26 @@ public class BreweryIngredients {
         // tracks the highest quality recipe using exact numbers, no rounding or clamping
         // if no legacy recipe can be found, this is the plugin's best guess at what the player is trying to make
         BreweryRecipe bestRecipe = null;
-        RecipeEvaluation bestEval = null;
+        RecipeEvaluation[] bestParts = null;
+
         // the original Brewery plugin uses a different algorithm that rounds and clamps ingredient/cook/age/wood
         // qualities before adding them, so we have to do the same here to avoid breaking backward compatibility
         float quality = 0;
         BreweryRecipe bestRecipeLegacy = null;
-        RecipeEvaluation bestEvalLegacy = null;
+        RecipeEvaluation[] bestPartsLegacy = null;
+
+        // Every candidate has to be ranked, but only the winner ends up being returned as an evaluation.
+        // Ranking therefore happens on the comparison keys of the parts, and the parts themselves are carried
+        // along so that the evaluation can be built once at the end. Handing the freshly computed keys over
+        // after a swap means no copying, which would undo the point of skipping the losing combinations.
+        RecipeEvaluation.ComparisonKeys candidateKeys = new RecipeEvaluation.ComparisonKeys();
+        RecipeEvaluation.ComparisonKeys bestKeys = new RecipeEvaluation.ComparisonKeys();
 
         // Only brew recipes are candidates here. Cauldron recipes have neither difficulty, cooking time,
         // distill runs nor barrel type, so they cannot be scored by this evaluation; they are matched on their
         // own by getCauldronRecipe(), which is what decides the name of the base potion. Brews without a matching
         // cauldron recipe are named after the cooked ingredients instead.
         for (BreweryRecipe recipe : BreweryRecipe.getAllRecipes()) {
-            RecipeEvaluation completeRecipeEval;
-
             RecipeEvaluation ingredientEval = getIngredientQualityFull(recipe);
             float ingredientQuality = ingredientEval.getQuality();
 
@@ -299,6 +305,7 @@ public class BreweryIngredients {
             // age and wood quality cannot be fatal, only need to check ingredient and cooking
             boolean isFatal = ingredientEval.isFatal() || cookingEval.isFatal();
 
+            RecipeEvaluation[] parts;
             if (recipe.needsToAge() || time > 0.5) {
                 // needs riping in barrel
                 RecipeEvaluation ageEval = getAgeQualityFull(recipe, time);
@@ -307,44 +314,60 @@ public class BreweryIngredients {
                 RecipeEvaluation woodEval = getWoodQualityFull(recipe, wood);
                 float woodQuality = woodEval.getQuality();
 
-                // is this recipe better than the previous best?
-                Logging.debugLog("Ingredient Quality: " + ingredientQuality + " Cooking Quality: " + cookingQuality +
-                    " Wood Quality: " + woodQuality + " age Quality: " + ageQuality + " for " + recipe.getName(5));
-                completeRecipeEval = RecipeEvaluation.combine(ingredientEval, cookingEval, ageEval, woodEval);
+                Logging.debugLog(() -> "Ingredient Quality: " + ingredientQuality
+                    + " Cooking Quality: " + cookingQuality
+                    + " Wood Quality: " + woodQuality + " age Quality: " + ageQuality + " for " + recipe.getName(5));
+                parts = new RecipeEvaluation[]{ingredientEval, cookingEval, ageEval, woodEval};
 
-                float averageQuality = ((float) ingredientQuality + cookingQuality + woodQuality + ageQuality) / 4;
+                float averageQuality = (ingredientQuality + cookingQuality + woodQuality + ageQuality) / 4;
                 if (!isFatal && averageQuality > quality) {
-                    quality = ((float) ingredientQuality + cookingQuality + woodQuality + ageQuality) / 4;
+                    quality = averageQuality;
                     bestRecipeLegacy = recipe;
-                    bestEvalLegacy = completeRecipeEval;
+                    bestPartsLegacy = parts;
                 }
 
             } else {
                 // calculate quality without age and barrel
-                Logging.debugLog("Ingredient Quality: " + ingredientQuality + " Cooking Quality: " + cookingQuality + " for " + recipe.getName(5));
-                completeRecipeEval = RecipeEvaluation.combine(ingredientEval, cookingEval);
+                Logging.debugLog(() -> "Ingredient Quality: " + ingredientQuality
+                    + " Cooking Quality: " + cookingQuality + " for " + recipe.getName(5));
+                parts = new RecipeEvaluation[]{ingredientEval, cookingEval};
 
-                float averageQuality = ((float) ingredientQuality + cookingQuality) / 2;
+                float averageQuality = (ingredientQuality + cookingQuality) / 2;
                 if (!isFatal && averageQuality > quality) {
                     quality = averageQuality;
                     bestRecipeLegacy = recipe;
-                    bestEvalLegacy = completeRecipeEval;
+                    bestPartsLegacy = parts;
                 }
             }
 
-            if (bestEval == null || completeRecipeEval.compareMostToLeastComplexity(bestEval) > 0) {
+            candidateKeys.combine(parts);
+            if (bestParts == null || candidateKeys.isBetterThan(bestKeys)) {
                 bestRecipe = recipe;
-                bestEval = completeRecipeEval;
+                bestParts = parts;
+                RecipeEvaluation.ComparisonKeys swap = bestKeys;
+                bestKeys = candidateKeys;
+                candidateKeys = swap;
+                if (bestKeys.isPerfect()) {
+                    // A recipe with no defects is the best possible outcome, and because the comparison above
+                    // uses a strict "better than", an equally good recipe later in the list would not replace
+                    // this one. Stopping here is therefore the same answer, just without scoring the rest.
+                    break;
+                }
             }
         }
 
         if (bestRecipeLegacy != null) {
-            Logging.debugLog(String.format("best recipe: %s has Quality=%.3f",
-                bestRecipeLegacy.getName(5), quality));
+            RecipeEvaluation bestEvalLegacy = RecipeEvaluation.combine(bestPartsLegacy);
+            // The lambda needs effectively final copies, as the originals were reassigned inside the loop
+            float foundQuality = quality;
+            BreweryRecipe foundRecipe = bestRecipeLegacy;
+            Logging.debugLog(() -> String.format("best recipe: %s has Quality=%.3f", foundRecipe.getName(5), foundQuality));
             return new BestRecipeResult.Found(bestRecipeLegacy, bestEvalLegacy);
         } else {
-            Logging.debugLog(String.format("guess recipe: %s has Quality=%.3f",
-                bestRecipe.getName(5), bestEval.getTrueQuality()));
+            // The recipe list is not empty, so the loop above always ranked at least one candidate
+            RecipeEvaluation bestEval = RecipeEvaluation.combine(bestParts);
+            BreweryRecipe guessRecipe = bestRecipe;
+            Logging.debugLog(() -> String.format("guess recipe: %s has Quality=%.3f", guessRecipe.getName(5), bestEval.getTrueQuality()));
             return new BestRecipeResult.Error(bestRecipe, bestEval);
         }
     }
@@ -360,13 +383,12 @@ public class BreweryIngredients {
         BestRecipeResult result = getBestRecipeFull(BarrelWoodType.ANY, 0, false);
 
         // Check if best recipe is cooking only
-        if (result instanceof BestRecipeResult.Found found) {
-            if (found.recipe().isCookingOnly()) {
+        if (result instanceof BestRecipeResult.Found(BreweryRecipe recipe, RecipeEvaluation evaluation)) {
+            if (recipe.isCookingOnly()) {
                 return result;
             } else {
-                RecipeEvaluation evaluation = found.evaluation();
                 evaluation.fatal(new BrewDefect.CookingNotNeeded());
-                return new BestRecipeResult.Error(found.recipe(), evaluation);
+                return new BestRecipeResult.Error(recipe, evaluation);
             }
         }
         return result;
@@ -404,13 +426,12 @@ public class BreweryIngredients {
         BestRecipeResult result = getBestRecipeFull(wood, time, true);
 
         // Check if best recipe needs to be distilled
-        if (result instanceof BestRecipeResult.Found found) {
-            if (found.recipe().needsDistilling()) {
+        if (result instanceof BestRecipeResult.Found(BreweryRecipe recipe, RecipeEvaluation evaluation)) {
+            if (recipe.needsDistilling()) {
                 return result;
             } else {
-                RecipeEvaluation evaluation = found.evaluation();
-                evaluation.fatal(new BrewDefect.DistillMismatch(true, false, found.recipe().isAlcoholic()));
-                return new BestRecipeResult.Error(found.recipe(), evaluation);
+                evaluation.fatal(new BrewDefect.DistillMismatch(true, false, recipe.isAlcoholic()));
+                return new BestRecipeResult.Error(recipe, evaluation);
             }
         }
         return result;
@@ -426,13 +447,12 @@ public class BreweryIngredients {
     public BestRecipeResult getAgeRecipeFull(BarrelWoodType wood, float time, boolean distilled) {
         BestRecipeResult result = getBestRecipeFull(wood, time, distilled);
 
-        if (result instanceof BestRecipeResult.Found found) {
-            if (found.recipe().needsToAge()) {
+        if (result instanceof BestRecipeResult.Found(BreweryRecipe recipe, RecipeEvaluation evaluation)) {
+            if (recipe.needsToAge()) {
                 return result;
             } else {
-                RecipeEvaluation evaluation = found.evaluation();
-                evaluation.fatal(new BrewDefect.AgeMismatch(time, found.recipe().getAge(), found.recipe().isAlcoholic()));
-                return new BestRecipeResult.Error(found.recipe(), evaluation);
+                evaluation.fatal(new BrewDefect.AgeMismatch(time, recipe.getAge(), recipe.isAlcoholic()));
+                return new BestRecipeResult.Error(recipe, evaluation);
             }
         }
         return result;
@@ -448,25 +468,64 @@ public class BreweryIngredients {
     public RecipeEvaluation getIngredientQualityFull(BreweryRecipe recipe) {
         RecipeEvaluation evaluation = new RecipeEvaluation();
 
-        List<RecipeItem> missingIngredients = recipe.getMissingIngredients(ingredients);
-        if (!missingIngredients.isEmpty()) {
-            // when ingredients are not complete
-            for (RecipeItem missing : missingIngredients) {
-                evaluation.fatal(new BrewDefect.MissingIngredient(missing, missing.getAmount()));
+        List<RecipeItem> recipeItems = recipe.getIngredients();
+        int recipeItemCount = recipeItems.size();
+        int ingredientCount = ingredients.size();
+
+        // Match every recipe item against every given ingredient exactly once. One pass over the pairs is
+        // enough to derive both halves of what is needed here: which recipe items nothing matched, and the
+        // amount each given ingredient is expected to have. Doing it as two separate loops (as
+        // getMissingIngredients() and amountOf() do) walks the same m*k pairs twice.
+        // amountOf() resolves an ingredient to the first match in recipe order, so a later recipe item
+        // must never overwrite an amount that is already known.
+        boolean[] recipeItemMatched = new boolean[recipeItemCount];
+        int[] expectedAmounts = new int[ingredientCount];
+        boolean[] ingredientResolved = new boolean[ingredientCount];
+        int resolvedCount = 0;
+
+        for (int recipeItemIndex = 0; recipeItemIndex < recipeItemCount; recipeItemIndex++) {
+            RecipeItem recipeItem = recipeItems.get(recipeItemIndex);
+            boolean anyMatched = false;
+            for (int ingredientIndex = 0; ingredientIndex < ingredientCount; ingredientIndex++) {
+                if (!recipeItem.matches(ingredients.get(ingredientIndex))) {
+                    continue;
+                }
+                anyMatched = true;
+                if (!ingredientResolved[ingredientIndex]) {
+                    ingredientResolved[ingredientIndex] = true;
+                    expectedAmounts[ingredientIndex] = recipeItem.getAmount();
+                    resolvedCount++;
+                }
+                if (resolvedCount == ingredientCount) {
+                    // Every ingredient already knows its expected amount, so this row tells us nothing more
+                    break;
+                }
             }
+            recipeItemMatched[recipeItemIndex] = anyMatched;
         }
 
+        for (int recipeItemIndex = 0; recipeItemIndex < recipeItemCount; recipeItemIndex++) {
+            if (recipeItemMatched[recipeItemIndex]) {
+                continue;
+            }
+            // when ingredients are not complete
+            RecipeItem missing = recipeItems.get(recipeItemIndex);
+            evaluation.fatal(new BrewDefect.MissingIngredient(missing, missing.getAmount()));
+        }
+
+        int totalCount = getIngredientsCount();
         int badStuff = 0;
-        for (Ingredient ingredient : ingredients) {
-            int amountInRecipe = recipe.amountOf(ingredient);
+        for (int ingredientIndex = 0; ingredientIndex < ingredientCount; ingredientIndex++) {
+            Ingredient ingredient = ingredients.get(ingredientIndex);
+            int amountInRecipe = expectedAmounts[ingredientIndex];
             int count = ingredient.getAmount();
             if (amountInRecipe == 0) {
                 // this ingredient doesn't belong into the recipe
                 badStuff++;
-                if (count > (getIngredientsCount() / 2)) {
+                if (count > (totalCount / 2)) {
                     // when more than half of the ingredients don't fit into the recipe
                     evaluation.fatal(new BrewDefect.WrongIngredient(ingredient));
-                } else if (badStuff < ingredients.size()) {
+                } else if (badStuff < ingredientCount) {
                     // when there are other ingredients
                     float badIngredientDeduction = count * (recipe.getDifficulty() / 2.0f);
                     evaluation.deduct(new BrewDefect.WrongIngredient(ingredient), badIngredientDeduction);
@@ -582,8 +641,7 @@ public class BreweryIngredients {
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
-        if (!(obj instanceof BreweryIngredients)) return false;
-        BreweryIngredients other = ((BreweryIngredients) obj);
+        if (!(obj instanceof BreweryIngredients other)) return false;
         return cookedTime == other.cookedTime &&
             ingredients.equals(other.ingredients);
     }

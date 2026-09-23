@@ -20,7 +20,7 @@
 
 package com.dre.brewery.instruments.barrel;
 
-import com.dre.brewery.Brew;
+import com.dre.brewery.brew.Brew;
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.api.events.barrel.BarrelAccessEvent;
 import com.dre.brewery.api.events.barrel.BarrelCreateEvent;
@@ -89,15 +89,15 @@ public class BreweryBarrel extends BarrelBody implements InventoryHolder {
     /**
      * Create a new Barrel, has to be done in the primary thread
      */
-    public BreweryBarrel(Block spigot, byte signoffset) {
-        super(spigot, signoffset);
+    public BreweryBarrel(Block spigot, byte signOffset) {
+        super(spigot, signOffset);
         this.small = computeSmall();
         this.inventory = Bukkit.createInventory(this, !small ? config.getBarrelInvSizeLarge() * 9 : config.getBarrelInvSizeSmall() * 9, lang.getEntry("Etc_Barrel"));
         this.id = UUID.randomUUID();
     }
 
-    public BreweryBarrel(Block spigot, byte signoffset, boolean isSmall) {
-        super(spigot, signoffset);
+    public BreweryBarrel(Block spigot, byte signOffset, boolean isSmall) {
+        super(spigot, signOffset);
         this.small = isSmall;
         this.inventory = Bukkit.createInventory(this, !isSmall ? config.getBarrelInvSizeLarge() * 9 : config.getBarrelInvSizeSmall() * 9, lang.getEntry("Etc_Barrel"));
         this.id = UUID.randomUUID();
@@ -315,9 +315,9 @@ public class BreweryBarrel extends BarrelBody implements InventoryHolder {
         // convert spigot if neccessary
         Block spigot = BarrelBody.getSpigotOfSign(sign);
 
-        byte signoffset = 0;
+        byte signOffset = 0;
         if (!spigot.equals(sign)) {
-            signoffset = (byte) (sign.getY() - spigot.getY());
+            signOffset = (byte) (sign.getY() - spigot.getY());
         }
         List<BreweryBarrel> worldBreweryBarrels = barrels.get(sign.getWorld().getUID());
         if (worldBreweryBarrels == null) {
@@ -325,11 +325,11 @@ public class BreweryBarrel extends BarrelBody implements InventoryHolder {
         }
         int i = 0;
         for (BreweryBarrel breweryBarrel : worldBreweryBarrels) {
-            if (breweryBarrel != null && breweryBarrel.isSignOfBarrel(signoffset)) {
+            if (breweryBarrel != null && breweryBarrel.isSignOfBarrel(signOffset)) {
                 if (breweryBarrel.spigot.equals(spigot)) {
-                    if (breweryBarrel.getSignoffset() == 0 && signoffset != 0) {
+                    if (breweryBarrel.getSignOffset() == 0 && signOffset != 0) {
                         // Barrel has no signOffset even though we clicked a sign, may be old
-                        breweryBarrel.setSignoffset(signoffset);
+                        breweryBarrel.setSignOffset(signOffset);
                     }
                     moveMRU(sign.getWorld().getUID(), i);
                     return breweryBarrel;
@@ -384,14 +384,14 @@ public class BreweryBarrel extends BarrelBody implements InventoryHolder {
         // Check for already existing barrel at this location
         if (BreweryBarrel.get(spigot) != null) return false;
 
-        byte signoffset = 0;
+        byte signOffset = 0;
         if (!spigot.equals(sign)) {
-            signoffset = (byte) (sign.getY() - spigot.getY());
+            signOffset = (byte) (sign.getY() - spigot.getY());
         }
 
         BreweryBarrel breweryBarrel = getBySpigot(spigot);
         if (breweryBarrel == null) {
-            breweryBarrel = new BreweryBarrel(spigot, signoffset);
+            breweryBarrel = new BreweryBarrel(spigot, signOffset);
             if (breweryBarrel.getBrokenBlock(true) == null) {
                 if (overlapsExistingBarrel(breweryBarrel)) {
                     return false;
@@ -415,8 +415,8 @@ public class BreweryBarrel extends BarrelBody implements InventoryHolder {
                 }
             }
         } else {
-            if (breweryBarrel.getSignoffset() == 0 && signoffset != 0) {
-                breweryBarrel.setSignoffset(signoffset);
+            if (breweryBarrel.getSignOffset() == 0 && signOffset != 0) {
+                breweryBarrel.setSignOffset(signOffset);
                 return true;
             }
         }
@@ -493,12 +493,12 @@ public class BreweryBarrel extends BarrelBody implements InventoryHolder {
                             if (brew != null) {
                                 // Brew before throwing
                                 brew.age(item, time, wood);
-                                PotionMeta meta = (PotionMeta) item.getItemMeta();
-                                if (BrewLore.hasColorLore(meta)) {
-                                    BrewLore lore = new BrewLore(brew, meta);
+                                PotionMeta itemMeta = (PotionMeta) item.getItemMeta();
+                                if (BrewLore.hasColorLore(itemMeta)) {
+                                    BrewLore lore = new BrewLore(brew, itemMeta);
                                     lore.convertLore(false);
                                     lore.write();
-                                    item.setItemMeta(meta);
+                                    item.setItemMeta(itemMeta);
                                 }
                             }
                             // "broken" is the block that destroyed, throw them there!
@@ -599,8 +599,8 @@ public class BreweryBarrel extends BarrelBody implements InventoryHolder {
         public void run() {
             barrels.keySet()
                 .forEach(worldUuid -> {
-                    // Folia doesn't fire 'WorldUnloadEvent' but Canvas does.
-                    if (MinecraftVersion.isFolia() && !MinecraftVersion.isCanvas() && Bukkit.getWorld(worldUuid) == null) {
+                    // Folia doesn't fire 'WorldUnloadEvent', so unloaded worlds would keep stale barrel entries
+                    if (MinecraftVersion.isFolia() && Bukkit.getWorld(worldUuid) == null) {
                         barrels.remove(worldUuid); // remove this world and assume that it was unloaded on Folia servers
                         return;
                     }

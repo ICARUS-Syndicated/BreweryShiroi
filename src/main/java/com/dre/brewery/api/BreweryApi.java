@@ -21,9 +21,9 @@
 package com.dre.brewery.api;
 
 import com.dre.brewery.instruments.BreweryCauldron;
-import com.dre.brewery.BreweryPlayer;
+import com.dre.brewery.mechanics.BreweryPlayer;
 import com.dre.brewery.instruments.barrel.BreweryBarrel;
-import com.dre.brewery.Brew;
+import com.dre.brewery.brew.Brew;
 import com.dre.brewery.configuration.ConfigManager;
 import com.dre.brewery.configuration.files.Config;
 import com.dre.brewery.recipe.BreweryCauldronRecipe;
@@ -151,12 +151,12 @@ public class BreweryApi {
     /**
      * Get a Brew from an ItemMeta.
      * <p>Reads the Brew data from the saved data in the Meta
-     * <p>Checks if meta has a Brew saved
-     * <p>Returns null if meta is not a Brew
+     * <p>Checks if the itemMeta has a Brew saved
+     * <p>Returns null if the itemMeta is not a Brew
      */
     @Nullable
-    public static Brew getBrew(ItemMeta meta) {
-        return Brew.get(meta);
+    public static Brew getBrew(ItemMeta itemMeta) {
+        return Brew.get(itemMeta);
     }
 
     /**

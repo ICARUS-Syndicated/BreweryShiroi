@@ -70,11 +70,11 @@ public class BlockLockerBarrel implements ProtectableBlocksSettings {
             Block sign = block.getRelative(face);
             if (lastBarrelSign.equals(sign)) {
                 Block spigot = BarrelBody.getSpigotOfSign(sign);
-                byte signoffset = 0;
+                byte signOffset = 0;
                 if (!spigot.equals(sign)) {
-                    signoffset = (byte) (sign.getY() - spigot.getY());
+                    signOffset = (byte) (sign.getY() - spigot.getY());
                 }
-                BreweryBarrel breweryBarrel = new BreweryBarrel(spigot, signoffset, true); // Barrel is temporary, size does not matter
+                BreweryBarrel breweryBarrel = new BreweryBarrel(spigot, signOffset, true); // Barrel is temporary, size does not matter
 
                 return breweryBarrel.getBrokenBlock(true) == null;
             }

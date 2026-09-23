@@ -21,6 +21,7 @@
 package com.dre.brewery.recipe.items;
 
 import com.dre.brewery.utility.ItemMetaCompat;
+import com.dre.brewery.utility.utils.BreweryUtil;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
@@ -103,23 +104,23 @@ public class CustomMatchAnyItem extends RecipeItem {
     @Override
     public Ingredient toIngredient(ItemStack forItem) {
         // We only use the one part of this item that actually matched the given item to add to ingredients
-        Material mat = getMaterialMatch(forItem);
-        if (mat != null) {
-            return new CustomItem(mat);
+        Material material = getMaterialMatch(forItem);
+        if (material != null) {
+            return new CustomItem(material);
         }
         String name = getNameMatch(forItem);
         if (name != null) {
             return new CustomItem(null, name, null);
         }
-        String l = getLoreMatch(forItem);
-        if (l != null) {
+        String loreMatch = getLoreMatch(forItem);
+        if (loreMatch != null) {
             List<String> lore = new ArrayList<>(1);
-            lore.add(l);
+            lore.add(loreMatch);
             return new CustomItem(null, null, lore);
         }
-        Integer cmData = getCustomModelDataMatch(forItem);
-        if (cmData != null) {
-            return new CustomItem(null, null, null, cmData);
+        Integer customModelData = getCustomModelDataMatch(forItem);
+        if (customModelData != null) {
+            return new CustomItem(null, null, null, customModelData);
         }
 
         // Shouldnt happen
@@ -130,16 +131,16 @@ public class CustomMatchAnyItem extends RecipeItem {
     @Override
     public Ingredient toIngredientGeneric() {
         if (hasMaterials()) {
-            return new CustomItem(materials.get(0));
+            return new CustomItem(materials.getFirst());
         }
         if (hasNames()) {
-            return new CustomItem(null, names.get(0), null);
+            return new CustomItem(null, names.getFirst(), null);
         }
         if (hasLore()) {
-            return new CustomItem(null, null, new ArrayList<>(List.of(lore.get(0))));
+            return new CustomItem(null, null, new ArrayList<>(List.of(lore.getFirst())));
         }
         if (hasCustomModelDatas()) {
-            return new CustomItem(null, null, null, customModelDatas.get(0));
+            return new CustomItem(null, null, null, customModelDatas.getFirst());
         }
 
         // Shouldnt happen
@@ -150,9 +151,9 @@ public class CustomMatchAnyItem extends RecipeItem {
         if (!hasMaterials()) return null;
 
         Material usedMat = item.getType();
-        for (Material mat : materials) {
-            if (usedMat == mat) {
-                return mat;
+        for (Material material : materials) {
+            if (usedMat == material) {
+                return material;
             }
         }
         return null;
@@ -162,10 +163,10 @@ public class CustomMatchAnyItem extends RecipeItem {
         if (!item.hasItemMeta() || !hasNames()) {
             return null;
         }
-        ItemMeta meta = item.getItemMeta();
-        assert meta != null;
-        if (meta.hasDisplayName()) {
-            return getNameMatch(meta.getDisplayName());
+        ItemMeta itemMeta = item.getItemMeta();
+        assert itemMeta != null;
+        if (itemMeta.hasDisplayName()) {
+            return getNameMatch(BreweryUtil.displayName(itemMeta));
         }
         return null;
     }
@@ -185,10 +186,10 @@ public class CustomMatchAnyItem extends RecipeItem {
         if (!item.hasItemMeta() || !hasLore()) {
             return null;
         }
-        ItemMeta meta = item.getItemMeta();
-        assert meta != null;
-        if (meta.hasLore()) {
-            return getLoreMatch(meta.getLore());
+        ItemMeta itemMeta = item.getItemMeta();
+        assert itemMeta != null;
+        if (itemMeta.hasLore()) {
+            return getLoreMatch(itemMeta.getLore());
         }
         return null;
     }
@@ -211,9 +212,9 @@ public class CustomMatchAnyItem extends RecipeItem {
         if (!item.hasItemMeta() || !hasCustomModelDatas()) {
             return null;
         }
-        ItemMeta meta = item.getItemMeta();
-        assert meta != null;
-        Integer customModelData = ItemMetaCompat.getCustomModelData(meta);
+        ItemMeta itemMeta = item.getItemMeta();
+        assert itemMeta != null;
+        Integer customModelData = ItemMetaCompat.getCustomModelData(itemMeta);
         if (customModelData != null) {
             return getCustomModelDataMatch(customModelData);
         }
@@ -300,12 +301,13 @@ public class CustomMatchAnyItem extends RecipeItem {
 
     @Override
     public String toString() {
-        return "CustomMatchAnyItem{" +
-            "id=" + getConfigId() +
-            ", materials: " + (materials != null ? materials.size() : 0) +
-            ", names:" + (names != null ? names.size() : 0) +
-            ", loresize: " + (lore != null ? lore.size() : 0) +
-            ", customModelDatas: " + (customModelDatas != null ? customModelDatas.size() : 0) +
-            '}';
+        return new StringBuilder("CustomMatchAnyItem{")
+            .append("id = ").append(getConfigId())
+            .append(", materials = ").append(materials != null ? materials.size() : 0)
+            .append(", names = ").append(names != null ? names.size() : 0)
+            .append(", loreSize = ").append(lore != null ? lore.size() : 0)
+            .append(", customModelDatas = ").append(customModelDatas != null ? customModelDatas.size() : 0)
+            .append('}')
+            .toString();
     }
 }

@@ -22,11 +22,10 @@ package com.dre.brewery.listeners;
 
 import com.dre.brewery.instruments.BreweryCauldron;
 import com.dre.brewery.instruments.barrel.BreweryBarrel;
-import com.dre.brewery.Brew;
+import com.dre.brewery.brew.Brew;
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.api.events.barrel.BarrelDestroyEvent;
 import com.dre.brewery.utility.utils.BreweryUtil;
-import com.dre.brewery.utility.MinecraftVersion;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
@@ -125,13 +124,8 @@ public class EntityListener implements Listener {
      * @return A boolean representing if the given event was caused by a wind charge
      */
     private boolean causedByWindCharge(EntityExplodeEvent event) {
-
-        // Wind charges don't exist in versions below 1.21
-        if (!BreweryPlugin.getMCVersion().isOrLater(MinecraftVersion.V1_21)) return false;
-
         EntityType type = event.getEntityType();
-        return type == EntityType.valueOf("BREEZE_WIND_CHARGE") || type == EntityType.valueOf("WIND_CHARGE");
-        // Enum can't currently be used directly, because BX still uses Spigots 1.20.2 API
+        return type == EntityType.BREEZE_WIND_CHARGE || type == EntityType.WIND_CHARGE;
 
         /*
          * Note that, since WindCharges have the ability to modify BlockStates (e.g. flip trapdoors they hit), we sadly

@@ -21,11 +21,11 @@
 package com.dre.brewery.integration.bstats;
 
 import com.dre.brewery.instruments.BreweryCauldron;
-import com.dre.brewery.BreweryPlayer;
+import com.dre.brewery.mechanics.BreweryPlayer;
 import com.dre.brewery.instruments.barrel.BreweryBarrel;
-import com.dre.brewery.Brew;
+import com.dre.brewery.brew.Brew;
 import com.dre.brewery.BreweryPlugin;
-import com.dre.brewery.Wakeup;
+import com.dre.brewery.mechanics.Wakeup;
 import com.dre.brewery.configuration.ConfigManager;
 import com.dre.brewery.configuration.files.Config;
 import com.dre.brewery.integration.bstats.Metrics.AdvancedPie;

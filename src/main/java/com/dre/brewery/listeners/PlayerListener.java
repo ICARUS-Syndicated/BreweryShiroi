@@ -21,20 +21,19 @@
 package com.dre.brewery.listeners;
 
 import com.dre.brewery.instruments.BreweryCauldron;
-import com.dre.brewery.BreweryPlayer;
+import com.dre.brewery.mechanics.BreweryPlayer;
 import com.dre.brewery.instruments.BrewerySealer;
 import com.dre.brewery.instruments.barrel.BreweryBarrel;
 import com.dre.brewery.instruments.barrel.BarrelAsset;
-import com.dre.brewery.Brew;
+import com.dre.brewery.brew.Brew;
 import com.dre.brewery.BreweryPlugin;
-import com.dre.brewery.DistortChat;
-import com.dre.brewery.Wakeup;
+import com.dre.brewery.mechanics.DistortChat;
+import com.dre.brewery.mechanics.Wakeup;
 import com.dre.brewery.configuration.ConfigManager;
 import com.dre.brewery.configuration.files.Config;
 import com.dre.brewery.configuration.files.Lang;
 import com.dre.brewery.utility.utils.BreweryUtil;
 import com.dre.brewery.utility.utils.MaterialUtil;
-import com.dre.brewery.utility.MinecraftVersion;
 import com.dre.brewery.utility.utils.PermissionUtil;
 import com.dre.brewery.utility.releases.ReleaseChecker;
 import org.bukkit.GameMode;
@@ -64,7 +63,6 @@ import org.bukkit.inventory.PlayerInventory;
 
 public class PlayerListener implements Listener {
 
-    private static final MinecraftVersion VERSION = BreweryPlugin.getMCVersion();
     private static final Config config = ConfigManager.getConfig(Config.class);
     private static final Lang lang = ConfigManager.getConfig(Lang.class);
 
@@ -84,23 +82,19 @@ public class PlayerListener implements Listener {
 
         // -- Clicking an Hopper --
         if (type == Material.HOPPER) {
-            if (config.isBrewHopperDump() && event.getPlayer().isSneaking()) {
-                if (VERSION.isOrEarlier(MinecraftVersion.V1_9) || event.getHand() == EquipmentSlot.HAND) {
-                    ItemStack item = event.getItem();
-                    if (Brew.isBrew(item)) {
-                        event.setCancelled(true);
-                        BreweryUtil.setItemInHand(event, Material.GLASS_BOTTLE, false);
-                        if (VERSION.isOrLater(MinecraftVersion.V1_11)) {
-                            clickedBlock.getWorld().playSound(clickedBlock.getLocation(), Sound.ITEM_BOTTLE_EMPTY, 1f, 1f);
-                        }
-                    }
+            if (config.isBrewHopperDump() && player.isSneaking() && event.getHand() == EquipmentSlot.HAND) {
+                ItemStack item = event.getItem();
+                if (Brew.isBrew(item)) {
+                    event.setCancelled(true);
+                    BreweryUtil.setItemInHand(event, Material.GLASS_BOTTLE, false);
+                    clickedBlock.getWorld().playSound(clickedBlock.getLocation(), Sound.ITEM_BOTTLE_EMPTY, 1f, 1f);
                 }
             }
             return;
         }
 
         // -- Opening a Sealing Table --
-        if (VERSION.isOrLater(MinecraftVersion.V1_14) && BrewerySealer.isBSealer(clickedBlock)) {
+        if (BrewerySealer.isBSealer(clickedBlock)) {
             if (player.isSneaking()) {
                 event.setUseInteractedBlock(Event.Result.DENY);
                 return;
@@ -129,7 +123,7 @@ public class PlayerListener implements Listener {
         }
 
         // -- Opening a Minecraft Barrel --
-        if (VERSION.isOrLater(MinecraftVersion.V1_14) && type == Material.BARREL) {
+        if (type == Material.BARREL) {
             if (!player.hasPermission("brewery.openbarrel.mc")) {
                 event.setCancelled(true);
                 lang.sendEntry(player, "Error_NoPermissions");
@@ -138,7 +132,7 @@ public class PlayerListener implements Listener {
         }
 
         // Do not process Off Hand for Barrel interaction
-        if (VERSION.isOrLater(MinecraftVersion.V1_9) && event.getHand() != EquipmentSlot.HAND) {
+        if (event.getHand() != EquipmentSlot.HAND) {
             return;
         }
 
@@ -173,37 +167,34 @@ public class PlayerListener implements Listener {
 
             breweryBarrel.open(player);
 
-            if (VERSION.isOrLater(MinecraftVersion.V1_14)) {
-
-                // When right clicking a normal Block in 1.14 with a potion or any edible item in hand,
-                // even when cancelled, the consume animation will continue playing while opening the Barrel inventory.
-                // The Animation and sound will play endlessly while the inventory is open, though no item is consumed.
-                // This seems to be a client bug.
-                // This workaround switches the currently selected slot to another for a short time, it needs to be a slot with a different item in it.
-                // This seems to make the client stop animating a consumption
-                // If there is a better way to do this please let me know
-                Material hand = event.getMaterial();
-                if ((hand == Material.POTION || hand.isEdible()) && !BarrelAsset.isBarrelAsset(BarrelAsset.SIGN, type)) {
-                    PlayerInventory inv = player.getInventory();
-                    final int held = inv.getHeldItemSlot();
-                    int useSlot = -1;
-                    for (int i = 0; i < 9; i++) {
-                        ItemStack item = inv.getItem(i);
-                        if (item == null || item.getType() == Material.AIR) {
-                            useSlot = i;
-                            break;
-                        } else if (useSlot == -1 && item.getType() != hand) {
-                            useSlot = i;
-                        }
-                    }
-                    if (useSlot != -1) {
-                        inv.setHeldItemSlot(useSlot);
-                        BreweryPlugin.getScheduler().runTaskLater(() -> player.getInventory().setHeldItemSlot(held), 2);
+            // When right clicking a normal Block with a potion or any edible item in hand,
+            // even when cancelled, the consume animation will continue playing while opening the Barrel inventory.
+            // The Animation and sound will play endlessly while the inventory is open, though no item is consumed.
+            // This seems to be a client bug.
+            // This workaround switches the currently selected slot to another for a short time, it needs to be a slot with a different item in it.
+            // This seems to make the client stop animating a consumption
+            // If there is a better way to do this please let me know
+            Material hand = event.getMaterial();
+            if ((hand == Material.POTION || hand.isEdible()) && !BarrelAsset.isBarrelAsset(BarrelAsset.SIGN, type)) {
+                PlayerInventory inventory = player.getInventory();
+                final int held = inventory.getHeldItemSlot();
+                int useSlot = -1;
+                for (int i = 0; i < 9; i++) {
+                    ItemStack item = inventory.getItem(i);
+                    if (item == null || item.getType() == Material.AIR) {
+                        useSlot = i;
+                        break;
+                    } else if (useSlot == -1 && item.getType() != hand) {
+                        useSlot = i;
                     }
                 }
-
-                breweryBarrel.playOpeningSound();
+                if (useSlot != -1) {
+                    inventory.setHeldItemSlot(useSlot);
+                    BreweryPlugin.getScheduler().runTaskLater(() -> player.getInventory().setHeldItemSlot(held), 2);
+                }
             }
+
+            breweryBarrel.playOpeningSound();
         }
     }
 
@@ -235,22 +226,20 @@ public class PlayerListener implements Listener {
                 /*if (player.getGameMode() != org.bukkit.GameMode.CREATIVE) {
                     brew.remove(item);
                 }*/
-                if (VERSION.isOrLater(MinecraftVersion.V1_9)) {
-                    if (player.getGameMode() != GameMode.CREATIVE) {
-// replace the potion with an empty potion to avoid effects
-                        event.setItem(new ItemStack(Material.POTION));
-                    } else {
-// Don't replace the item when keeping the potion, just cancel the event
-                        event.setCancelled(true);
-                    }
+                if (player.getGameMode() != GameMode.CREATIVE) {
+                    // replace the potion with an empty potion to avoid effects
+                    event.setItem(new ItemStack(Material.POTION));
+                } else {
+                    // Don't replace the item when keeping the potion, just cancel the event
+                    event.setCancelled(true);
                 }
             }
         } else if (BreweryUtil.getMaterialMap(config.getDrainItems()).containsKey(item.getType())) {
-            BreweryPlayer bplayer = BreweryPlayer.get(player);
-            if (bplayer != null) {
-                bplayer.drainByItem(player, item.getType());
+            BreweryPlayer breweryPlayer = BreweryPlayer.get(player);
+            if (breweryPlayer != null) {
+                breweryPlayer.drainByItem(player, item.getType());
                 if (config.isShowStatusOnDrink()) {
-                    bplayer.showDrunkeness(player);
+                    breweryPlayer.showDrunkeness(player);
                 }
             }
         }
@@ -260,12 +249,13 @@ public class PlayerListener implements Listener {
     @EventHandler
     public void onPlayerRespawn(PlayerRespawnEvent event) {
         BreweryPlayer breweryPlayer = BreweryPlayer.get(event.getPlayer());
-        if (breweryPlayer != null) {
-            if (breweryPlayer.getDrunkeness() > 20) {
-                breweryPlayer.setData(breweryPlayer.getDrunkeness() - 20, 0);
-            } else {
-                BreweryPlayer.remove(event.getPlayer());
-            }
+        if (breweryPlayer == null) {
+            return;
+        }
+        if (breweryPlayer.getDrunkenness() > 20) {
+            breweryPlayer.setData(breweryPlayer.getDrunkenness() - 20, 0);
+        } else {
+            BreweryPlayer.remove(event.getPlayer());
         }
     }
 
@@ -296,17 +286,17 @@ public class PlayerListener implements Listener {
             return;
         }
         Player player = event.getPlayer();
-        BreweryPlayer bplayer = BreweryPlayer.get(player);
-        if (bplayer == null) {
+        BreweryPlayer breweryPlayer = BreweryPlayer.get(player);
+        if (breweryPlayer == null) {
             return;
         }
         if (player.hasPermission("brewery.bypass.logindeny")) {
-            if (bplayer.getDrunkeness() > 100) {
-                bplayer.setData(100, 0);
+            if (breweryPlayer.getDrunkenness() > 100) {
+                breweryPlayer.setData(100, 0);
             }
             return;
         }
-        switch (bplayer.canJoin()) {
+        switch (breweryPlayer.canJoin()) {
             case 2 -> event.disallow(PlayerLoginEvent.Result.KICK_OTHER, lang.getEntry("Player_LoginDeny"));
             case 3 -> event.disallow(PlayerLoginEvent.Result.KICK_OTHER, lang.getEntry("Player_LoginDenyLong"));
         }
@@ -314,27 +304,27 @@ public class PlayerListener implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        BreweryPlayer bplayer = BreweryPlayer.get(event.getPlayer());
-        if (bplayer != null) {
-            bplayer.join(event.getPlayer());
+        BreweryPlayer breweryPlayer = BreweryPlayer.get(event.getPlayer());
+        if (breweryPlayer != null) {
+            breweryPlayer.join(event.getPlayer());
         }
         ReleaseChecker.getInstance().notify(event.getPlayer());
     }
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
-        BreweryPlayer bplayer = BreweryPlayer.get(event.getPlayer());
-        if (bplayer != null) {
-            bplayer.disconnecting();
+        BreweryPlayer breweryPlayer = BreweryPlayer.get(event.getPlayer());
+        if (breweryPlayer != null) {
+            breweryPlayer.disconnecting();
         }
         PermissionUtil.logout(event.getPlayer());
     }
 
     @EventHandler
     public void onPlayerKick(PlayerKickEvent event) {
-        BreweryPlayer bplayer = BreweryPlayer.get(event.getPlayer());
-        if (bplayer != null) {
-            bplayer.disconnecting();
+        BreweryPlayer breweryPlayer = BreweryPlayer.get(event.getPlayer());
+        if (breweryPlayer != null) {
+            breweryPlayer.disconnecting();
         }
         PermissionUtil.logout(event.getPlayer());
     }

@@ -20,13 +20,15 @@
 
 package com.dre.brewery.utility;
 
+import lombok.Getter;
+
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class OptionalFloat {
     private static final OptionalFloat EMPTY = new OptionalFloat();
     private final float value;
-    private final boolean isPresent;
+    @Getter private final boolean isPresent;
 
     private OptionalFloat(float value) {
         this.value = value;
@@ -51,9 +53,6 @@ public class OptionalFloat {
         return value;
     }
 
-    public boolean isPresent() {
-        return isPresent;
-    }
     public boolean isEmpty() {
         return !isPresent;
     }
@@ -80,7 +79,7 @@ public class OptionalFloat {
         return isPresent ? value : other.get();
     }
 
-    public <X extends Throwable> float orElseThrow(Supplier<X> exceptionSupplier) throws X {
+    public <T extends Throwable> float orElseThrow(Supplier<T> exceptionSupplier) throws T {
         if (isPresent) {
             return value;
         }
@@ -88,7 +87,7 @@ public class OptionalFloat {
     }
 
     public String toString() {
-        return this.isPresent ? "OptionalFloat[" + this.value + "]" : "OptionalFloat.empty";
+        return this.isPresent ? "OptionalFloat{value = " + this.value + "}" : "OptionalFloat{empty}";
     }
 
 }

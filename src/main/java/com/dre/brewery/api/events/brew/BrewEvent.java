@@ -20,18 +20,18 @@
 
 package com.dre.brewery.api.events.brew;
 
-import com.dre.brewery.Brew;
+import com.dre.brewery.brew.Brew;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class BrewEvent extends Event {
     protected final Brew brew;
-    protected final ItemMeta meta;
+    protected final ItemMeta itemMeta;
 
-    public BrewEvent(@NotNull Brew brew, @NotNull ItemMeta meta) {
+    public BrewEvent(@NotNull Brew brew, @NotNull ItemMeta itemMeta) {
         this.brew = brew;
-        this.meta = meta;
+        this.itemMeta = itemMeta;
     }
 
     @NotNull
@@ -44,6 +44,6 @@ public abstract class BrewEvent extends Event {
      */
     @NotNull
     public ItemMeta getItemMeta() {
-        return meta;
+        return itemMeta;
     }
 }

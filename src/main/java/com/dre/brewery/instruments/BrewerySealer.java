@@ -20,14 +20,15 @@
 
 package com.dre.brewery.instruments;
 
-import com.dre.brewery.Brew;
+import com.dre.brewery.brew.Brew;
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.configuration.ConfigManager;
 import com.dre.brewery.configuration.files.Config;
 import com.dre.brewery.configuration.files.Lang;
-import com.dre.brewery.utility.MinecraftVersion;
+import com.dre.brewery.utility.utils.BreweryUtil;
 import com.github.Anon8281.universalScheduler.scheduling.tasks.MyScheduledTask;
 import io.papermc.lib.PaperLib;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -45,6 +46,7 @@ import org.bukkit.inventory.Recipe;
 import org.bukkit.inventory.RecipeChoice;
 import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,14 +71,13 @@ public class BrewerySealer implements InventoryHolder {
     public BrewerySealer(Player player) {
         this.player = player;
         if (inventoryHolderWorking) {
-            Inventory inv = Bukkit.createInventory(this, InventoryType.DISPENSER, lang.getEntry("Etc_SealingTable"));
+            Inventory dispenserInventory = Bukkit.createInventory(this, InventoryType.DISPENSER, lang.getEntry("Etc_SealingTable"));
             // Inventory Holder (for DISPENSER, ...) is only passed in Paper, not in Spigot. Doing inventory.getHolder() will return null in spigot :/
-            if (PaperLib.getHolder(inv, true).getHolder() == this) {
-                inventory = inv;
+            if (PaperLib.getHolder(dispenserInventory, true).getHolder() == this) {
+                inventory = dispenserInventory;
                 return;
-            } else {
-                inventoryHolderWorking = false;
             }
+            inventoryHolderWorking = false;
         }
         inventory = Bukkit.createInventory(this, 9, lang.getEntry("Etc_SealingTable"));
     }
@@ -127,7 +128,7 @@ public class BrewerySealer implements InventoryHolder {
                 Brew brew = Brew.get(contents[i]);
                 if (brew != null && !brew.isStripped()) {
                     brew.seal(contents[i], player);
-                    if (playerValid && BreweryPlugin.getMCVersion().isOrLater(MinecraftVersion.V1_9)) {
+                    if (playerValid) {
                         player.playSound(player.getLocation(), Sound.ITEM_BOTTLE_FILL_DRAGONBREATH, 1, 1.5f + (float) (Math.random() * 0.2));
                     }
                 }
@@ -138,24 +139,30 @@ public class BrewerySealer implements InventoryHolder {
     }
 
     public static boolean isBSealer(Block block) {
-        if (BreweryPlugin.getMCVersion().isOrLater(MinecraftVersion.V1_14) && block.getType() == config.getSealingTableBlock()) {
-            Container container = (Container) PaperLib.getBlockState(block, true).getState();
-            if (container.getCustomName() != null) {
-                if (container.getCustomName().equals("§e" + lang.getEntry("Etc_SealingTable"))) {
-                    return true;
-                } else {
-                    return container.getPersistentDataContainer().has(TAG_KEY, PersistentDataType.BYTE) || container.getPersistentDataContainer().has(LEGACY_TAG_KEY, PersistentDataType.BYTE);
-                }
-            }
+        if (block.getType() != config.getSealingTableBlock()) {
+            return false;
         }
-        return false;
+        Container container = (Container) PaperLib.getBlockState(block, true).getState();
+        Component customName = container.customName();
+        if (customName != null && BreweryUtil.stripColors(customName).equals(sealingTableName())) {
+            return true;
+        }
+        PersistentDataContainer pdc = container.getPersistentDataContainer();
+        return pdc.has(TAG_KEY, PersistentDataType.BYTE) || pdc.has(LEGACY_TAG_KEY, PersistentDataType.BYTE);
+    }
+
+    /**
+     * The plain text name of a sealing table, used to recognise tables placed by older versions.
+     */
+    private static String sealingTableName() {
+        return BreweryUtil.stripColors(BreweryUtil.component("§e" + lang.getEntry("Etc_SealingTable")));
     }
 
     public static void blockPlace(ItemStack item, Block block) {
         if (item.getType() == config.getSealingTableBlock() && item.hasItemMeta()) {
             ItemMeta itemMeta = item.getItemMeta();
             assert itemMeta != null;
-            if ((itemMeta.hasDisplayName() && itemMeta.getDisplayName().equals("§e" + lang.getEntry("Etc_SealingTable"))) ||
+            if ((itemMeta.displayName() != null && BreweryUtil.stripColors(itemMeta.displayName()).equals(sealingTableName())) ||
                 itemMeta.getPersistentDataContainer().has(BrewerySealer.TAG_KEY, PersistentDataType.BYTE)) {
                 Container container = (Container) PaperLib.getBlockState(block, true).getState();
                 // Rotate the Block 180° so it looks different
@@ -171,19 +178,22 @@ public class BrewerySealer implements InventoryHolder {
 
     public static void registerRecipe() {
         // Register Sealing Table Recipe
-        if (!config.isCraftSealingTable() && recipeExists()) {
-            unregisterRecipe();
+        if (!config.isCraftSealingTable()) {
+            if (recipeExists()) {
+                unregisterRecipe();
+            }
             return;
-        } else if (!config.isCraftSealingTable() || recipeExists() || BreweryPlugin.getMCVersion().isOrEarlier(MinecraftVersion.V1_13)) {
+        }
+        if (recipeExists()) {
             return;
         }
 
         ItemStack sealingTableItem = new ItemStack(config.getSealingTableBlock());
-        ItemMeta meta = BreweryPlugin.getInstance().getServer().getItemFactory().getItemMeta(config.getSealingTableBlock());
-        if (meta == null) return;
-        meta.setDisplayName("§e" + lang.getEntry("Etc_SealingTable"));
-        meta.getPersistentDataContainer().set(TAG_KEY, PersistentDataType.BYTE, (byte) 1);
-        sealingTableItem.setItemMeta(meta);
+        ItemMeta itemMeta = BreweryPlugin.getInstance().getServer().getItemFactory().getItemMeta(config.getSealingTableBlock());
+        if (itemMeta == null) return;
+        itemMeta.displayName(BreweryUtil.component("§e" + lang.getEntry("Etc_SealingTable")));
+        itemMeta.getPersistentDataContainer().set(TAG_KEY, PersistentDataType.BYTE, (byte) 1);
+        sealingTableItem.setItemMeta(itemMeta);
 
         ShapedRecipe recipe = new ShapedRecipe(new NamespacedKey(BreweryPlugin.getInstance(), "SealingTable"), sealingTableItem);
         recipe.shape("bb ",

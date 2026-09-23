@@ -65,7 +65,7 @@ public class WGBarrel7 implements WGBarrel {
                 world = ((World) getWorldByName.invoke(platform, spigot.getWorld().getName()));
             } catch (IllegalAccessException | InvocationTargetException e) {
                 Logging.errorLog("Error in WorldGuard", e);
-                Logging.msg(player, "Error in WorldGuard");
+                Logging.message(player, "Error in WorldGuard");
                 return false;
             }
         }

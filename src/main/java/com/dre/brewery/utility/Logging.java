@@ -43,7 +43,7 @@ public final class Logging {
      * <p>
      * Messages sent to players keep using the configurable {@code pluginPrefix} instead.
      */
-    public static final String PREFIX = "&#D7FFFFBrewShiroi \u00BB &f";
+    public static final String PREFIX = "&#D7FFFFBrewShiroi » &f";
 
     /**
      * Resolved lazily on purpose: touching this class from {@code BreweryPlugin}'s constructor must not
@@ -53,73 +53,66 @@ public final class Logging {
         return ConfigManager.getConfig(Config.class);
     }
 
-    public static void msg(CommandSender sender, String msg) {
-        sender.sendMessage(BreweryUtil.color(config().getPluginPrefix() + msg));
+    public static void message(CommandSender sender, String message) {
+        sender.sendMessage(BreweryUtil.color(config().getPluginPrefix() + message));
     }
 
-    public static void log(String msg) {
-        Bukkit.getConsoleSender().sendMessage(BreweryUtil.color(PREFIX + msg));
+    public static void log(String message) {
+        Bukkit.getConsoleSender().sendMessage(BreweryUtil.color(PREFIX + message));
     }
 
-    public static void log(LogLevel level, String msg) {
-        log(level, msg, null);
+    public static void log(LogLevel level, String message) {
+        log(level, message, null);
     }
 
-    public static void log(LogLevel level, String msg, @Nullable Throwable throwable) {
+    public static void log(LogLevel level, String message, @Nullable Throwable throwable) {
         switch (level) {
-            case INFO -> log(msg);
-            case WARNING -> warningLog(msg);
+            case INFO -> log(message);
+            case WARNING -> warningLog(message);
             case ERROR -> {
                 if (throwable != null) {
-                    errorLog(msg, throwable);
+                    errorLog(message, throwable);
                 } else {
-                    errorLog(msg);
+                    errorLog(message);
                 }
             }
-            case DEBUG -> debugLog(msg);
+            case DEBUG -> debugLog(message);
         }
     }
 
-    public static void debugLog(String msg) {
+    public static void debugLog(String message) {
         if (config().isDebug()) {
-            log("&2[Debug] &f" + msg);
+            log("&2[Debug] &f" + message);
         }
     }
 
-    public static void warningLog(String msg) {
-        Bukkit.getConsoleSender().sendMessage(BreweryUtil.color(PREFIX + "&eWARNING: " + msg));
+    public static void warningLog(String message) {
+        Bukkit.getConsoleSender().sendMessage(BreweryUtil.color(PREFIX + "&eWARNING: " + message));
     }
 
-    public static void errorLog(String msg) {
-        String str = BreweryUtil.color(PREFIX + "&cERROR: " + msg);
-        Bukkit.getConsoleSender().sendMessage(str);
+    public static void errorLog(String message) {
+        String text = BreweryUtil.color(PREFIX + "&cERROR: " + message);
+        Bukkit.getConsoleSender().sendMessage(text);
         if (ReloadCommand.getReloader() != null) { // I hate this, but I'm too lazy to go change all of it - Jsinco
-            ReloadCommand.getReloader().sendMessage(str);
+            ReloadCommand.getReloader().sendMessage(text);
         }
     }
 
-    // TODO: cleanup
-    public static void errorLog(String msg, Throwable throwable) {
-        errorLog(msg);
-        errorLog("&6" + throwable.toString());
-        for (StackTraceElement ste : throwable.getStackTrace()) {
-            String str = ste.toString();
-            if (str.contains(".jar//")) {
-                str = str.substring(str.indexOf(".jar//") + 6);
-            }
-            errorLog(str);
+    public static void errorLog(String message, Throwable throwable) {
+        errorLog(message);
+        errorLog("&6" + throwable);
+        printFrames(throwable, "");
+        for (Throwable cause = throwable.getCause(); cause != null; cause = cause.getCause()) {
+            errorLog("&6Caused by: " + cause);
+            printFrames(cause, "&6     ");
         }
-        Throwable cause = throwable.getCause();
-        while (cause != null) {
-            Bukkit.getConsoleSender().sendMessage(BreweryUtil.color(PREFIX + "&6Caused by: " + cause));
-            for (StackTraceElement ste : cause.getStackTrace()) {
-                String str = ste.toString();
-                if (str.contains(".jar//")) {
-                    str = str.substring(str.indexOf(".jar//") + 6);
-                }
-                Bukkit.getConsoleSender().sendMessage(BreweryUtil.color(PREFIX + "&6     " + str));
-            }
-            cause = cause.getCause();
+    }
+
+    private static void printFrames(Throwable throwable, String prefix) {
+        for (StackTraceElement stackTraceElement : throwable.getStackTrace()) {
+            String frame = stackTraceElement.toString();
+            int jarMarker = frame.indexOf(".jar//");
+            errorLog(prefix + (jarMarker < 0 ? frame : frame.substring(jarMarker + 6)));
         }
     }
 

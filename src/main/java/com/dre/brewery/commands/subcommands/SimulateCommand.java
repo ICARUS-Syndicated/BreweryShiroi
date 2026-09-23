@@ -20,11 +20,9 @@
 
 package com.dre.brewery.commands.subcommands;
 
-import com.dre.brewery.Brew;
-import com.dre.brewery.BreweryIngredients;
-import com.dre.brewery.BreweryPlugin;
+import com.dre.brewery.brew.Brew;
+import com.dre.brewery.brew.BreweryIngredients;
 import com.dre.brewery.commands.BreweryCommandManager;
-import com.dre.brewery.configuration.ConfigManager;
 import com.dre.brewery.configuration.files.Lang;
 import com.dre.brewery.instruments.barrel.BarrelWoodType;
 import com.dre.brewery.recipe.BreweryCauldronRecipe;
@@ -87,6 +85,10 @@ public class SimulateCommand {
     private static void simulate(BreweryCommandManager commands, CommandSender sender, String rawArguments) {
         Lang lang = commands.lang();
         Arguments arguments = new Arguments(rawArguments);
+        if (arguments.failure != null) {
+            arguments.failure.send(lang, sender);
+            return;
+        }
 
         BreweryRecipe recipe = null;
         if (arguments.recipe != null) {
@@ -121,7 +123,7 @@ public class SimulateCommand {
         if (arguments.distill != null) {
             distill = OptionalInt.of(arguments.distill);
         } else if (recipe != null && recipe.needsDistilling()) {
-            distill = OptionalInt.of(recipe.getDistillruns());
+            distill = OptionalInt.of(recipe.getDistillRuns());
         } else {
             distill = OptionalInt.empty();
         }
@@ -185,14 +187,14 @@ public class SimulateCommand {
         Brew brew = new Brew(ingredientsHolder);
 
         if (distillRuns.isPresent()) {
-            if (!(item.getItemMeta() instanceof PotionMeta meta)) {
+            if (!(item.getItemMeta() instanceof PotionMeta itemMeta)) {
                 lang.sendEntry(sender, "CMD_Cannot_Distill");
                 return;
             }
 
             int runs = distillRuns.getAsInt();
             for (int i = 0; i < runs; i++) {
-                brew.distillSlot(item, meta);
+                brew.distillSlot(item, itemMeta);
             }
             Logging.debugLog(String.format("simulate: distilled for %d runs: %s",
                 runs, ChatColor.stripColor(brew.toString())));
@@ -301,6 +303,12 @@ public class SimulateCommand {
         @Nullable
         private String player;
         private final List<String> ingredients = new ArrayList<>();
+        /**
+         * Set when an option could not be parsed, so the user is told what was wrong instead of the
+         * option silently counting as absent. The first failure wins.
+         */
+        @Nullable
+        private ParseFailure failure;
 
         private Arguments(String raw) {
             String[] parts = raw.trim().split("\\s+");
@@ -322,16 +330,53 @@ public class SimulateCommand {
                 }
 
                 switch (option) {
-                    case OPTION_RECIPE -> recipe = next(parts, ++i);
-                    case OPTION_COOK -> cook = parseInt(next(parts, ++i));
-                    case OPTION_DISTILL -> distill = parseInt(next(parts, ++i));
+                    case OPTION_RECIPE -> {
+                        String value = next(parts, ++i);
+                        if (value == null) {
+                            fail("--recipe");
+                            return;
+                        }
+                        recipe = value;
+                    }
+                    case OPTION_COOK -> {
+                        Integer value = parseNumber(next(parts, ++i), "--cook");
+                        if (value == null) {
+                            return;
+                        }
+                        cook = value;
+                    }
+                    case OPTION_DISTILL -> {
+                        Integer value = parseNumber(next(parts, ++i), "--distill");
+                        if (value == null) {
+                            return;
+                        }
+                        distill = value;
+                    }
                     case OPTION_AGE -> {
                         String wood = next(parts, ++i);
                         String time = next(parts, ++i);
-                        age = parseAge(wood, time);
+                        Age value = parseAge(wood, time);
+                        if (value == null) {
+                            return;
+                        }
+                        age = value;
                     }
-                    case OPTION_BREWER -> brewer = next(parts, ++i);
-                    case OPTION_PLAYER -> player = next(parts, ++i);
+                    case OPTION_BREWER -> {
+                        String value = next(parts, ++i);
+                        if (value == null) {
+                            fail("--brewer");
+                            return;
+                        }
+                        brewer = value;
+                    }
+                    case OPTION_PLAYER -> {
+                        String value = next(parts, ++i);
+                        if (value == null) {
+                            fail("--player");
+                            return;
+                        }
+                        player = value;
+                    }
                     default -> ingredients.add(part);
                 }
             }
@@ -362,29 +407,72 @@ public class SimulateCommand {
             return index < parts.length ? parts[index] : null;
         }
 
+        /**
+         * Reads an integer option value, registering a failure when the value is absent or not a number.
+         */
         @Nullable
-        private static Integer parseInt(@Nullable String value) {
+        private Integer parseNumber(@Nullable String value, String optionName) {
             if (value == null) {
+                fail(optionName);
                 return null;
             }
             OptionalInt parsed = BreweryUtil.parseInt(value);
-            return parsed.isPresent() ? parsed.getAsInt() : null;
+            if (parsed.isEmpty()) {
+                fail(value);
+                return null;
+            }
+            return parsed.getAsInt();
         }
 
         @Nullable
-        private static Age parseAge(@Nullable String wood, @Nullable String time) {
-            if (wood == null || time == null) {
+        private Age parseAge(@Nullable String wood, @Nullable String time) {
+            BarrelWoodType woodType = wood == null ? null : BarrelWoodType.fromName(wood);
+            if (woodType == null || !woodType.isSpecific()) {
+                failBarrelType();
                 return null;
             }
-            BarrelWoodType woodType = BarrelWoodType.fromName(wood);
-            if (woodType == null || !woodType.isSpecific()) {
+            if (time == null) {
+                fail("--age");
                 return null;
             }
             OptionalFloat parsedTime = BreweryUtil.parseFloat(time);
             if (parsedTime.isEmpty() || parsedTime.getAsFloat() <= 0) {
+                fail(time);
                 return null;
             }
             return new Age(woodType, parsedTime.getAsFloat());
+        }
+
+        /**
+         * Records that the given input was not usable, either as an option value or because the option had none.
+         */
+        private void fail(String input) {
+            if (failure == null) {
+                failure = new ParseFailure("Error_InvalidAmount", input);
+            }
+        }
+
+        /**
+         * Records that the age option named something that is not a specific barrel wood type.
+         */
+        private void failBarrelType() {
+            if (failure == null) {
+                failure = new ParseFailure("Error_MissingBarrelType", null);
+            }
+        }
+
+        /**
+         * A reason why the arguments could not be parsed, as a language key plus its argument.
+         */
+        private record ParseFailure(String translationKey, @Nullable String argument) {
+
+            private void send(Lang lang, CommandSender sender) {
+                if (argument == null) {
+                    lang.sendEntry(sender, translationKey);
+                } else {
+                    lang.sendEntry(sender, translationKey, argument);
+                }
+            }
         }
     }
 }

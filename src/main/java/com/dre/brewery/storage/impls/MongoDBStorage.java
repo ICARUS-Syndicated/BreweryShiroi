@@ -21,9 +21,9 @@
 package com.dre.brewery.storage.impls;
 
 import com.dre.brewery.instruments.BreweryCauldron;
-import com.dre.brewery.BreweryPlayer;
+import com.dre.brewery.mechanics.BreweryPlayer;
 import com.dre.brewery.instruments.barrel.BreweryBarrel;
-import com.dre.brewery.Wakeup;
+import com.dre.brewery.mechanics.Wakeup;
 import com.dre.brewery.configuration.sector.capsule.ConfiguredDataManager;
 import com.dre.brewery.storage.DataManager;
 import com.dre.brewery.storage.StorageInitException;

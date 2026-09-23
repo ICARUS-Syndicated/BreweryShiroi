@@ -20,10 +20,13 @@
 
 package com.dre.brewery.integration.item;
 
-import com.dre.brewery.Brew;
+import com.dre.brewery.brew.Brew;
 import com.dre.brewery.recipe.BreweryRecipe;
 import com.dre.brewery.recipe.items.PluginItem;
-import org.bukkit.ChatColor;
+import com.dre.brewery.utility.utils.BreweryUtil;
+import net.kyori.adventure.text.Component;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.ItemStack;
 
 /**
@@ -59,7 +62,8 @@ public class BreweryPluginItem extends PluginItem {
     // I truly hate doing it this way, but to have it be checked based on ids
     // I'd have to rewrite major parts of BRecipe and BCauldronRecipe - Jsinco
     private boolean isCauldronIngredient(ItemStack item) {
-        if (!item.hasItemMeta()) return false;
-        return ChatColor.stripColor(item.getItemMeta().getDisplayName()).equalsIgnoreCase(this.getItemId()); // From original Impl
+        if (!(item.getItemMeta() instanceof ItemMeta itemMeta)) return false;
+        Component name = itemMeta.displayName();
+        return name != null && BreweryUtil.stripColors(name).equalsIgnoreCase(this.getItemId());
     }
 }

@@ -24,7 +24,7 @@ import com.dre.brewery.recipe.items.Ingredient;
 import com.dre.brewery.recipe.items.RecipeItem;
 import com.dre.brewery.recipe.items.SimpleItem;
 import com.dre.brewery.utility.Logging;
-import com.dre.brewery.utility.Tuple;
+import com.dre.brewery.utility.BinaryTuple;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Color;
@@ -56,9 +56,9 @@ public class BreweryCauldronRecipe {
     private String name;
     private List<RecipeItem> ingredients;
     private PotionColor color;
-    private List<Tuple<Integer, Color>> particleColor = new ArrayList<>();
+    private List<BinaryTuple<Integer, Color>> particleColor = new ArrayList<>();
     private List<String> lore;
-    private int cmData; // Custom Model Data
+    private int customModelData; // Custom Model Data
     private boolean saveInData; // If this recipe should be saved in data and loaded again when the server restarts. Applicable to non-config recipes
 
 
@@ -149,7 +149,7 @@ public class BreweryCauldronRecipe {
 
     @Override
     public String toString() {
-        return "BCauldronRecipe{" + name + '}';
+        return "BreweryCauldronRecipe{name = " + name + '}';
     }
 
     @Nullable
@@ -196,9 +196,9 @@ public class BreweryCauldronRecipe {
         private final String name;
         private final List<RecipeItem> ingredients = new ArrayList<>();
         private PotionColor color = PotionColor.CYAN;
-        private final List<Tuple<Integer, Color>> particleColor = new ArrayList<>();
+        private final List<BinaryTuple<Integer, Color>> particleColor = new ArrayList<>();
         private final List<String> lore = new ArrayList<>();
-        private int cmData = 0;
+        private int customModelData = 0;
         private boolean saveInData = false;
 
 
@@ -223,7 +223,7 @@ public class BreweryCauldronRecipe {
         }
 
         public Builder particleColor(int minute, Color color) {
-            this.particleColor.add(new Tuple<>(minute, color));
+            this.particleColor.add(new BinaryTuple<>(minute, color));
             return this;
         }
 
@@ -237,8 +237,8 @@ public class BreweryCauldronRecipe {
             return this;
         }
 
-        public Builder cmData(int cmData) {
-            this.cmData = cmData;
+        public Builder customModelData(int customModelData) {
+            this.customModelData = customModelData;
             return this;
         }
 
@@ -253,7 +253,7 @@ public class BreweryCauldronRecipe {
             recipe.color = color;
             recipe.particleColor = particleColor;
             recipe.lore = lore;
-            recipe.cmData = cmData;
+            recipe.customModelData = customModelData;
             recipe.saveInData = saveInData;
             return recipe;
         }

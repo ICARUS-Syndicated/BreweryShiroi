@@ -28,8 +28,12 @@ import com.dre.brewery.api.events.barrel.BarrelDestroyEvent;
 import com.dre.brewery.configuration.ConfigManager;
 import com.dre.brewery.configuration.files.Lang;
 import com.dre.brewery.utility.Logging;
-import com.dre.brewery.utility.MinecraftVersion;
 import com.dre.brewery.utility.OptionalFloat;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import net.kyori.adventure.title.Title;
+import net.kyori.adventure.title.Title.Times;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Color;
@@ -43,17 +47,21 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import java.util.Random;
@@ -72,9 +80,16 @@ public final class BreweryUtil {
     /* *********                      ********* */
     /* **************************************** */
 
-    private static final String WITH_DELIMITER = "((?<=%1$s)|(?=%1$s))";
-    private static final MinecraftVersion VERSION = BreweryPlugin.getMCVersion();
     private static final Pattern RANGE_PATTERN = Pattern.compile("([-+]?\\d+)\\.\\.([-+]?\\d+)");
+    /** Matches the {@code &#rrggbb} notation, which the legacy colour translator does not understand. */
+    private static final Pattern HEX_COLOR_PATTERN = Pattern.compile("&(#[0-9a-fA-F]{6})");
+    private static final LegacyComponentSerializer LEGACY_SECTION = LegacyComponentSerializer.legacySection();
+    private static final PlainTextComponentSerializer PLAIN_TEXT = PlainTextComponentSerializer.plainText();
+
+    /**
+     * The spigot.yml of the running server. Read directly, since {@code Bukkit.spigot()} is deprecated for removal.
+     */
+    private static final YamlConfiguration SPIGOT_CONFIG = YamlConfiguration.loadConfiguration(new File("spigot.yml"));
 
     /**
      * Check if the Chunk of a Block is loaded !without loading it in the process!
@@ -86,33 +101,62 @@ public final class BreweryUtil {
     /**
      * Color code a message. Supports HEX colors and default minecraft colors!
      *
-     * @param msg The message to color
-     * @return The colored message, or null if msg was null
+     * @param message The message to color
+     * @return The colored message, or null if message was null
      */
-    public static String color(String msg) {
-        if (msg == null) {
-            return null;
-        } else if (msg.isEmpty()) {
-            return msg;
+    public static String color(String message) {
+        if (message == null || message.isEmpty()) {
+            return message;
         }
-        String[] texts = msg.split(String.format(WITH_DELIMITER, "&"));
+        // Minecraft itself only understands the section code form of a hex colour, so expand "&#rgb" first
+        String expanded = HEX_COLOR_PATTERN.matcher(message).replaceAll(match -> toSectionHex(match.group(1)));
+        return ChatColor.translateAlternateColorCodes('&', expanded);
+    }
 
-        StringBuilder finalText = new StringBuilder();
+    /**
+     * Parses a message containing legacy ({@code &}/{@code §}) colour codes into an Adventure component.
+     *
+     * @param message The message to parse
+     * @return The parsed component, never null
+     */
+    public static Component component(@Nullable String message) {
+        return message == null ? Component.empty() : LEGACY_SECTION.deserialize(color(message));
+    }
 
-        for (int i = 0; i < texts.length; i++) {
-            if (texts[i].equalsIgnoreCase("&") && texts.length > i+1) {
-                //get the next string
-                i++;
-                if (texts[i].charAt(0) == '#') {
-                    finalText.append(net.md_5.bungee.api.ChatColor.of(texts[i].substring(0, 7))).append(texts[i].substring(7));
-                } else {
-                    finalText.append(ChatColor.translateAlternateColorCodes('&', "&" + texts[i]));
-                }
-            } else {
-                finalText.append(texts[i]);
-            }
+    /**
+     * The display name of an ItemMeta, in the legacy section notation. Replacement for the deprecated
+     * {@code ItemMeta#getDisplayName()}.
+     *
+     * @return The display name, or null if the item has none
+     */
+    @Nullable
+    public static String displayName(@NotNull ItemMeta itemMeta) {
+        Component name = itemMeta.displayName();
+        return name == null ? null : LEGACY_SECTION.serialize(name);
+    }
+
+    /**
+     * The display name of an ItemMeta without any colours.
+     */
+    public static String stripColors(@Nullable Component component) {
+        return component == null ? "" : PLAIN_TEXT.serialize(component);
+    }
+
+    /**
+     * Builds a title out of a legacy coloured subtitle, using the tick timings of the old API.
+     */
+    public static Title title(@Nullable String subtitle, int fadeInTicks, int stayTicks, int fadeOutTicks) {
+        Times times = Times.times(Duration.ofMillis(fadeInTicks * 50L), Duration.ofMillis(stayTicks * 50L),
+            Duration.ofMillis(fadeOutTicks * 50L));
+        return Title.title(Component.empty(), component(subtitle), times);
+    }
+
+    private static String toSectionHex(String hashRgb) {
+        StringBuilder out = new StringBuilder(14).append('\u00A7').append('x');
+        for (int i = 1; i < hashRgb.length(); i++) {
+            out.append('\u00A7').append(Character.toLowerCase(hashRgb.charAt(i)));
         }
-        return finalText.toString();
+        return out.toString();
     }
 
     public static List<String> colorArrayList(List<String> list) {
@@ -127,18 +171,18 @@ public final class BreweryUtil {
 
     /**
      * Creates a weighted mix between the two given colours
-     * <p>where the weight is calculated from the distance of the currentPos to the prev and next
+     * <p>where the weight is calculated from the distance of the current position to the previous and next one
      *
-     * @param prevColor  Previous Color
-     * @param prevPos    Position of the Previous Color
-     * @param currentPos Current Position
-     * @param nextColor  Next Color
-     * @param nextPos    Position of the Next Color
+     * @param previousColor    Previous Color
+     * @param previousPosition Position of the Previous Color
+     * @param currentPosition  Current Position
+     * @param nextColor        Next Color
+     * @param nextPosition     Position of the Next Color
      * @return Mixed Color
      */
-    public static Color weightedMixColor(Color prevColor, int prevPos, int currentPos, Color nextColor, int nextPos) {
-        float diffPrev = currentPos - prevPos;
-        float diffNext = nextPos - currentPos;
+    public static Color weightedMixColor(Color previousColor, int previousPosition, int currentPosition, Color nextColor, int nextPosition) {
+        float diffPrev = currentPosition - previousPosition;
+        float diffNext = nextPosition - currentPosition;
         float total = diffNext + diffPrev;
         float percentNext = diffPrev / total;
         float percentPrev = diffNext / total;
@@ -148,29 +192,24 @@ public final class BreweryUtil {
 			15-8 = 7 -> 7/10*/
 
         return Color.fromRGB(
-            Math.min(255, (int) ((nextColor.getRed() * percentNext) + (prevColor.getRed() * percentPrev))),
-            Math.min(255, (int) ((nextColor.getGreen() * percentNext) + (prevColor.getGreen() * percentPrev))),
-            Math.min(255, (int) ((nextColor.getBlue() * percentNext) + (prevColor.getBlue() * percentPrev)))
+            Math.min(255, (int) ((nextColor.getRed() * percentNext) + (previousColor.getRed() * percentPrev))),
+            Math.min(255, (int) ((nextColor.getGreen() * percentNext) + (previousColor.getGreen() * percentPrev))),
+            Math.min(255, (int) ((nextColor.getBlue() * percentNext) + (previousColor.getBlue() * percentPrev)))
         );
     }
 
     /**
      * Sets the Item in the Players hand, depending on which hand he used and if the hand should be swapped
      *
-     * @param event   Interact Event to tell which hand the player used
-     * @param mat     The Material of the new item
-     * @param swapped If true, will set the opposite Hand instead of the one he used
+     * @param event    Interact Event to tell which hand the player used
+     * @param material The Material of the new item
+     * @param swapped  If true, will set the opposite Hand instead of the one he used
      */
-    @SuppressWarnings("deprecation")
-    public static void setItemInHand(PlayerInteractEvent event, Material mat, boolean swapped) {
-        if (BreweryPlugin.getMCVersion().isOrLater(MinecraftVersion.V1_9)) {
-            if ((event.getHand() == EquipmentSlot.OFF_HAND) != swapped) {
-                event.getPlayer().getInventory().setItemInOffHand(new ItemStack(mat));
-            } else {
-                event.getPlayer().getInventory().setItemInMainHand(new ItemStack(mat));
-            }
+    public static void setItemInHand(PlayerInteractEvent event, Material material, boolean swapped) {
+        if ((event.getHand() == EquipmentSlot.OFF_HAND) != swapped) {
+            event.getPlayer().getInventory().setItemInOffHand(new ItemStack(material));
         } else {
-            event.getPlayer().setItemInHand(new ItemStack(mat));
+            event.getPlayer().getInventory().setItemInMainHand(new ItemStack(material));
         }
     }
 
@@ -195,11 +234,9 @@ public final class BreweryUtil {
         BreweryPlugin.getScheduler().execute(player, () -> {
             final PotionEffectType type = effect.getType();
             if (player.hasPotionEffect(type)) {
-                PotionEffect plEffect;
-                if (VERSION.isOrLater(MinecraftVersion.V1_11)) {
-                    plEffect = player.getPotionEffect(type);
-                } else {
-                    plEffect = player.getActivePotionEffects().stream().filter(e -> e.getType().equals(type)).findAny().get();
+                PotionEffect plEffect = player.getPotionEffect(type);
+                if (plEffect == null) {
+                    return;
                 }
 
                 if (!onlyIfStronger ||
@@ -218,13 +255,13 @@ public final class BreweryUtil {
      * Load A List of Strings from config, if found a single String, will convert to List
      */
     @Nullable
-    public static List<String> loadCfgStringList(ConfigurationSection cfg, String path) {
-        if (cfg.isString(path)) {
+    public static List<String> loadCfgStringList(ConfigurationSection config, String path) {
+        if (config.isString(path)) {
             List<String> list = new ArrayList<>(1);
-            list.add(cfg.getString(path));
+            list.add(config.getString(path));
             return list;
-        } else if (cfg.isList(path)) {
-            return cfg.getStringList(path);
+        } else if (config.isList(path)) {
+            return config.getStringList(path);
         }
         return null;
     }
@@ -482,10 +519,10 @@ public final class BreweryUtil {
         for (String materialString : stringList) {
             String[] drainSplit = materialString.split("/");
             if (drainSplit.length > 1) {
-                Material mat = MaterialUtil.getMaterialSafely(drainSplit[0]);
+                Material material = MaterialUtil.getMaterialSafely(drainSplit[0]);
                 int strength = BreweryUtil.parseIntOrZero(drainSplit[1]);
-                if (mat != null && strength > 0) {
-                    map.put(mat, strength);
+                if (material != null && strength > 0) {
+                    map.put(material, strength);
                 }
             }
         }
@@ -513,11 +550,9 @@ public final class BreweryUtil {
 
 
     public static int getItemDespawnRate(World world) {
-        YamlConfiguration spigotConfig = Bukkit.spigot().getConfig();
-
-        int worldDespawnRate = spigotConfig.getInt("world-settings." + world.getName() + ".item-despawn-rate", -1);
+        int worldDespawnRate = SPIGOT_CONFIG.getInt("world-settings." + world.getName() + ".item-despawn-rate", -1);
         if (worldDespawnRate < 0) {
-            return spigotConfig.getInt("world-settings.default.item-despawn-rate", 6000);
+            return SPIGOT_CONFIG.getInt("world-settings.default.item-despawn-rate", 6000);
         }
         return worldDespawnRate;
     }
@@ -528,7 +563,7 @@ public final class BreweryUtil {
     public static String getDxlName(String worldName) {
         File dungeonFolder = new File(worldName);
         if (dungeonFolder.isDirectory()) {
-            for (File file : dungeonFolder.listFiles()) {
+            for (File file : Objects.requireNonNull(dungeonFolder.listFiles())) {
                 if (!file.isDirectory()) {
                     if (file.getName().startsWith(".id_")) {
                         return file.getName().substring(1).toLowerCase();
@@ -615,12 +650,12 @@ public final class BreweryUtil {
     /**
      * Determines if two floats are close enough to be considered "equal" (difference < 1e-6)
      *
-     * @param a first float
-     * @param b second float
+     * @param first  first float
+     * @param second second float
      * @return true if the floats are close
      */
-    public static boolean isClose(float a, float b) {
-        return Math.abs(a - b) < 1e-6;
+    public static boolean isClose(float first, float second) {
+        return Math.abs(first - second) < 1e-6;
     }
 
     public static boolean isInt(String string) {
@@ -654,9 +689,9 @@ public final class BreweryUtil {
             return OptionalDouble.empty();
         }
         try {
-            double d = Double.parseDouble(string);
-            if (Double.isFinite(d)) {
-                return OptionalDouble.of(d);
+            double parsed = Double.parseDouble(string);
+            if (Double.isFinite(parsed)) {
+                return OptionalDouble.of(parsed);
             }
             return OptionalDouble.empty();
         } catch (NumberFormatException ignored) {
@@ -675,9 +710,9 @@ public final class BreweryUtil {
             return OptionalFloat.empty();
         }
         try {
-            float f = Float.parseFloat(string);
-            if (Float.isFinite(f)) {
-                return OptionalFloat.of(f);
+            float parsed = Float.parseFloat(string);
+            if (Float.isFinite(parsed)) {
+                return OptionalFloat.of(parsed);
             }
             return OptionalFloat.empty();
         } catch (NumberFormatException ignored) {

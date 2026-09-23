@@ -20,11 +20,10 @@
 
 package com.dre.brewery.instruments;
 
-import com.dre.brewery.Brew;
+import com.dre.brewery.brew.Brew;
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.lore.BrewLore;
 import com.dre.brewery.utility.Logging;
-import com.dre.brewery.utility.MinecraftVersion;
 import com.github.Anon8281.universalScheduler.UniversalRunnable;
 import com.github.Anon8281.universalScheduler.scheduling.tasks.MyScheduledTask;
 import io.papermc.lib.PaperLib;
@@ -51,7 +50,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class BreweryDistiller {
 
-    private static final MinecraftVersion VERSION = BreweryPlugin.getMCVersion();
 
     private static final int DISTILLTIME = 400;
     private static final Map<Block, BreweryDistiller> trackedDistillers = new ConcurrentHashMap<>();
@@ -99,11 +97,11 @@ public class BreweryDistiller {
     }
 
     // Returns a Brew or null for every Slot in the BrewerInventory
-    public static Brew[] getDistillContents(BrewerInventory inv) {
+    public static Brew[] getDistillContents(BrewerInventory inventory) {
         ItemStack item;
         Brew[] contents = new Brew[3];
         for (int slot = 0; slot < 3; slot++) {
-            item = inv.getItem(slot);
+            item = inventory.getItem(slot);
             if (item != null) {
                 contents[slot] = Brew.get(item);
             }
@@ -111,11 +109,11 @@ public class BreweryDistiller {
         return contents;
     }
 
-    public static void checkContents(BrewerInventory inv, Brew[] contents) {
+    public static void checkContents(BrewerInventory inventory, Brew[] contents) {
         ItemStack item;
         for (int slot = 0; slot < 3; slot++) {
             if (contents[slot] != null) {
-                item = inv.getItem(slot);
+                item = inventory.getItem(slot);
                 if (!Brew.isBrew(item)) {
                     contents[slot] = null;
                 }
@@ -142,7 +140,7 @@ public class BreweryDistiller {
         return customFound;
     }
 
-    public static boolean runDistill(BrewerInventory inv, Brew[] contents) {
+    public static boolean runDistill(BrewerInventory inventory, Brew[] contents) {
         boolean custom = false;
         for (int slot = 0; slot < 3; slot++) {
             if (contents[slot] == null) continue;
@@ -154,7 +152,7 @@ public class BreweryDistiller {
             }
         }
         if (custom) {
-            Brew.distillAll(inv, contents);
+            Brew.distillAll(inventory, contents);
             return true;
         }
         return false;
@@ -180,16 +178,16 @@ public class BreweryDistiller {
         return 800;
     }
 
-    public static void showAlc(BrewerInventory inv, Brew[] contents) {
+    public static void showAlc(BrewerInventory inventory, Brew[] contents) {
         for (int slot = 0; slot < 3; slot++) {
             if (contents[slot] != null) {
                 // Show Alc in lore
-                ItemStack item = inv.getItem(slot);
-                PotionMeta meta = (PotionMeta) item.getItemMeta();
-                BrewLore brewLore = new BrewLore(contents[slot], meta);
+                ItemStack item = inventory.getItem(slot);
+                PotionMeta itemMeta = (PotionMeta) item.getItemMeta();
+                BrewLore brewLore = new BrewLore(contents[slot], itemMeta);
                 brewLore.updateAlc(true);
                 brewLore.write();
-                item.setItemMeta(meta);
+                item.setItemMeta(itemMeta);
             }
         }
     }
@@ -247,17 +245,9 @@ public class BreweryDistiller {
                 case 1:
                     // Custom potion but not for distilling. Stop any brewing and cancel this task
                     if (stand.getBrewingTime() > 0) {
-                        if (VERSION.isOrLater(MinecraftVersion.V1_11)) {
-                            // The trick below doesn't work in 1.11, but we don't need it anymore
-                            // This should only happen with older Brews that have been made with the old Potion Color System
-                            // This causes standard potions to not brew in the brewing stand if put together with Brews, but the bubble animation will play
-                            stand.setBrewingTime(Short.MAX_VALUE);
-                        } else {
-                            // Brewing time is sent and stored as short
-                            // This sends a negative short value to the Client
-                            // In the client the Brewer will look like it is not doing anything
-                            stand.setBrewingTime(Short.MAX_VALUE << 1);
-                        }
+                        // Brewing time is sent and stored as short. The huge value keeps the stand busy
+                        // without the client playing the (wrong) brew animation.
+                        stand.setBrewingTime(Short.MAX_VALUE);
                         stand.setFuelLevel(fuel);
                     }
                 case 0:

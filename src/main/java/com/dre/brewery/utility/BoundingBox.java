@@ -20,8 +20,6 @@
 
 package com.dre.brewery.utility;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Location;
@@ -37,8 +35,8 @@ public class BoundingBox {
 
     private BlockPos min, max;
 
-    public BoundingBox(BlockPos a, BlockPos b) {
-        this(a.x, a.y, a.z, b.x, b.y, b.z);
+    public BoundingBox(BlockPos first, BlockPos second) {
+        this(first.x, first.y, first.z, second.x, second.y, second.z);
     }
 
     public BoundingBox(int x1, int y1, int z1, int x2, int y2, int z2) {
@@ -57,14 +55,14 @@ public class BoundingBox {
         return (x >= min.x && x <= max.x) && (y >= min.y && y <= max.y) && (z >= min.z && z <= max.z);
     }
 
-    public boolean contains(Location loc) {
-        return contains(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
+    public boolean contains(Location location) {
+        return contains(location.getBlockX(), location.getBlockY(), location.getBlockZ());
     }
 
     public boolean contains(Block block) {
         return contains(block.getX(), block.getY(), block.getZ());
     }
-    
+
     public boolean intersects(BoundingBox other) {
         if (other == null) {
             return false;
@@ -74,7 +72,7 @@ public class BoundingBox {
             && max.y >= other.min.y && min.y <= other.max.y
             && max.z >= other.min.z && min.z <= other.max.z;
     }
-    
+
     public long volume() {
         return ((long) (max.z - min.z + 1)) * ((long) (max.y - min.y + 1)) * ((long) (max.z - min.z + 1));
     }

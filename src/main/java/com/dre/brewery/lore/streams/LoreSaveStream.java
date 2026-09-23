@@ -32,17 +32,17 @@ public class LoreSaveStream extends ByteArrayOutputStream {
 
     public static final String IDENTIFIER = "§%";
 
-    private ItemMeta meta;
+    private ItemMeta itemMeta;
     private int line;
     private boolean flushed = false;
 
-    public LoreSaveStream(ItemMeta meta) {
-        this(meta, -1);
+    public LoreSaveStream(ItemMeta itemMeta) {
+        this(itemMeta, -1);
     }
 
-    public LoreSaveStream(ItemMeta meta, int line) {
+    public LoreSaveStream(ItemMeta itemMeta, int line) {
         super(128);
-        this.meta = meta;
+        this.itemMeta = itemMeta;
         this.line = line;
     }
 
@@ -52,21 +52,21 @@ public class LoreSaveStream extends ByteArrayOutputStream {
     public void flush() throws IOException {
         super.flush();
         if (size() <= 0) return;
-        if (flushed || meta == null) {
+        if (flushed || itemMeta == null) {
             // Dont write twice
             return;
         }
         flushed = true;
-        String s = toString();
+        String content = toString();
 
-        StringBuilder loreLineBuilder = new StringBuilder((s.length() * 2) + 6);
+        StringBuilder loreLineBuilder = new StringBuilder((content.length() * 2) + 6);
         loreLineBuilder.append(IDENTIFIER);
-        for (char c : s.toCharArray()) {
+        for (char c : content.toCharArray()) {
             loreLineBuilder.append('§').append(c);
         }
         List<String> lore;
-        if (meta.hasLore()) {
-            lore = meta.getLore();
+        if (itemMeta.hasLore()) {
+            lore = itemMeta.getLore();
         } else {
             lore = new ArrayList<>();
         }
@@ -89,12 +89,12 @@ public class LoreSaveStream extends ByteArrayOutputStream {
             lore.add("");
         }
         lore.add(line, loreLineBuilder.toString());
-        meta.setLore(lore);
+        itemMeta.setLore(lore);
     }
 
     @Override
     public void close() throws IOException {
         super.close();
-        meta = null;
+        itemMeta = null;
     }
 }

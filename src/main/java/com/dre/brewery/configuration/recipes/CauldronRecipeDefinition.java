@@ -26,7 +26,7 @@ import com.dre.brewery.configuration.recipes.serdes.StringListDeserializer;
 import com.dre.brewery.recipe.BreweryCauldronRecipe;
 import com.dre.brewery.recipe.PotionColor;
 import com.dre.brewery.recipe.items.RecipeItem;
-import com.dre.brewery.utility.Tuple;
+import com.dre.brewery.utility.BinaryTuple;
 import com.dre.brewery.utility.utils.BreweryUtil;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -56,7 +56,7 @@ public class CauldronRecipeDefinition {
     private List<String> cookParticles;
 
     @JsonDeserialize(using = LoreStringsDeserializer.class)
-    private List<Tuple<Integer, String>> lore;
+    private List<BinaryTuple<Integer, String>> lore;
 
     private Integer customModelData;
 
@@ -82,7 +82,7 @@ public class CauldronRecipeDefinition {
         recipe.setColor(parseColor(this.color, recipe.getName()));
 
         recipe.setParticleColor(parseCookParticles(recipe.getName()));
-        recipe.setCmData(this.customModelData != null ? this.customModelData : 0);
+        recipe.setCustomModelData(this.customModelData != null ? this.customModelData : 0);
 
         List<String> lore = new ArrayList<>();
         if (this.lore != null) {
@@ -112,8 +112,8 @@ public class CauldronRecipeDefinition {
      * @return The color transitions of the particles above the cauldron, ordered by their minute
      * @throws RecipeParseException When an entry is malformed
      */
-    private List<Tuple<Integer, Color>> parseCookParticles(String recipeName) {
-        List<Tuple<Integer, Color>> particleColor = new ArrayList<>();
+    private List<BinaryTuple<Integer, Color>> parseCookParticles(String recipeName) {
+        List<BinaryTuple<Integer, Color>> particleColor = new ArrayList<>();
         if (this.cookParticles == null) {
             return particleColor;
         }
@@ -136,10 +136,10 @@ public class CauldronRecipeDefinition {
             if (particleColorEntry == PotionColor.WATER && !split[0].equals("WATER")) {
                 throw new RecipeParseException("Color of cookParticle: '" + entry + "' in: " + recipeName);
             }
-            particleColor.add(new Tuple<>(minute, particleColorEntry.getColor()));
+            particleColor.add(new BinaryTuple<>(minute, particleColorEntry.getColor()));
         }
 
-        particleColor.sort(Comparator.comparing(Tuple::first));
+        particleColor.sort(Comparator.comparing(BinaryTuple::first));
         return particleColor;
     }
 }

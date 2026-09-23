@@ -32,17 +32,17 @@ public class NBTSaveStream extends ByteArrayOutputStream {
     private static final String TAG = "brewdata";
     private static final NamespacedKey KEY = new NamespacedKey(BreweryPlugin.getInstance(), TAG);
 
-    private final ItemMeta meta;
+    private final ItemMeta itemMeta;
 
-    public NBTSaveStream(ItemMeta meta) {
+    public NBTSaveStream(ItemMeta itemMeta) {
         super(128);
-        this.meta = meta;
+        this.itemMeta = itemMeta;
     }
 
     @Override
     public void flush() throws IOException {
         super.flush();
         if (size() <= 0) return;
-        NBTUtil.writeBytesItem(toByteArray(), meta, KEY);
+        NBTUtil.writeBytesItem(toByteArray(), itemMeta, KEY);
     }
 }

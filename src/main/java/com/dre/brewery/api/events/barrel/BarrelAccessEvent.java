@@ -21,6 +21,7 @@
 package com.dre.brewery.api.events.barrel;
 
 import com.dre.brewery.instruments.barrel.BreweryBarrel;
+import lombok.Getter;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
@@ -29,15 +30,15 @@ import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * A Player opens a Barrel by rightclicking it.
- * <p>The PlayerInteractEvent on the Barrel may be cancelled. In that case this never gets called
- * <p>Can be cancelled to silently deny opening the Barrel
+ * A Player opens a Barrel by right-clicking it.
+ * <p>The PlayerInteractEvent on the Barrel may be canceled. In that case this never gets called
+ * <p>Can be canceled to silently deny opening the Barrel
  */
 public class BarrelAccessEvent extends BarrelEvent implements Cancellable {
     private static final HandlerList handlers = new HandlerList();
-    private final Player player;
-    private final Block clickedBlock;
-    private final BlockFace clickedBlockFace;
+    @Getter private final Player player;
+    @Getter private final Block clickedBlock;
+    @Getter private final BlockFace clickedBlockFace;
     private boolean isCancelled;
 
     public BarrelAccessEvent(BreweryBarrel breweryBarrel, Player player, Block clickedBlock) {
@@ -51,23 +52,6 @@ public class BarrelAccessEvent extends BarrelEvent implements Cancellable {
         this.clickedBlockFace = clickedBlockFace;
     }
 
-    /**
-     * Gets the Block that was actually clicked.
-     * <p>For access Permissions getSpigot() should be used
-     */
-    public Block getClickedBlock() {
-        return clickedBlock;
-    }
-
-    /**
-     * Get the clicked Block Face when clicking on the Barrel Block
-     *
-     * @since v3.0 (Api 3)
-     */
-    public BlockFace getClickedBlockFace() {
-        return clickedBlockFace;
-    }
-
     @Override
     public boolean isCancelled() {
         return isCancelled;
@@ -76,10 +60,6 @@ public class BarrelAccessEvent extends BarrelEvent implements Cancellable {
     @Override
     public void setCancelled(boolean cancelled) {
         isCancelled = cancelled;
-    }
-
-    public Player getPlayer() {
-        return player;
     }
 
     @NotNull

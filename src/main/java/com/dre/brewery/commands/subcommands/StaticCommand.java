@@ -20,7 +20,7 @@
 
 package com.dre.brewery.commands.subcommands;
 
-import com.dre.brewery.Brew;
+import com.dre.brewery.brew.Brew;
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.api.events.brew.BrewModifyEvent;
 import com.dre.brewery.commands.BreweryCommandManager;
@@ -69,17 +69,17 @@ public class StaticCommand {
                 lang.sendEntry(player, "Error_SealedAlwaysStatic");
                 return;
             }
-            brew.setStatic(false, hand);
+            brew.setStatic(false);
             lang.sendEntry(player, "CMD_NonStatic");
         } else {
-            brew.setStatic(true, hand);
+            brew.setStatic(true);
             lang.sendEntry(player, "CMD_Static");
         }
 
         brew.touch();
-        ItemMeta meta = hand.getItemMeta();
-        assert meta != null;
-        BrewModifyEvent modifyEvent = new BrewModifyEvent(brew, meta, BrewModifyEvent.Type.STATIC);
+        ItemMeta itemMeta = hand.getItemMeta();
+        assert itemMeta != null;
+        BrewModifyEvent modifyEvent = new BrewModifyEvent(brew, itemMeta, BrewModifyEvent.Type.STATIC);
         BreweryPlugin.getInstance().getServer().getPluginManager().callEvent(modifyEvent);
         if (brew != modifyEvent.getBrew()) {
             brew = modifyEvent.getBrew();
@@ -87,7 +87,7 @@ public class StaticCommand {
         if (modifyEvent.isCancelled()) {
             return;
         }
-        brew.save(meta);
-        hand.setItemMeta(meta);
+        brew.save(itemMeta);
+        hand.setItemMeta(itemMeta);
     }
 }

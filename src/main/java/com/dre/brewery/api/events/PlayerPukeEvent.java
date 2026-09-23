@@ -20,7 +20,9 @@
 
 package com.dre.brewery.api.events;
 
-import com.dre.brewery.BreweryPlayer;
+import com.dre.brewery.mechanics.BreweryPlayer;
+import lombok.Getter;
+import lombok.Setter;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.HandlerList;
@@ -34,27 +36,13 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PlayerPukeEvent extends PlayerEvent implements Cancellable {
     private static final HandlerList handlers = new HandlerList();
-    private int count;
+    @Setter @Getter private int count;
     private boolean cancelled;
     private BreweryPlayer breweryPlayer;
 
 
     public PlayerPukeEvent(Player who, int count) {
         super(who);
-        this.count = count;
-    }
-
-    /**
-     * Get the Amount of items being dropped this time
-     */
-    public int getCount() {
-        return count;
-    }
-
-    /**
-     * Set the amount of items being dropped this time
-     */
-    public void setCount(int count) {
         this.count = count;
     }
 
@@ -81,7 +69,6 @@ public class PlayerPukeEvent extends PlayerEvent implements Cancellable {
         return handlers;
     }
 
-    // Required by Bukkit
     public static HandlerList getHandlerList() {
         return handlers;
     }

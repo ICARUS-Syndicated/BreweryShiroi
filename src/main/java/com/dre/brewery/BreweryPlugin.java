@@ -51,6 +51,8 @@ import com.dre.brewery.listeners.CauldronListener;
 import com.dre.brewery.listeners.EntityListener;
 import com.dre.brewery.listeners.InventoryListener;
 import com.dre.brewery.listeners.PlayerListener;
+import com.dre.brewery.mechanics.BreweryPlayer;
+import com.dre.brewery.mechanics.Wakeup;
 import com.dre.brewery.recipe.items.CustomItem;
 import com.dre.brewery.recipe.items.Ingredient;
 import com.dre.brewery.recipe.items.ItemLoader;
@@ -68,14 +70,12 @@ import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.command.CommandSender;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
@@ -122,10 +122,8 @@ public final class BreweryPlugin extends JavaPlugin {
         // Lands flags must be registered onLoad
         if (getServer().getPluginManager().getPlugin("Lands") != null) LandsHook.load();
 
-        if (getMCVersion().isOrLater(MinecraftVersion.V1_14)) {
-            // Campfires are weird. Initialize once now, so it doesn't lag later when we check for campfires under Cauldrons
-            getServer().createBlockData(Material.CAMPFIRE);
-        }
+        // Campfires are weird. Initialize once now, so it doesn't lag later when we check for campfires under Cauldrons
+        getServer().createBlockData(Material.CAMPFIRE);
     }
 
     @Override
@@ -218,13 +216,12 @@ public final class BreweryPlugin extends JavaPlugin {
         pluginManager.registerEvents(new EntityListener(), this);
         pluginManager.registerEvents(new InventoryListener(), this);
         pluginManager.registerEvents(new IntegrationListener(), this);
-        if (getMCVersion().isOrLater(MinecraftVersion.V1_9))
-            pluginManager.registerEvents(new CauldronListener(), this);
-        if (Hook.CHESTSHOP.isEnabled() && getMCVersion().isOrLater(MinecraftVersion.V1_13))
+        pluginManager.registerEvents(new CauldronListener(), this);
+        if (Hook.CHESTSHOP.isEnabled())
             pluginManager.registerEvents(new ChestShopListener(), this);
         if (Hook.SHOPKEEPERS.isEnabled())
             pluginManager.registerEvents(new ShopKeepersListener(), this);
-        if (Hook.SLIMEFUN.isEnabled() && getMCVersion().isOrLater(MinecraftVersion.V1_14))
+        if (Hook.SLIMEFUN.isEnabled())
             pluginManager.registerEvents(new SlimefunListener(), this);
         if (Hook.MOVECRAFT.isEnabled()) {
             pluginManager.registerEvents(new CraftDetectListener(), this);
@@ -236,7 +233,7 @@ public final class BreweryPlugin extends JavaPlugin {
         // Heartbeat
         BreweryPlugin.getScheduler().runTaskTimer(new BreweryRunnable(), 650, 1200);
         BreweryPlugin.getScheduler().runTaskTimer(new DrunkRunnable(), 120, 120);
-        if (getMCVersion().isOrLater(MinecraftVersion.V1_9) && !MinecraftVersion.isFolia())
+        if (!MinecraftVersion.isFolia())
             BreweryPlugin.getScheduler().runTaskTimer(new CauldronParticles(), 1, 1);
 
 
@@ -254,9 +251,7 @@ public final class BreweryPlugin extends JavaPlugin {
         Logging.log("BreweryShiroi enabled!");
 
         ReleaseChecker releaseChecker = ReleaseChecker.getInstance();
-        releaseChecker.checkForUpdate().thenAccept(updateAvailable -> {
-            releaseChecker.notify(Bukkit.getConsoleSender());
-        });
+        releaseChecker.checkForUpdate().thenAccept(updateAvailable -> releaseChecker.notify(Bukkit.getConsoleSender()));
     }
 
     @Override
@@ -335,13 +330,13 @@ public final class BreweryPlugin extends JavaPlugin {
 
             BreweryBarrel.onUpdate();// runs every min to check and update ageing time
 
-            if (getMCVersion().isOrLater(MinecraftVersion.V1_14)) VanillaBarrel.onUpdate();
+            VanillaBarrel.onUpdate();
             if (BlockLockerHook.BLOCKLOCKER.isEnabled()) BlockLockerBarrel.clearBarrelSign();
 
             BreweryPlayer.onUpdate();// updates players drunkenness
 
 
-            //DataSave.autoSave();
+            // DataSave.autoSave();
             dataManager.tryAutoSave();
 
             Logging.debugLog("BreweryRunnable: " + (System.currentTimeMillis() - start) + "ms");
@@ -380,7 +375,7 @@ public final class BreweryPlugin extends JavaPlugin {
                 continue;
             }
 
-            dataFolder.mkdirs();
+            Boolean ignored = dataFolder.mkdirs();
             File[] files = oldFolder.listFiles();
             if (files != null) {
                 for (File file : files) {

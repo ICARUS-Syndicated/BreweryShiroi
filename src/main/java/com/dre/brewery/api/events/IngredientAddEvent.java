@@ -23,6 +23,8 @@ package com.dre.brewery.api.events;
 import com.dre.brewery.instruments.BreweryCauldron;
 import com.dre.brewery.recipe.items.RecipeItem;
 import com.dre.brewery.utility.utils.MaterialUtil;
+import lombok.Getter;
+import lombok.Setter;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Levelled;
@@ -37,31 +39,23 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Player adding an ingredient to a cauldron.
  * <p>Always one item added at a time.
- * <p>If needed use the caudrons add method to manually add more Items
+ * <p>If needed to use the cauldrons add method to manually add more Items
  */
-public class IngedientAddEvent extends PlayerEvent implements Cancellable {
+public class IngredientAddEvent extends PlayerEvent implements Cancellable {
     private static final HandlerList handlers = new HandlerList();
-    private final Block block;
-    private final BreweryCauldron cauldron;
-    private ItemStack ingredient;
+    @Getter private final Block block;
+    @Getter private final BreweryCauldron cauldron;
+    @Getter private ItemStack ingredient;
     private RecipeItem rItem;
     private boolean cancelled;
-    private boolean takeItem = true;
+    @Setter private boolean takeItem = true;
 
-    public IngedientAddEvent(Player who, Block block, BreweryCauldron breweryCauldron, ItemStack ingredient, RecipeItem rItem) {
+    public IngredientAddEvent(Player who, Block block, BreweryCauldron breweryCauldron, ItemStack ingredient, RecipeItem rItem) {
         super(who);
         this.block = block;
         cauldron = breweryCauldron;
         this.rItem = rItem;
         this.ingredient = ingredient;
-    }
-
-    public Block getBlock() {
-        return block;
-    }
-
-    public BreweryCauldron getCauldron() {
-        return cauldron;
     }
 
     /**
@@ -71,17 +65,6 @@ public class IngedientAddEvent extends PlayerEvent implements Cancellable {
      */
     public RecipeItem getRecipeItem() {
         return rItem;
-    }
-
-    /**
-     * Get the item currently being added to the cauldron by the player.
-     * <p>Can be changed directly (mutable) or with the setter Method
-     * <p>The amount is ignored and always one added
-     *
-     * @return The item being added
-     */
-    public ItemStack getIngredient() {
-        return ingredient;
     }
 
     /**
@@ -104,15 +87,6 @@ public class IngedientAddEvent extends PlayerEvent implements Cancellable {
      */
     public boolean willTakeItem() {
         return takeItem;
-    }
-
-    /**
-     * Set if the amount of the item in the players hand should be decreased.
-     *
-     * @param takeItem if the item amount in the hand should be decreased
-     */
-    public void setTakeItem(boolean takeItem) {
-        this.takeItem = takeItem;
     }
 
     /**

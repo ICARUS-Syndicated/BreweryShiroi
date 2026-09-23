@@ -20,7 +20,7 @@
 
 package com.dre.brewery.commands.subcommands;
 
-import com.dre.brewery.BreweryPlayer;
+import com.dre.brewery.mechanics.BreweryPlayer;
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.commands.BreweryCommandManager;
 import com.dre.brewery.configuration.files.Lang;
@@ -78,7 +78,7 @@ public class InfoCommand {
             breweryPlayer.showDrunkeness((Player) sender);
         } else {
             lang.sendEntry(sender, "CMD_Info_Drunk", playerName,
-                "" + breweryPlayer.getDrunkeness(), "" + breweryPlayer.getQuality());
+                "" + breweryPlayer.getDrunkenness(), "" + breweryPlayer.getQuality());
         }
     }
 }

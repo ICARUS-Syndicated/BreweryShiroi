@@ -20,6 +20,8 @@
 
 package com.dre.brewery.api.events;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.HandlerList;
@@ -37,32 +39,14 @@ import java.util.List;
  */
 public class PlayerEffectEvent extends PlayerEvent implements Cancellable {
     private static final HandlerList handlers = new HandlerList();
-    private final EffectType effectType;
-    private List<PotionEffect> effects;
+    @Getter private final EffectType effectType;
+    @Setter @Getter private List<PotionEffect> effects;
     private boolean cancelled;
 
     public PlayerEffectEvent(Player who, EffectType effectType, List<PotionEffect> effects) {
         super(who);
         this.effectType = effectType;
         this.effects = effects;
-    }
-
-    /**
-     * @return The effects being applied. Effects can be added or removed from this list.
-     */
-    public List<PotionEffect> getEffects() {
-        return effects;
-    }
-
-    public void setEffects(List<PotionEffect> effects) {
-        this.effects = effects;
-    }
-
-    /**
-     * @return What type of effects are applied, see EffectType
-     */
-    public EffectType getEffectType() {
-        return effectType;
     }
 
     @Override
@@ -94,7 +78,7 @@ public class PlayerEffectEvent extends PlayerEvent implements Cancellable {
         /**
          * The Alcohol level demands its toll.
          * <p>Regularly applied depending on the players alcohol level
-         * <p>By default it is just one Confusion effect
+         * <p>By default, it is just one Confusion effect
          */
         ALCOHOL,
 

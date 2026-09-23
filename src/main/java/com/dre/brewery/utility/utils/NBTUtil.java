@@ -51,29 +51,29 @@ public final class NBTUtil {
     }
 
     @SuppressWarnings("deprecation")
-    public static void writeBytesItem(byte[] bytes, ItemMeta meta, NamespacedKey key) {
+    public static void writeBytesItem(byte[] bytes, ItemMeta itemMeta, NamespacedKey key) {
         if (NewNbtVer) {
-            meta.getPersistentDataContainer().set(key, org.bukkit.persistence.PersistentDataType.BYTE_ARRAY, bytes);
+            itemMeta.getPersistentDataContainer().set(key, org.bukkit.persistence.PersistentDataType.BYTE_ARRAY, bytes);
         } else {
-            meta.getCustomTagContainer().setCustomTag(key, org.bukkit.inventory.meta.tags.ItemTagType.BYTE_ARRAY, bytes);
+            itemMeta.getCustomTagContainer().setCustomTag(key, org.bukkit.inventory.meta.tags.ItemTagType.BYTE_ARRAY, bytes);
         }
     }
 
     @SuppressWarnings("deprecation")
-    public static byte[] readBytesItem(ItemMeta meta, NamespacedKey key) {
+    public static byte[] readBytesItem(ItemMeta itemMeta, NamespacedKey key) {
         if (NewNbtVer) {
-            return meta.getPersistentDataContainer().get(key, org.bukkit.persistence.PersistentDataType.BYTE_ARRAY);
+            return itemMeta.getPersistentDataContainer().get(key, org.bukkit.persistence.PersistentDataType.BYTE_ARRAY);
         } else {
-            return meta.getCustomTagContainer().getCustomTag(key, org.bukkit.inventory.meta.tags.ItemTagType.BYTE_ARRAY);
+            return itemMeta.getCustomTagContainer().getCustomTag(key, org.bukkit.inventory.meta.tags.ItemTagType.BYTE_ARRAY);
         }
     }
 
     @SuppressWarnings("deprecation")
-    public static boolean hasBytesItem(ItemMeta meta, NamespacedKey key) {
+    public static boolean hasBytesItem(ItemMeta itemMeta, NamespacedKey key) {
         if (NewNbtVer) {
-            return meta.getPersistentDataContainer().has(key, org.bukkit.persistence.PersistentDataType.BYTE_ARRAY);
+            return itemMeta.getPersistentDataContainer().has(key, org.bukkit.persistence.PersistentDataType.BYTE_ARRAY);
         } else {
-            return meta.getCustomTagContainer().hasCustomTag(key, org.bukkit.inventory.meta.tags.ItemTagType.BYTE_ARRAY);
+            return itemMeta.getCustomTagContainer().hasCustomTag(key, org.bukkit.inventory.meta.tags.ItemTagType.BYTE_ARRAY);
         }
     }
 }

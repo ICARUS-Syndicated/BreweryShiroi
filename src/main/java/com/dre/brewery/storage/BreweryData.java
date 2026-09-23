@@ -21,14 +21,14 @@
 package com.dre.brewery.storage;
 
 import com.dre.brewery.instruments.BreweryCauldron;
-import com.dre.brewery.BreweryIngredients;
-import com.dre.brewery.BreweryPlayer;
+import com.dre.brewery.brew.BreweryIngredients;
+import com.dre.brewery.mechanics.BreweryPlayer;
 import com.dre.brewery.instruments.barrel.BreweryBarrel;
 import com.dre.brewery.instruments.barrel.BarrelWoodType;
-import com.dre.brewery.Brew;
+import com.dre.brewery.brew.Brew;
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.instruments.barrel.VanillaBarrel;
-import com.dre.brewery.Wakeup;
+import com.dre.brewery.mechanics.Wakeup;
 import com.dre.brewery.lore.base91.Base91DecoderStream;
 import com.dre.brewery.recipe.items.Ingredient;
 import com.dre.brewery.recipe.items.SimpleItem;
@@ -36,7 +36,6 @@ import com.dre.brewery.utility.utils.BreweryUtil;
 import com.dre.brewery.utility.BoundingBox;
 import com.dre.brewery.utility.utils.FutureUtil;
 import com.dre.brewery.utility.Logging;
-import com.dre.brewery.utility.MinecraftVersion;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -73,7 +72,6 @@ import java.util.stream.Collectors;
  */
 public class BreweryData {
 
-    private static final MinecraftVersion VERSION = BreweryPlugin.getMCVersion();
     private static final BreweryPlugin plugin = BreweryPlugin.getInstance();
 
     public static AtomicInteger dataMutex = new AtomicInteger(0); // WorldData: -1 = Saving, 0 = Free, >= 1 = Loading
@@ -163,20 +161,20 @@ public class BreweryData {
             section = data.getConfigurationSection("Brew");
             if (section != null) {
                 // All sections have the UID as name
-                for (String uid : section.getKeys(false)) {
-                    BreweryIngredients ingredients = getIngredients(ingMap, section.getString(uid + ".ingId"));
-                    int quality = section.getInt(uid + ".quality", 0);
-                    int alc = section.getInt(uid + ".alc", 0);
-                    byte distillRuns = (byte) section.getInt(uid + ".distillRuns", 0);
-                    float ageTime = (float) section.getDouble(uid + ".ageTime", 0.0);
-                    float wood = (float) section.getDouble(uid + ".wood", -1.0);
-                    String recipe = section.getString(uid + ".recipe", null);
-                    boolean unlabeled = section.getBoolean(uid + ".unlabeled", false);
-                    boolean persistent = section.getBoolean(uid + ".persist", false);
-                    boolean stat = section.getBoolean(uid + ".stat", false);
-                    int lastUpdate = section.getInt(uid + ".lastUpdate", 0);
+                for (String uniqueId : section.getKeys(false)) {
+                    BreweryIngredients ingredients = getIngredients(ingMap, section.getString(uniqueId + ".ingId"));
+                    int quality = section.getInt(uniqueId + ".quality", 0);
+                    int alcohol = section.getInt(uniqueId + ".alc", 0);
+                    byte distillRuns = (byte) section.getInt(uniqueId + ".distillRuns", 0);
+                    float ageTime = (float) section.getDouble(uniqueId + ".ageTime", 0.0);
+                    float wood = (float) section.getDouble(uniqueId + ".wood", -1.0);
+                    String recipe = section.getString(uniqueId + ".recipe", null);
+                    boolean unlabeled = section.getBoolean(uniqueId + ".unlabeled", false);
+                    boolean persistent = section.getBoolean(uniqueId + ".persist", false);
+                    boolean stat = section.getBoolean(uniqueId + ".stat", false);
+                    int lastUpdate = section.getInt(uniqueId + ".lastUpdate", 0);
 
-                    Brew.loadLegacy(ingredients, Integer.parseInt(uid), quality, alc, distillRuns, ageTime, BarrelWoodType.fromAny(wood), recipe, unlabeled, persistent, stat, lastUpdate);
+                    Brew.loadLegacy(ingredients, Integer.parseInt(uniqueId), quality, alcohol, distillRuns, ageTime, BarrelWoodType.fromAny(wood), recipe, unlabeled, persistent, stat, lastUpdate);
                 }
             }
 
@@ -240,8 +238,8 @@ public class BreweryData {
         }
     }
 
-    public static BreweryIngredients deserializeIngredients(String mat) {
-        try (DataInputStream in = new DataInputStream(new Base91DecoderStream(new ByteArrayInputStream(mat.getBytes())))) {
+    public static BreweryIngredients deserializeIngredients(String material) {
+        try (DataInputStream in = new DataInputStream(new Base91DecoderStream(new ByteArrayInputStream(material.getBytes())))) {
             byte ver = in.readByte();
             return BreweryIngredients.load(in, ver);
         } catch (IOException e) {
@@ -251,27 +249,27 @@ public class BreweryData {
     }
 
     // Loading from the old way of saving ingredients
-    public static List<Ingredient> oldDeserializeIngredients(ConfigurationSection matSection) {
+    public static List<Ingredient> oldDeserializeIngredients(ConfigurationSection materialsSection) {
         List<Ingredient> ingredients = new ArrayList<>();
-        for (String mat : matSection.getKeys(false)) {
-            String[] matSplit = mat.split(",");
-            Material m = Material.getMaterial(matSplit[0]);
-            if (m == null && VERSION.isOrLater(MinecraftVersion.V1_13)) {
-                if (matSplit[0].equals("LONG_GRASS")) {
-                    m = Material.SHORT_GRASS;
+        for (String material : materialsSection.getKeys(false)) {
+            String[] materialSplit = material.split(",");
+            Material foundMaterial = Material.getMaterial(materialSplit[0]);
+            if (foundMaterial == null) {
+                if (materialSplit[0].equals("LONG_GRASS")) {
+                    foundMaterial = Material.SHORT_GRASS;
                 } else {
-                    m = Material.matchMaterial(matSplit[0], true);
+                    foundMaterial = Material.matchMaterial(materialSplit[0], true);
                 }
-                Logging.debugLog("converting Data Material from " + matSplit[0] + " to " + m);
+                Logging.debugLog("converting Data Material from " + materialSplit[0] + " to " + foundMaterial);
             }
-            if (m == null) continue;
+            if (foundMaterial == null) continue;
             SimpleItem item;
-            if (matSplit.length == 2) {
-                item = new SimpleItem(m, (short) BreweryUtil.parseIntOrZero(matSplit[1]));
+            if (materialSplit.length == 2) {
+                item = new SimpleItem(foundMaterial, (short) BreweryUtil.parseIntOrZero(materialSplit[1]));
             } else {
-                item = new SimpleItem(m);
+                item = new SimpleItem(foundMaterial);
             }
-            item.setAmount(matSection.getInt(mat));
+            item.setAmount(materialsSection.getInt(material));
             ingredients.add(item);
         }
         return ingredients;
@@ -354,12 +352,12 @@ public class BreweryData {
         if (BreweryData.worldData.contains("BCauldron." + uuid)) {
             ConfigurationSection section = BreweryData.worldData.getConfigurationSection("BCauldron." + uuid);
             for (String cauldron : section.getKeys(false)) {
-                // block is splitted into x/y/z
+                // block is split into x/y/z
                 String block = section.getString(cauldron + ".block");
                 if (block != null) {
-                    String[] splitted = block.split("/");
-                    if (splitted.length == 3) {
-                        Block worldBlock = world.getBlockAt(Integer.parseInt(splitted[0]), Integer.parseInt(splitted[1]), Integer.parseInt(splitted[2]));
+                    String[] parts = block.split("/");
+                    if (parts.length == 3) {
+                        Block worldBlock = world.getBlockAt(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]), Integer.parseInt(parts[2]));
                         BreweryIngredients ingredients = loadCauldronIng(section, cauldron + ".ingredients");
                         int state = section.getInt(cauldron + ".state", 0);
 
@@ -378,15 +376,15 @@ public class BreweryData {
         if (BreweryData.worldData.contains("Barrel." + uuid)) {
             ConfigurationSection section = BreweryData.worldData.getConfigurationSection("Barrel." + uuid);
             for (String barrel : section.getKeys(false)) {
-                // block spigot is splitted into x/y/z
+                // block spigot is split into x/y/z
                 String spigot = section.getString(barrel + ".spigot");
                 if (spigot != null) {
-                    String[] splitted = spigot.split("/");
-                    if (splitted.length == 3) {
+                    String[] parts = spigot.split("/");
+                    if (parts.length == 3) {
 
                         // load itemStacks from invSection
                         ConfigurationSection invSection = section.getConfigurationSection(barrel + ".inv");
-                        Location spigotLocation = new Location(world, Integer.parseInt(splitted[0]), Integer.parseInt(splitted[1]), Integer.parseInt(splitted[2]));
+                        Location spigotLocation = new Location(world, Integer.parseInt(parts[0]), Integer.parseInt(parts[1]), Integer.parseInt(parts[2]));
                         float time = (float) section.getDouble(barrel + ".time", 0.0);
                         byte sign = (byte) section.getInt(barrel + ".sign", 0);
 
@@ -445,16 +443,16 @@ public class BreweryData {
         if (BreweryData.worldData.contains("Wakeup." + uuid)) {
             ConfigurationSection section = BreweryData.worldData.getConfigurationSection("Wakeup." + uuid);
             for (String wakeup : section.getKeys(false)) {
-                // loc of wakeup is splitted into x/y/z/pitch/yaw
-                String loc = section.getString(wakeup);
-                if (loc != null) {
-                    String[] splitted = loc.split("/");
-                    if (splitted.length == 5) {
-                        double x = Double.parseDouble(splitted[0]);
-                        double y = Double.parseDouble(splitted[1]);
-                        double z = Double.parseDouble(splitted[2]);
-                        float pitch = Float.parseFloat(splitted[3]);
-                        float yaw = Float.parseFloat(splitted[4]);
+                // the location of a wakeup is split into x/y/z/pitch/yaw
+                String locationData = section.getString(wakeup);
+                if (locationData != null) {
+                    String[] parts = locationData.split("/");
+                    if (parts.length == 5) {
+                        double x = Double.parseDouble(parts[0]);
+                        double y = Double.parseDouble(parts[1]);
+                        double z = Double.parseDouble(parts[2]);
+                        float pitch = Float.parseFloat(parts[3]);
+                        float yaw = Float.parseFloat(parts[4]);
 
                         Location location = new Location(world, x, y, z, yaw, pitch);
 

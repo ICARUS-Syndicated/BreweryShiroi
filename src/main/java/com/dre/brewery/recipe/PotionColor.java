@@ -20,14 +20,10 @@
 
 package com.dre.brewery.recipe;
 
-import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.utility.BukkitEffectConstants;
-import com.dre.brewery.utility.utils.ClassUtil;
-import com.dre.brewery.utility.MinecraftVersion;
 import lombok.Getter;
 import org.bukkit.Color;
 import org.bukkit.inventory.ItemFlag;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.potion.PotionType;
 
@@ -36,7 +32,6 @@ import org.bukkit.potion.PotionType;
 public class PotionColor {
 
     private static final String HEX_STRING = "#%02x%02x%02x";
-    private static final MinecraftVersion VERSION = BreweryPlugin.getMCVersion();
 
     public static final PotionColor PINK = new PotionColor(1, BukkitEffectConstants.POTION_REGENERATION, Color.FUCHSIA);
     public static final PotionColor CYAN = new PotionColor(2, BukkitEffectConstants.POTION_SWIFTNESS, Color.AQUA);
@@ -47,7 +42,7 @@ public class PotionColor {
     public static final PotionColor BLACK = new PotionColor(8, BukkitEffectConstants.POTION_WEAKNESS, Color.BLACK);
     public static final PotionColor RED = new PotionColor(9, BukkitEffectConstants.POTION_STRENGTH, Color.fromRGB(196, 0, 0));
     public static final PotionColor GREY = new PotionColor(10, BukkitEffectConstants.POTION_SLOWNESS, Color.GRAY);
-    public static final PotionColor WATER = new PotionColor(11, VERSION.isOrLater(MinecraftVersion.V1_9) ? BukkitEffectConstants.POTION_WATER_BREATHING : null, Color.BLUE);
+    public static final PotionColor WATER = new PotionColor(11, BukkitEffectConstants.POTION_WATER_BREATHING, Color.BLUE);
     public static final PotionColor DARK_RED = new PotionColor(12, BukkitEffectConstants.POTION_HARMING, Color.fromRGB(128, 0, 0));
     public static final PotionColor BRIGHT_GREY = new PotionColor(14, BukkitEffectConstants.POTION_INVISIBILITY, Color.SILVER);
     public static final PotionColor WHITE = new PotionColor(Color.WHITE);
@@ -73,43 +68,14 @@ public class PotionColor {
         this.color = color;
     }
 
-    // gets the Damage Value, that sets a color on the potion
-    // offset +32 is not accepted by brewer, so not further destillable
-    // Only for minecraft pre 1.9
-    public short getColorId(boolean destillable) {
-        if (destillable) {
-            return (short) (colorId + 64);
-        }
-        return (short) (colorId + 32);
+    public void colorBrew(PotionMeta itemMeta) {
+        // Hide potion effects but keep lore visible
+        hidePotionEffects(itemMeta);
+        itemMeta.setColor(getColor());
     }
 
-    @SuppressWarnings("deprecation")
-    public void colorBrew(PotionMeta meta, ItemStack potion, boolean destillable) {
-        if (VERSION.isOrLater(MinecraftVersion.V1_9)) {
-            // We need to Hide Potion Effects even in 1.12, as it would otherwise show "No Effects"
-
-            // Hide potion effects but keep lore visible
-            hidePotionEffects(meta);
-            if (VERSION.isOrLater(MinecraftVersion.V1_11)) {
-                // BasePotionData was only used for the Color, so starting with 1.12 we can use setColor instead
-                meta.setColor(getColor());
-            } else {
-                meta.setBasePotionType(getType());
-            }
-        } else {
-            potion.setDurability(getColorId(destillable));
-            // To stop 1.8 from showing the potioneffect for the color id, add a dummy Effect
-            meta.addCustomEffect(BukkitEffectConstants.REGENERATION.createEffect(0, 0), true);
-        }
-    }
-
-    private void hidePotionEffects(PotionMeta meta) {
-        if (!ClassUtil.fieldExists("org.bukkit.inventory.ItemFlag", "HIDE_ADDITIONAL_TOOLTIP") ||
-            !ClassUtil.fieldExists("org.bukkit.inventory.ItemFlag", "HIDE_ATTRIBUTES")) {
-            meta.addItemFlags(ItemFlag.values());
-        } else {
-            meta.addItemFlags(ItemFlag.HIDE_ADDITIONAL_TOOLTIP, ItemFlag.HIDE_ATTRIBUTES);
-        }
+    private void hidePotionEffects(PotionMeta itemMeta) {
+        itemMeta.addItemFlags(ItemFlag.HIDE_ADDITIONAL_TOOLTIP, ItemFlag.HIDE_ATTRIBUTES);
     }
 
     public static PotionColor fromString(String string) {

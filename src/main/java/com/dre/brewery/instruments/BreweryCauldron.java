@@ -20,9 +20,9 @@
 
 package com.dre.brewery.instruments;
 
-import com.dre.brewery.BreweryIngredients;
+import com.dre.brewery.brew.BreweryIngredients;
 import com.dre.brewery.BreweryPlugin;
-import com.dre.brewery.api.events.IngedientAddEvent;
+import com.dre.brewery.api.events.IngredientAddEvent;
 import com.dre.brewery.configuration.ConfigManager;
 import com.dre.brewery.configuration.files.Config;
 import com.dre.brewery.configuration.files.Lang;
@@ -32,7 +32,7 @@ import com.dre.brewery.utility.utils.BreweryUtil;
 import com.dre.brewery.utility.BukkitEffectConstants;
 import com.dre.brewery.utility.utils.MaterialUtil;
 import com.dre.brewery.utility.MinecraftVersion;
-import com.dre.brewery.utility.Tuple;
+import com.dre.brewery.utility.BinaryTuple;
 import com.github.Anon8281.universalScheduler.scheduling.tasks.MyScheduledTask;
 import lombok.Getter;
 import lombok.Setter;
@@ -152,7 +152,7 @@ public class BreweryCauldron {
         }
         if (config.isEnableCauldronParticles() && !config.isMinimalParticles()) {
             // Few little sparks and lots of water splashes. Offset by 0.2 in x and z
-            block.getWorld().spawnParticle(BukkitEffectConstants.INSTANT_EFFECT, particleLocation, 2, 0.2, 0, 0.2, new BukkitEffectConstants.ParticleSpellWrapper().toInstance(Color.WHITE, 1f));
+            block.getWorld().spawnParticle(BukkitEffectConstants.INSTANT_EFFECT, particleLocation, 2, 0.2, 0, 0.2, BukkitEffectConstants.instantEffectData(Color.WHITE, 1f));
             block.getWorld().spawnParticle(BukkitEffectConstants.SPLASH, particleLocation, 10, 0.2, 0, 0.2);
         }
     }
@@ -187,7 +187,7 @@ public class BreweryCauldron {
                 bcauldron.startFoliaParticleTask();
             }
 
-            IngedientAddEvent event = new IngedientAddEvent(player, block, bcauldron, ingredient.clone(), rItem);
+            IngredientAddEvent event = new IngredientAddEvent(player, block, bcauldron, ingredient.clone(), rItem);
             BreweryPlugin.getInstance().getServer().getPluginManager().callEvent(event);
             if (!event.isCancelled()) {
                 bcauldron.add(event.getIngredient(), event.getRecipeItem());
@@ -209,59 +209,34 @@ public class BreweryCauldron {
         ItemStack potion = ingredients.cook(state, player);
         if (potion == null) return false;
 
-        if (VERSION.isOrLater(MinecraftVersion.V1_13)) {
-            BlockData data = block.getBlockData();
-            if (!(data instanceof Levelled)) {
-                remove(block);
-                return false;
-            }
-            Levelled cauldron = ((Levelled) data);
-            if (cauldron.getLevel() <= 0) {
-                remove(block);
-                return false;
-            }
+        BlockData data = block.getBlockData();
+        if (!(data instanceof Levelled cauldron)) {
+            remove(block);
+            return false;
+        }
+        if (cauldron.getLevel() <= 0) {
+            remove(block);
+            return false;
+        }
 
-            // If the Water_Cauldron type exists and the cauldron is on last level
-            if (MaterialUtil.WATER_CAULDRON != null && cauldron.getLevel() == 1) {
-                // Empty Cauldron
-                block.setType(Material.CAULDRON);
-                remove(block);
-            } else {
-                cauldron.setLevel(cauldron.getLevel() - 1);
-
-                // Update the new Level to the Block
-                // We have to use the BlockData variable "data" here instead of the casted "cauldron"
-                // otherwise < 1.13 crashes on plugin load for not finding the BlockData Class
-                block.setBlockData(data);
-
-                if (cauldron.getLevel() <= 0) {
-                    remove(block);
-                } else {
-                    changed = true;
-                }
-            }
-
+        // On the last level the cauldron is emptied completely instead of lowering it
+        if (cauldron.getLevel() == 1) {
+            block.setType(Material.CAULDRON);
+            remove(block);
         } else {
-            @SuppressWarnings("deprecation")
-            byte data = block.getData();
-            if (data > 3) {
-                data = 3;
-            } else if (data <= 0) {
-                remove(block);
-                return false;
-            }
-            data -= 1;
-            MaterialUtil.setData(block, data);
+            cauldron.setLevel(cauldron.getLevel() - 1);
 
-            if (data == 0) {
+            // Update the new Level to the Block
+            // We have to use the BlockData variable "data" here instead of the casted "cauldron"
+            block.setBlockData(data);
+
+            if (cauldron.getLevel() <= 0) {
                 remove(block);
             } else {
                 changed = true;
             }
         }
-        if (VERSION.isOrLater(MinecraftVersion.V1_9)) {
-            block.getWorld().playSound(block.getLocation(), Sound.ITEM_BOTTLE_FILL, 1f, 1f);
-        }
+        block.getWorld().playSound(block.getLocation(), Sound.ITEM_BOTTLE_FILL, 1f, 1f);
         // Bukkit Bug, inventory not updating while in event so this
         // will delay the give
         // but could also just use deprecated updateInventory()
@@ -290,40 +265,28 @@ public class BreweryCauldron {
     public void cookEffect() {
         assert !VERSION.isFolia() || BreweryPlugin.getScheduler().isRegionThread(block.getLocation())
             : "cookEffect must run on owning region thread";
-        if (BreweryUtil.isChunkLoaded(block) && MaterialUtil.isCauldronHeatSource(block.getRelative(BlockFace.DOWN))) {
-            Color color = getParticleColor();
-            // Colorable spirally spell, 0 count enables color instead of the offset variables
-            // Configurable RGB color. The last parameter seems to control the hue and motion, but I couldn't find
-            // how exactly in the client code. 1025 seems to be the best for color brightness and upwards motion
+        if (!BreweryUtil.isChunkLoaded(block) || !MaterialUtil.isCauldronHeatSource(block.getRelative(BlockFace.DOWN))) {
+            return;
+        }
+        Color color = getParticleColor();
+        // Colorable spirally spell, 0 count enables color instead of the offset variables
+        block.getWorld().spawnParticle(BukkitEffectConstants.ENTITY_EFFECT, getRandParticleLoc(), 0, color);
 
-            if (VERSION.isOrLater(MinecraftVersion.V1_21)) {
-                block.getWorld().spawnParticle(BukkitEffectConstants.ENTITY_EFFECT, getRandParticleLoc(), 0, color);
-            } else {
-                block.getWorld().spawnParticle(BukkitEffectConstants.ENTITY_EFFECT, getRandParticleLoc(), 0,
-                    ((double) color.getRed()) / 255.0,
-                    ((double) color.getGreen()) / 255.0,
-                    ((double) color.getBlue()) / 255.0,
-                    1025.0);
-            }
-
-            if (config.isMinimalParticles()) {
-                return;
-            }
-
-            if (ThreadLocalRandom.current().nextFloat() > 0.85f) {
-                // Dark pixely smoke cloud at 0.4 random in x and z
-                // 0 count enables direction, send to y = 1 with speed 0.09
-                block.getWorld().spawnParticle(BukkitEffectConstants.LARGE_SMOKE, getRandParticleLoc(), 0, 0, 1, 0, 0.09);
-            }
-            if (ThreadLocalRandom.current().nextFloat() > 0.2f) {
-                // A Water Splash with 0.2 offset in x and z
-                block.getWorld().spawnParticle(BukkitEffectConstants.SPLASH, particleLocation, 1, 0.2, 0, 0.2);
-            }
-
-            if (VERSION.isOrLater(MinecraftVersion.V1_13) && ThreadLocalRandom.current().nextFloat() > 0.4f) {
-                // Two hovering pixely dust clouds, a bit of offset and with DustOptions to give some color and size
-                block.getWorld().spawnParticle(BukkitEffectConstants.DUST, particleLocation, 2, 0.15, 0.2, 0.15, new Particle.DustOptions(color, 1.5f));
-            }
+        if (config.isMinimalParticles()) {
+            return;
+        }
+        if (ThreadLocalRandom.current().nextFloat() > 0.85f) {
+            // Dark pixely smoke cloud at 0.4 random in x and z
+            // 0 count enables direction, send to y = 1 with speed 0.09
+            block.getWorld().spawnParticle(BukkitEffectConstants.LARGE_SMOKE, getRandParticleLoc(), 0, 0, 1, 0, 0.09);
+        }
+        if (ThreadLocalRandom.current().nextFloat() > 0.2f) {
+            // A Water Splash with 0.2 offset in x and z
+            block.getWorld().spawnParticle(BukkitEffectConstants.SPLASH, particleLocation, 1, 0.2, 0, 0.2);
+        }
+        if (ThreadLocalRandom.current().nextFloat() > 0.4f) {
+            // Two hovering pixely dust clouds, a bit of offset and with DustOptions to give some color and size
+            block.getWorld().spawnParticle(BukkitEffectConstants.DUST, particleLocation, 2, 0.15, 0.2, 0.15, new Particle.DustOptions(color, 1.5f));
         }
     }
 
@@ -353,7 +316,7 @@ public class BreweryCauldron {
             particleRecipe = ingredients.getCauldronRecipe();
         }
 
-        List<Tuple<Integer, Color>> colorList = null;
+        List<BinaryTuple<Integer, Color>> colorList = null;
         if (particleRecipe != null) {
             colorList = particleRecipe.getParticleColor();
         }
@@ -361,47 +324,47 @@ public class BreweryCauldron {
         if (colorList == null || colorList.isEmpty()) {
             // No color List configured, or no recipe found
             colorList = new ArrayList<>(1);
-            colorList.add(new Tuple<>(10, Color.fromRGB(77, 166, 255))); // Dark Aqua kind of Blue
+            colorList.add(new BinaryTuple<>(10, Color.fromRGB(77, 166, 255))); // Dark Aqua kind of Blue
         }
         int index = 0;
-        while (index < colorList.size() - 1 && colorList.get(index).a() < state) {
+        while (index < colorList.size() - 1 && colorList.get(index).first() < state) {
             // Find the first index where the colorList Minute is higher than the state
             index++;
         }
 
-        int minute = colorList.get(index).a();
+        int minute = colorList.get(index).first();
         if (minute > state) {
             // going towards the minute
-            int prevPos;
-            Color prevColor;
+            int previousPosition;
+            Color previousColor;
             if (index > 0) {
                 // has previous colours
-                prevPos = colorList.get(index - 1).a();
-                prevColor = colorList.get(index - 1).b();
+                previousPosition = colorList.get(index - 1).first();
+                previousColor = colorList.get(index - 1).second();
             } else {
-                prevPos = 0;
-                prevColor = Color.fromRGB(153, 221, 255); // Bright Blue
+                previousPosition = 0;
+                previousColor = Color.fromRGB(153, 221, 255); // Bright Blue
             }
 
-            particleColor = BreweryUtil.weightedMixColor(prevColor, prevPos, state, colorList.get(index).b(), minute);
+            particleColor = BreweryUtil.weightedMixColor(previousColor, previousPosition, state, colorList.get(index).second(), minute);
         } else if (minute == state) {
             // reached the minute
-            particleColor = colorList.get(index).b();
+            particleColor = colorList.get(index).second();
         } else {
             // passed the last minute configured
             if (index > 0) {
                 // We have more than one color, just use the last one
-                particleColor = colorList.get(index).b();
+                particleColor = colorList.get(index).second();
             } else {
                 // Only have one color, go towards a Gray
                 Color nextColor = Color.fromRGB(138, 153, 168); // Dark Teal, Gray
-                int nextPos = (int) (minute * 2.6f);
+                int nextPosition = (int) (minute * 2.6f);
 
-                if (nextPos <= state) {
+                if (nextPosition <= state) {
                     // We are past the next color (Gray) as well, keep using it
                     particleColor = nextColor;
                 } else {
-                    particleColor = BreweryUtil.weightedMixColor(colorList.get(index).b(), minute, state, nextColor, nextPos);
+                    particleColor = BreweryUtil.weightedMixColor(colorList.get(index).second(), minute, state, nextColor, nextPosition);
                 }
             }
         }
@@ -514,14 +477,6 @@ public class BreweryCauldron {
 
             // Ignore Water Buckets
         } else if (materialInHand == Material.WATER_BUCKET) {
-            if (VERSION.isOrEarlier(MinecraftVersion.V1_9)) {
-                // reset < 1.9 cauldron when refilling to prevent unlimited source of potions
-                // We catch >=1.9 cases in the Cauldron Listener
-                if (MaterialUtil.getFillLevel(clickedBlock) == 1) {
-                    // will only remove when existing
-                    BreweryCauldron.remove(clickedBlock);
-                }
-            }
             return;
         }
 
@@ -532,24 +487,22 @@ public class BreweryCauldron {
             event.setCancelled(true);
             boolean handSwap = false;
 
-            // Interact event is called twice!!!?? in 1.9, once for each hand.
+            // Interact event is called twice, once for each hand.
             // Certain Items in Hand cause one of them to be cancelled or not called at all sometimes.
             // We mark if a player had the event for the main hand
             // If not, we handle the main hand in the event for the offhand
-            if (VERSION.isOrLater(MinecraftVersion.V1_9)) {
-                if (event.getHand() == EquipmentSlot.HAND) {
-                    final UUID id = player.getUniqueId();
-                    plInteracted.add(id);
-                    BreweryPlugin.getScheduler().runTask(() -> plInteracted.remove(id));
-                } else if (event.getHand() == EquipmentSlot.OFF_HAND) {
-                    if (!plInteracted.remove(player.getUniqueId())) {
-                        item = player.getInventory().getItemInMainHand();
-                        if (item.getType() != Material.AIR) {
-                            materialInHand = item.getType();
-                            handSwap = true;
-                        } else {
-                            item = config.isUseOffhandForCauldron() ? event.getItem() : null;
-                        }
+            if (event.getHand() == EquipmentSlot.HAND) {
+                final UUID id = player.getUniqueId();
+                plInteracted.add(id);
+                BreweryPlugin.getScheduler().runTask(() -> plInteracted.remove(id));
+            } else if (event.getHand() == EquipmentSlot.OFF_HAND) {
+                if (!plInteracted.remove(player.getUniqueId())) {
+                    item = player.getInventory().getItemInMainHand();
+                    if (item.getType() != Material.AIR) {
+                        materialInHand = item.getType();
+                        handSwap = true;
+                    } else {
+                        item = config.isUseOffhandForCauldron() ? event.getItem() : null;
                     }
                 }
             }

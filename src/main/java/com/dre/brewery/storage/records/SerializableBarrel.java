@@ -44,16 +44,16 @@ import java.util.concurrent.CompletableFuture;
 public record SerializableBarrel(String id, String serializedLocation, List<Integer> bounds, float time, byte sign,
                                  String serializedItems) implements SerializableThing {
     public SerializableBarrel(BreweryBarrel breweryBarrel) {
-        this(breweryBarrel.getId().toString(), DataManager.serializeLocation(breweryBarrel.getSpigot().getLocation()), breweryBarrel.getBounds().serializeToIntList(), breweryBarrel.getTime(), breweryBarrel.getSignoffset(), BukkitSerialization.itemStackArrayToBase64(breweryBarrel.getInventory().getContents()));
+        this(breweryBarrel.getId().toString(), DataManager.serializeLocation(breweryBarrel.getSpigot().getLocation()), breweryBarrel.getBounds().serializeToIntList(), breweryBarrel.getTime(), breweryBarrel.getSignOffset(), BukkitSerialization.itemStackArrayToBase64(breweryBarrel.getInventory().getContents()));
     }
 
     public CompletableFuture<BreweryBarrel> toBarrel() {
-        Location loc = DataManager.deserializeLocation(serializedLocation);
-        if (loc == null) {
+        Location location = DataManager.deserializeLocation(serializedLocation);
+        if (location == null) {
             return CompletableFuture.completedFuture(null);
         }
-        return BreweryBarrel.computeSmall(loc).thenApplyAsync(small ->
-            new BreweryBarrel(loc.getBlock(), sign, BoundingBox.fromPoints(bounds), BukkitSerialization.itemStackArrayFromBase64(serializedItems), time, BreweryUtil.uuidFromString(id), small)
+        return BreweryBarrel.computeSmall(location).thenApplyAsync(small ->
+            new BreweryBarrel(location.getBlock(), sign, BoundingBox.fromPoints(bounds), BukkitSerialization.itemStackArrayFromBase64(serializedItems), time, BreweryUtil.uuidFromString(id), small)
         );
     }
 

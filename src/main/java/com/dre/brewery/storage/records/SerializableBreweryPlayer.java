@@ -20,7 +20,7 @@
 
 package com.dre.brewery.storage.records;
 
-import com.dre.brewery.BreweryPlayer;
+import com.dre.brewery.mechanics.BreweryPlayer;
 import com.dre.brewery.storage.interfaces.SerializableThing;
 
 /**
@@ -34,7 +34,7 @@ import com.dre.brewery.storage.interfaces.SerializableThing;
 public record SerializableBreweryPlayer(String id, int quality, int drunkenness,
                                         int offlineDrunkenness) implements SerializableThing {
     public SerializableBreweryPlayer(BreweryPlayer player) {
-        this(player.getUuid(), player.getQuality(), player.getDrunkeness(), player.getOfflineDrunkeness());
+        this(player.getUuid(), player.getQuality(), player.getDrunkenness(), player.getOfflineDrunkenness());
     }
 
     public BreweryPlayer toBPlayer() {

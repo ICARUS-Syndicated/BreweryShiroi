@@ -21,8 +21,6 @@
 package com.dre.brewery.utility;
 
 import com.dre.brewery.BreweryPlugin;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import org.bukkit.Color;
 import org.bukkit.Keyed;
 import org.bukkit.Material;
@@ -36,10 +34,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings("unchecked")
@@ -83,7 +79,7 @@ public final class BukkitEffectConstants {
     public static PotionType POTION_HARMING = potionType("harming");
     public static PotionType POTION_INVISIBILITY = potionType("invisibility");
 
-    public static Material SHORT_GRASS = renamedMaterial("grass", new Tuple<>(MinecraftVersion.V1_20_4, "short_grass"));
+    public static final Material SHORT_GRASS = Material.SHORT_GRASS;
 
 
     public static Particle particle(String key) {
@@ -91,10 +87,7 @@ public final class BukkitEffectConstants {
     }
 
     public static PotionEffectType potionEffectType(String key) {
-        if (BreweryPlugin.getMCVersion().isOrLater(MinecraftVersion.V1_21)) {
-            return getOrThrow(Registry.EFFECT, key);
-        }
-        return throwIfNull(key, k -> PotionEffectType.getByKey(NamespacedKey.minecraft(k)));
+        return getOrThrow(Registry.EFFECT, key);
     }
 
     public static PotionType potionType(String key) {
@@ -103,24 +96,9 @@ public final class BukkitEffectConstants {
 
     @Nullable
     public static PotionEffectType nullablePotionEffectType(String key) {
-        if (BreweryPlugin.getMCVersion().isOrLater(MinecraftVersion.V1_21)) {
-            return Registry.EFFECT.get(NamespacedKey.minecraft(key));
-        }
-        return PotionEffectType.getByKey(NamespacedKey.minecraft(key));
+        return Registry.EFFECT.get(NamespacedKey.minecraft(key));
     }
 
-
-    public static Material renamedMaterial(String defaultValue, Tuple<MinecraftVersion, String>... names) {
-        MinecraftVersion activeVersion = BreweryPlugin.getMCVersion();
-        for (Tuple<MinecraftVersion, String> pair : names) {
-            MinecraftVersion version = pair.a();
-            String name = pair.b();
-            if (activeVersion.isOrLater(version)) {
-                return Material.getMaterial(name.toUpperCase());
-            }
-        }
-        return Material.getMaterial(defaultValue.toUpperCase());
-    }
 
     private static <T extends Keyed> T getOrThrow(Registry<T> registry, String key) {
         T value = registry.get(NamespacedKey.minecraft(key));
@@ -130,44 +108,17 @@ public final class BukkitEffectConstants {
         return value;
     }
 
-    private static <T> T throwIfNull(String key, KeyLookup<T> function) {
-        T value = function.throwIfNull(key);
-        if (value == null) {
-            throw new IllegalArgumentException("No value found for key: " + key);
-        }
-        return value;
+    /**
+     * {@link Particle#INSTANT_EFFECT} only accepts its colour data since 1.21.10, older versions want {@code null}.
+     */
+    @Nullable
+    public static Particle.Spell instantEffectData(@NotNull Color color, float size) {
+        return BreweryPlugin.getMCVersion().isOrLater(MinecraftVersion.V1_21_10) ? new Particle.Spell(color, size) : null;
     }
 
-    private interface KeyLookup<T> {
-        T throwIfNull(String key);
-    }
-
-    @Getter
-    @AllArgsConstructor
-    public static abstract class BukkitConstantWrapper {
-        protected static final MinecraftVersion SERVER_VERSION = BreweryPlugin.getMCVersion();
-        protected final MinecraftVersion requiredVersion;
-    }
-
-    public static class ParticleSpellWrapper extends BukkitConstantWrapper {
-
-        public ParticleSpellWrapper() {
-            super(MinecraftVersion.V1_21_10);
-        }
-
-        @SuppressWarnings("UnstableApiUsage")
-        @Nullable
-        public Object toInstance(@NotNull Color color, float size) {
-            if (!SERVER_VERSION.isOrLater(this.requiredVersion)) {
-                return null;
-            }
-
-            return new Particle.Spell(color, size);
-        }
-    }
-
-    // I don't really like this but whatever
-
+    /**
+     * Holds the constants of this class that were defined in code, keyed by their registry key.
+     */
     private static final Map<String, Keyed> MAPPED_VALUES = new HashMap<>();
 
     static {
@@ -176,8 +127,9 @@ public final class BukkitEffectConstants {
                 if (!Modifier.isStatic(field.getModifiers()) || !Keyed.class.isAssignableFrom(field.getType())) {
                     continue;
                 }
-                Keyed obj = (Keyed) field.get(null);
-                MAPPED_VALUES.put(obj.getKey().getKey(), obj);
+                if (field.get(null) instanceof Keyed keyed) {
+                    MAPPED_VALUES.put(keyed.getKey().getKey(), keyed);
+                }
             }
         } catch (IllegalAccessException e) {
             Logging.errorLog("BukkitConstants failed to initialize mapped values", e);
@@ -187,24 +139,15 @@ public final class BukkitEffectConstants {
     @Nullable
     public static <T extends Keyed> T getMappedValue(String key, Class<T> type) {
         Keyed keyed = MAPPED_VALUES.get(key);
-        if (keyed == null) {
-            return null;
-        }
-        if (!type.isAssignableFrom(keyed.getClass())) {
-            return null;
-        }
-        return type.cast(keyed);
+        return type.isInstance(keyed) ? type.cast(keyed) : null;
     }
 
 
     public static <T extends Keyed> Collection<T> getMappedValues(Class<T> type) {
-        List<T> list = new ArrayList<>();
-        for (Keyed keyed : MAPPED_VALUES.values()) {
-            if (type.isAssignableFrom(keyed.getClass())) {
-                list.add(type.cast(keyed));
-            }
-        }
-        return list;
+        return MAPPED_VALUES.values().stream()
+            .filter(type::isInstance)
+            .map(type::cast)
+            .toList();
     }
 
     @Nullable

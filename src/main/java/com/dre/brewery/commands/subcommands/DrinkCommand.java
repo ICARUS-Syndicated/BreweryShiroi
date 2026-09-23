@@ -20,12 +20,12 @@
 
 package com.dre.brewery.commands.subcommands;
 
-import com.dre.brewery.Brew;
-import com.dre.brewery.BreweryPlayer;
+import com.dre.brewery.brew.Brew;
+import com.dre.brewery.mechanics.BreweryPlayer;
 import com.dre.brewery.commands.BreweryCommandManager;
 import com.dre.brewery.commands.CommandUtil;
 import com.dre.brewery.configuration.files.Lang;
-import com.dre.brewery.utility.Tuple;
+import com.dre.brewery.utility.BinaryTuple;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.incendo.cloud.parser.standard.IntegerParser;
@@ -57,13 +57,13 @@ public class DrinkCommand {
                             String recipeName, Integer quality, String playerName) {
         Lang lang = commands.lang();
 
-        Tuple<Brew, Player> brewForPlayer = CommandUtil.createBrew(sender, recipeName, quality, playerName, lang);
-        if (brewForPlayer == null) {
+        BinaryTuple<Brew, Player> created = CommandUtil.createBrew(sender, recipeName, quality, playerName, lang);
+        if (created == null) {
             return;
         }
 
-        Player player = brewForPlayer.b();
-        Brew brew = brewForPlayer.a();
+        Player player = created.second();
+        Brew brew = created.first();
         String brewName = brew.getCurrentRecipe().getName(brew.getQuality());
         BreweryPlayer.drink(brew, player, null, null);
 

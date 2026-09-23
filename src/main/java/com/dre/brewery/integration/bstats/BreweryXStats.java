@@ -21,7 +21,7 @@
 package com.dre.brewery.integration.bstats;
 
 import com.dre.brewery.instruments.BreweryCauldron;
-import com.dre.brewery.BreweryPlayer;
+import com.dre.brewery.mechanics.BreweryPlayer;
 import com.dre.brewery.instruments.barrel.BreweryBarrel;
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.configuration.ConfigManager;

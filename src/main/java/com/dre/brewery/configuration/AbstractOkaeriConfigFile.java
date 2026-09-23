@@ -58,11 +58,11 @@ public abstract class AbstractOkaeriConfigFile extends OkaeriConfig {
         if (this.blankInstance) { // Don't create if this is a placeholder instance
             return false;
         }
-        boolean b = this.getBindFile().toFile().exists();
-        if (!b && createIfNotExist) {
+        boolean exists = this.getBindFile().toFile().exists();
+        if (!exists && createIfNotExist) {
             return this.getBindFile().toFile().createNewFile();
         }
-        return b;
+        return exists;
     }
 
     public void saveAsync() throws OkaeriException {
@@ -75,10 +75,11 @@ public abstract class AbstractOkaeriConfigFile extends OkaeriConfig {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "{" +
-            "file=" + this.getBindFile().getFileName() +
-            ", update=" + update +
-            ", firstCreation=" + firstCreation +
-            '}';
+        return new StringBuilder(this.getClass().getSimpleName())
+            .append("{file = ").append(this.getBindFile().getFileName())
+            .append(", update = ").append(update)
+            .append(", firstCreation = ").append(firstCreation)
+            .append('}')
+            .toString();
     }
 }

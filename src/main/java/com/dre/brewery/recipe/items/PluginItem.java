@@ -22,6 +22,7 @@ package com.dre.brewery.recipe.items;
 
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.utility.Logging;
+import lombok.Getter;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +42,7 @@ import java.util.function.Supplier;
  * <p>See /integration/item for examples on how to extend this class.
  * <p>This class stores items as name of the plugin and item id
  */
+@Getter
 public abstract class PluginItem extends RecipeItem implements Ingredient {
 
     private static final Map<String, Supplier<PluginItem>> constructors = new HashMap<>();
@@ -74,14 +76,6 @@ public abstract class PluginItem extends RecipeItem implements Ingredient {
     @Override
     public List<Material> getMaterials() {
         return null;
-    }
-
-    public String getPlugin() {
-        return plugin;
-    }
-
-    public String getItemId() {
-        return itemId;
     }
 
     protected void setPlugin(String plugin) {
@@ -170,7 +164,7 @@ public abstract class PluginItem extends RecipeItem implements Ingredient {
      */
     public static PluginItem loadFrom(ItemLoader loader) {
         try {
-            DataInputStream in = loader.getInputStream();
+            DataInputStream in = loader.inputStream();
             String plugin = in.readUTF();
             String itemId = in.readUTF();
             PluginItem item = fromConfig(plugin, itemId);

@@ -20,7 +20,7 @@
 
 package com.dre.brewery.commands.subcommands;
 
-import com.dre.brewery.Wakeup;
+import com.dre.brewery.mechanics.Wakeup;
 import com.dre.brewery.commands.BreweryCommandManager;
 import com.dre.brewery.configuration.files.Lang;
 import org.bukkit.command.CommandSender;

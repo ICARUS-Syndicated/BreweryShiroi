@@ -18,8 +18,9 @@
  * along with BreweryX. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
-package com.dre.brewery;
+package com.dre.brewery.mechanics;
 
+import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.configuration.ConfigManager;
 import com.dre.brewery.configuration.files.Lang;
 import com.dre.brewery.utility.utils.BreweryUtil;
@@ -49,18 +50,18 @@ public class Wakeup {
     public static int checkId = -1;
     public static Player checkPlayer = null;
 
-    private final Location loc;
+    private final Location location;
     private final UUID id;
     private boolean active = true;
 
-    public Wakeup(Location loc) {
-        this.loc = loc;
+    public Wakeup(Location location) {
+        this.location = location;
         this.id = UUID.randomUUID();
     }
 
     // load from save data
-    public Wakeup(Location loc, UUID id) {
-        this.loc = loc;
+    public Wakeup(Location location, UUID id) {
+        this.location = location;
         this.id = id;
     }
 
@@ -73,7 +74,7 @@ public class Wakeup {
 
         List<Wakeup> worldWakes = wakeups.stream()
             .filter(w -> w.active)
-            .filter(w -> w.loc.getWorld().equals(playerLoc.getWorld()))
+            .filter(w -> w.location.getWorld().equals(playerLoc.getWorld()))
             .collect(Collectors.toList());
 
         if (worldWakes.isEmpty()) {
@@ -103,17 +104,17 @@ public class Wakeup {
 
                 w2 = calcRandom(worldWakes);
                 if (w2 == null) {
-                    return w1.loc;
+                    return w1.location;
                 }
                 worldWakes.remove(w2);
             }
 
 
-            if (w1.loc.distanceSquared(playerLoc) > w2.loc.distanceSquared(playerLoc)) {
-                return w2.loc;
+            if (w1.location.distanceSquared(playerLoc) > w2.location.distanceSquared(playerLoc)) {
+                return w2.location;
             }
         }
-        return w1.loc;
+        return w1.location;
     }
 
     public static Wakeup calcRandom(List<Wakeup> worldWakes) {
@@ -162,19 +163,19 @@ public class Wakeup {
 
             Wakeup wakeup = wakeups.get(id);
 
-            String s = "&m";
+            String strikeThrough = "&m";
             if (wakeup.active) {
-                s = "";
+                strikeThrough = "";
             }
 
-            String world = wakeup.loc.getWorld().getName();
+            String world = wakeup.location.getWorld().getName();
 
             if (worldOnly == null || world.equalsIgnoreCase(worldOnly)) {
-                int x = (int) wakeup.loc.getX();
-                int y = (int) wakeup.loc.getY();
-                int z = (int) wakeup.loc.getZ();
+                int x = (int) wakeup.location.getX();
+                int y = (int) wakeup.location.getY();
+                int z = (int) wakeup.location.getZ();
 
-                locs.add("&6" + s + id + "&f" + s + ": " + world + " " + x + "," + y + "," + z);
+                locs.add("&6" + strikeThrough + id + "&f" + strikeThrough + ": " + world + " " + x + "," + y + "," + z);
             }
         }
         BreweryUtil.list(sender, locs, page);
@@ -192,12 +193,12 @@ public class Wakeup {
 
                 Wakeup wakeup = wakeups.get(id);
                 if (wakeup.check()) {
-                    PaperLib.teleportAsync(player, wakeup.loc);
+                    PaperLib.teleportAsync(player, wakeup.location);
                 } else {
-                    String world = wakeup.loc.getWorld().getName();
-                    int x = (int) wakeup.loc.getX();
-                    int y = (int) wakeup.loc.getY();
-                    int z = (int) wakeup.loc.getZ();
+                    String world = wakeup.location.getWorld().getName();
+                    int x = (int) wakeup.location.getX();
+                    int y = (int) wakeup.location.getY();
+                    int z = (int) wakeup.location.getZ();
                     lang.sendEntry(sender, "Player_WakeFilled", "" + id, world, "" + x, "" + y, "" + z);
                 }
 
@@ -220,7 +221,7 @@ public class Wakeup {
     }
 
     public boolean check() {
-        return (!loc.getBlock().getType().isSolid() && !loc.getBlock().getRelative(0, 1, 0).getType().isSolid());
+        return (!location.getBlock().getType().isSolid() && !location.getBlock().getRelative(0, 1, 0).getType().isSolid());
     }
 
     public static void tpNext() {
@@ -238,14 +239,14 @@ public class Wakeup {
             return;
         }
 
-        String world = wakeup.loc.getWorld().getName();
-        int x = (int) wakeup.loc.getX();
-        int y = (int) wakeup.loc.getY();
-        int z = (int) wakeup.loc.getZ();
+        String world = wakeup.location.getWorld().getName();
+        int x = (int) wakeup.location.getX();
+        int y = (int) wakeup.location.getY();
+        int z = (int) wakeup.location.getZ();
 
         if (wakeup.check()) {
             lang.sendEntry(checkPlayer, "Player_WakeTeleport", checkId, world, "" + x, "" + y, "" + z);
-            PaperLib.teleportAsync(checkPlayer, wakeup.loc);
+            PaperLib.teleportAsync(checkPlayer, wakeup.location);
         } else {
             lang.sendEntry(checkPlayer, "Player_WakeFilled", checkId, world, "" + x, "" + y, "" + z);
         }
@@ -267,7 +268,7 @@ public class Wakeup {
     public static void save(ConfigurationSection section, ConfigurationSection oldData) {
         BreweryUtil.createWorldSections(section);
 
-        // loc is saved as a String in world sections with format x/y/z/pitch/yaw
+        // the location is saved as a String in world sections with format x/y/z/pitch/yaw
         if (!wakeups.isEmpty()) {
 
             Iterator<Wakeup> iter = wakeups.iterator();
@@ -278,16 +279,16 @@ public class Wakeup {
                     continue;
                 }
 
-                String worldName = wakeup.loc.getWorld().getName();
+                String worldName = wakeup.location.getWorld().getName();
                 String prefix;
 
                 if (worldName.startsWith("DXL_")) {
                     prefix = BreweryUtil.getDxlName(worldName) + "." + id;
                 } else {
-                    prefix = wakeup.loc.getWorld().getUID().toString() + "." + id;
+                    prefix = wakeup.location.getWorld().getUID().toString() + "." + id;
                 }
 
-                section.set(prefix, wakeup.loc.getX() + "/" + wakeup.loc.getY() + "/" + wakeup.loc.getZ() + "/" + wakeup.loc.getPitch() + "/" + wakeup.loc.getYaw());
+                section.set(prefix, wakeup.location.getX() + "/" + wakeup.location.getY() + "/" + wakeup.location.getZ() + "/" + wakeup.location.getPitch() + "/" + wakeup.location.getYaw());
             }
         }
 
@@ -302,12 +303,12 @@ public class Wakeup {
     }
 
     public static void onUnload(World world) {
-        wakeups.removeIf(wakeup -> wakeup.loc.getWorld().equals(world));
+        wakeups.removeIf(wakeup -> wakeup.location.getWorld().equals(world));
     }
 
     public static void unloadWorlds() {
         List<World> worlds = BreweryPlugin.getInstance().getServer().getWorlds();
-        wakeups.removeIf(wakeup -> !worlds.contains(wakeup.loc.getWorld()));
+        wakeups.removeIf(wakeup -> !worlds.contains(wakeup.location.getWorld()));
     }
 
 }

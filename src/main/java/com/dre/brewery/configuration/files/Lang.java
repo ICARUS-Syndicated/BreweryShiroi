@@ -135,16 +135,16 @@ public class Lang extends AbstractOkaeriConfigFile {
             mapStrings();
         }
 
-        String msg;
+        String message;
         Object entry = mappedEntries.get(key);
         if (entry instanceof String) {
-            msg = format((String) entry, args);
+            message = format((String) entry, args);
         } else if (entry instanceof List) {
-            msg = "&c[LanguageReader] Config entry for key '" + key + "' is a list!";
+            message = "&c[LanguageReader] Config entry for key '" + key + "' is a list!";
         } else {
-            msg = "&c[LanguageReader] Failed to retrieve a config entry for key '" + key + "'!";
+            message = "&c[LanguageReader] Failed to retrieve a config entry for key '" + key + "'!";
         }
-        return color ? BreweryUtil.color(msg) : msg;
+        return color ? BreweryUtil.color(message) : message;
     }
 
     public List<String> getEntries(String key, Object... args) {

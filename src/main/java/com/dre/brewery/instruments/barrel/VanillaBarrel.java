@@ -20,7 +20,7 @@
 
 package com.dre.brewery.instruments.barrel;
 
-import com.dre.brewery.Brew;
+import com.dre.brewery.brew.Brew;
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.configuration.ConfigManager;
 import com.dre.brewery.configuration.files.Config;
@@ -51,20 +51,20 @@ public class VanillaBarrel {
     private static final Lang lang = ConfigManager.getConfig(Lang.class);
 
     private byte brews = -1; // How many Brewery Brews are in this Barrel
-    private final Inventory inv;
+    private final Inventory inventory;
     private final int invSize;
 
 
-    public VanillaBarrel(Inventory inv) {
-        this.inv = inv;
-        invSize = inv.getSize();
+    public VanillaBarrel(Inventory inventory) {
+        this.inventory = inventory;
+        invSize = inventory.getSize();
     }
 
 
     // Now Opening this Barrel for a player
     public void open() {
         // if nobody had the inventory opened
-        if (inv.getViewers().size() == 1 && PaperLib.getHolder(inv, true).getHolder() instanceof Barrel barrel) {
+        if (inventory.getViewers().size() == 1 && PaperLib.getHolder(inventory, true).getHolder() instanceof Barrel barrel) {
             PersistentDataContainer data = barrel.getPersistentDataContainer();
             NamespacedKey key = new NamespacedKey(BreweryPlugin.getInstance(), TAG);
             if (!data.has(key, PersistentDataType.LONG)) {
@@ -85,9 +85,9 @@ public class VanillaBarrel {
             if (time > 0) {
                 brews = 0;
                 // if inventory contains potions
-                if (inv.contains(Material.POTION)) {
+                if (inventory.contains(Material.POTION)) {
                     long loadTime = System.nanoTime();
-                    for (ItemStack item : inv.getContents()) {
+                    for (ItemStack item : inventory.getContents()) {
                         if (item != null) {
                             Brew brew = Brew.get(item);
                             if (brew != null && !brew.isStatic()) {
@@ -111,13 +111,13 @@ public class VanillaBarrel {
 
     // Closing Inventory. Check if we need to set a time on the Barrel
     public void close() {
-        if (inv.getViewers().size() == 1) {
+        if (inventory.getViewers().size() == 1) {
             // This is the last viewer
-            for (ItemStack item : inv.getContents()) {
+            for (ItemStack item : inventory.getContents()) {
                 if (item != null) {
                     if (Brew.isBrew(item)) {
                         // We found a brew, so set time on this Barrel
-                        if (PaperLib.getHolder(inv, true).getHolder() instanceof org.bukkit.block.Barrel barrel) {
+                        if (PaperLib.getHolder(inventory, true).getHolder() instanceof org.bukkit.block.Barrel barrel) {
                             PersistentDataContainer data = barrel.getPersistentDataContainer();
                             data.set(new NamespacedKey(BreweryPlugin.getInstance(), TAG), PersistentDataType.LONG, mcBarrelTime);
                             barrel.update();
@@ -132,7 +132,7 @@ public class VanillaBarrel {
 
     public void countBrews() {
         brews = 0;
-        for (ItemStack item : inv.getContents()) {
+        for (ItemStack item : inventory.getContents()) {
             if (item != null) {
                 if (Brew.isBrew(item)) {
                     brews++;
@@ -142,7 +142,7 @@ public class VanillaBarrel {
     }
 
     public Inventory getInventory() {
-        return inv;
+        return inventory;
     }
 
 

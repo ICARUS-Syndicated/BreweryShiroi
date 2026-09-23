@@ -20,7 +20,8 @@
 
 package com.dre.brewery.api.events;
 
-import com.dre.brewery.BreweryPlayer;
+import com.dre.brewery.mechanics.BreweryPlayer;
+import lombok.Getter;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.HandlerList;
@@ -35,28 +36,14 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PlayerPushEvent extends PlayerEvent implements Cancellable {
     private static final HandlerList handlers = new HandlerList();
-    private final BreweryPlayer breweryPlayer;
-    private Vector push;
+    @Getter private final BreweryPlayer bPlayer;
+    @Getter private Vector push;
     private boolean cancelled;
 
-    public PlayerPushEvent(Player who, Vector push, BreweryPlayer breweryPlayer) {
+    public PlayerPushEvent(Player who, Vector push, BreweryPlayer bPlayer) {
         super(who);
         this.push = push;
-        this.breweryPlayer = breweryPlayer;
-    }
-
-    public BreweryPlayer getBPlayer() {
-        return breweryPlayer;
-    }
-
-    /**
-     * Get the Vector in which direction and magnitude the player is pushed.
-     * <p>Can be changed directly or through setPush
-     *
-     * @return The current push vector
-     */
-    public Vector getPush() {
-        return push;
+        this.bPlayer = bPlayer;
     }
 
     /**
@@ -65,9 +52,6 @@ public class PlayerPushEvent extends PlayerEvent implements Cancellable {
      * @param push The new push vector, not null
      */
     public void setPush(@NotNull Vector push) {
-        if (push == null) {
-            throw new NullPointerException("Push Vector is null");
-        }
         this.push = push;
     }
 

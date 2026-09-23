@@ -20,7 +20,7 @@
 
 package com.dre.brewery.storage.records;
 
-import com.dre.brewery.Wakeup;
+import com.dre.brewery.mechanics.Wakeup;
 import com.dre.brewery.storage.DataManager;
 import com.dre.brewery.storage.interfaces.SerializableThing;
 import com.dre.brewery.utility.utils.BreweryUtil;
@@ -34,15 +34,15 @@ import org.bukkit.Location;
  */
 public record SerializableWakeup(String id, String serializedLocation) implements SerializableThing {
     public SerializableWakeup(Wakeup wakeup) {
-        this(wakeup.getId().toString(), DataManager.serializeLocation(wakeup.getLoc(), true));
+        this(wakeup.getId().toString(), DataManager.serializeLocation(wakeup.getLocation(), true));
     }
 
     public Wakeup toWakeup() {
-        Location loc = DataManager.deserializeLocation(serializedLocation, true);
-        if (loc == null) {
+        Location location = DataManager.deserializeLocation(serializedLocation, true);
+        if (location == null) {
             return null;
         }
-        return new Wakeup(loc, BreweryUtil.uuidFromString(id));
+        return new Wakeup(location, BreweryUtil.uuidFromString(id));
     }
 
     @Override

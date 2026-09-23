@@ -21,12 +21,12 @@
 package com.dre.brewery.storage;
 
 import com.dre.brewery.instruments.BreweryCauldron;
-import com.dre.brewery.BreweryPlayer;
+import com.dre.brewery.mechanics.BreweryPlayer;
 import com.dre.brewery.instruments.barrel.BreweryBarrel;
-import com.dre.brewery.Brew;
+import com.dre.brewery.brew.Brew;
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.instruments.barrel.VanillaBarrel;
-import com.dre.brewery.Wakeup;
+import com.dre.brewery.mechanics.Wakeup;
 import com.dre.brewery.configuration.ConfigManager;
 import com.dre.brewery.configuration.files.Config;
 import com.dre.brewery.configuration.sector.capsule.ConfiguredDataManager;
@@ -313,35 +313,36 @@ public abstract class DataManager {
             worldName = split[1];
         }
 
-        String[] loc = locationString.split(",");
-        UUID worldUUID = null;
-        try {
-            worldUUID = UUID.fromString(loc[0]);
-        } catch (IllegalArgumentException ignored) {
-        }
-
-
-        World world = null;
-
-
-        if (worldUUID != null) {
-            world = Bukkit.getWorld(worldUUID);
-        }
-
+        String[] location = locationString.split(",");
+        UUID worldUUID = parseUuid(location[0]);
+        World world = worldUUID == null ? null : Bukkit.getWorld(worldUUID);
         if (world == null && worldName != null) {
             world = Bukkit.getWorld(worldName);
         }
-
-
         if (world == null) {
-            Logging.warningLog("World not found! " + loc[0]); // TODO: add command to purge stuff in non-existent worlds
+            // The entry is skipped and, because a save writes the in-memory state back in full,
+            // it is gone after the next save. It can only be read again if the world is present then.
+            Logging.warningLog("Skipping stored data of the world '" + (worldName != null ? worldName : location[0])
+                + "' because that world is not loaded; it will be removed by the next save.");
             return null;
         }
 
-        if (yawPitch && loc.length == 6) {
-            return new Location(world, Integer.parseInt(loc[1]), Integer.parseInt(loc[2]), Integer.parseInt(loc[3]), Float.parseFloat(loc[4]), Float.parseFloat(loc[5]));
+        if (yawPitch && location.length == 6) {
+            return new Location(world, Integer.parseInt(location[1]), Integer.parseInt(location[2]), Integer.parseInt(location[3]), Float.parseFloat(location[4]), Float.parseFloat(location[5]));
         } else {
-            return new Location(world, Integer.parseInt(loc[1]), Integer.parseInt(loc[2]), Integer.parseInt(loc[3]));
+            return new Location(world, Integer.parseInt(location[1]), Integer.parseInt(location[2]), Integer.parseInt(location[3]));
+        }
+    }
+
+    /**
+     * Parses a UUID, returning null instead of throwing if the given string is not one.
+     */
+    @Nullable
+    private static UUID parseUuid(String raw) {
+        try {
+            return UUID.fromString(raw);
+        } catch (IllegalArgumentException e) {
+            return null;
         }
     }
 

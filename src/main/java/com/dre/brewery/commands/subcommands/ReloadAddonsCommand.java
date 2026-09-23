@@ -45,8 +45,8 @@ public class ReloadAddonsCommand {
                 String confirmation = context.optional("confirmation").map(Object::toString).orElse("");
 
                 if (!confirmation.equalsIgnoreCase("confirm")) {
-                    Logging.msg(sender, "&rThis command should be avoided as it can cause unpredictable behavior within addons, use &6/brewery reloadaddons confirm &r to confirm.");
-                    Logging.msg(sender, "&aMost addons support reloading without using this command! Try using &6/brewery reload &ainstead.");
+                    Logging.message(sender, "&rThis command should be avoided as it can cause unpredictable behavior within addons, use &6/brewery reloadaddons confirm &r to confirm.");
+                    Logging.message(sender, "&aMost addons support reloading without using this command! Try using &6/brewery reload &ainstead.");
                     return;
                 }
 
@@ -54,8 +54,8 @@ public class ReloadAddonsCommand {
                 addonManager.unloadAddons();
                 addonManager.loadAddons();
                 addonManager.enableAddons();
-                Logging.msg(sender, "Finished loading " + addonManager.getAddons().size() + " addon(s)");
-                Logging.msg(sender, "&eUsing this command should be avoided as it can cause unpredictable behavior within addons!");
+                Logging.message(sender, "Finished loading " + addonManager.getAddons().size() + " addon(s)");
+                Logging.message(sender, "&eUsing this command should be avoided as it can cause unpredictable behavior within addons!");
             }));
     }
 }

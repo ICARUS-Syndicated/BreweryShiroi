@@ -122,16 +122,16 @@ public enum BarrelWoodType {
 
     @Nullable
     private Material[] getStandardBarrelAssetMaterial(BarrelAsset assetType) {
-        try {
-            // TODO: I dont like this... Change it later
-            if (assetType == BarrelAsset.SIGN) {
-                return new Material[]{ Material.valueOf(this.name() + "_" + assetType.name()), Material.valueOf(this.name() + "_WALL_SIGN") };
-            }
-            return new Material[]{ Material.valueOf(this.name() + "_" + assetType.name()) };
-        } catch (IllegalArgumentException e) {
-            // Just assume they're running some older version.
+        Material primary = Material.matchMaterial(this.name() + "_" + assetType.name());
+        if (primary == null) {
+            // The material does not exist on this server version
             return null;
         }
+        if (assetType != BarrelAsset.SIGN) {
+            return new Material[]{ primary };
+        }
+        Material wallSign = Material.matchMaterial(this.name() + "_WALL_SIGN");
+        return wallSign == null ? new Material[]{ primary } : new Material[]{ primary, wallSign };
     }
 
     public boolean isSpecific() {
@@ -226,12 +226,12 @@ public enum BarrelWoodType {
     public static BarrelWoodType fromAny(Object intOrString) {
         if (intOrString instanceof Integer integer) {
             return fromIndex(integer);
-        } else if (intOrString instanceof String s) {
-            return fromName(s);
+        } else if (intOrString instanceof String string) {
+            return fromName(string);
         } else if (intOrString instanceof Float || intOrString instanceof Double) {
             return fromIndex((int) (float) intOrString);
-        } else if (intOrString instanceof Material m) {
-            return fromMaterial(m);
+        } else if (intOrString instanceof Material material) {
+            return fromMaterial(material);
         }
         return ANY;
     }

@@ -20,11 +20,10 @@
 
 package com.dre.brewery.recipe;
 
-import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.utility.utils.BreweryUtil;
 import com.dre.brewery.utility.BukkitEffectConstants;
 import com.dre.brewery.utility.Logging;
-import com.dre.brewery.utility.MinecraftVersion;
+import lombok.Getter;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.potion.PotionEffect;
@@ -32,20 +31,20 @@ import org.bukkit.potion.PotionEffectType;
 
 public class BreweryEffect implements Cloneable {
 
-    private final PotionEffectType type;
-    private short minlvl;
-    private short maxlvl;
-    private short minduration;
-    private short maxduration;
-    private boolean hidden = false;
+    @Getter private final PotionEffectType type;
+    private short minLevel;
+    private short maxLevel;
+    private short minDuration;
+    private short maxDuration;
+    @Getter private boolean hidden = false;
 
 
-    public BreweryEffect(PotionEffectType type, short minlvl, short maxlvl, short minduration, short maxduration, boolean hidden) {
+    public BreweryEffect(PotionEffectType type, short minLevel, short maxLevel, short minDuration, short maxDuration, boolean hidden) {
         this.type = type;
-        this.minlvl = minlvl;
-        this.maxlvl = maxlvl;
-        this.minduration = minduration;
-        this.maxduration = maxduration;
+        this.minLevel = minLevel;
+        this.maxLevel = maxLevel;
+        this.minDuration = minDuration;
+        this.maxDuration = maxDuration;
         this.hidden = hidden;
     }
 
@@ -73,46 +72,46 @@ public class BreweryEffect implements Cloneable {
         if (effectSplit.length == 3) {
             String[] range = effectSplit[1].split("-");
             if (type.isInstant()) {
-                setLvl(range);
+                setLevel(range);
             } else {
-                setLvl(range);
+                setLevel(range);
                 range = effectSplit[2].split("-");
                 setDuration(range);
             }
         } else if (effectSplit.length == 2) {
             String[] range = effectSplit[1].split("-");
             if (type.isInstant()) {
-                setLvl(range);
+                setLevel(range);
             } else {
                 setDuration(range);
-                maxlvl = 3;
-                minlvl = 1;
+                maxLevel = 3;
+                minLevel = 1;
             }
         } else {
-            maxduration = 20;
-            minduration = 10;
-            maxlvl = 3;
-            minlvl = 1;
+            maxDuration = 20;
+            minDuration = 10;
+            maxLevel = 3;
+            minLevel = 1;
         }
     }
 
-    private void setLvl(String[] range) {
+    private void setLevel(String[] range) {
         if (range.length == 1) {
-            maxlvl = (short) BreweryUtil.getRandomIntInRange(range[0]);
-            minlvl = 1;
+            maxLevel = (short) BreweryUtil.getRandomIntInRange(range[0]);
+            minLevel = 1;
         } else {
-            maxlvl = (short) BreweryUtil.getRandomIntInRange(range[1]);
-            minlvl = (short) BreweryUtil.getRandomIntInRange(range[0]);
+            maxLevel = (short) BreweryUtil.getRandomIntInRange(range[1]);
+            minLevel = (short) BreweryUtil.getRandomIntInRange(range[0]);
         }
     }
 
     private void setDuration(String[] range) {
         if (range.length == 1) {
-            maxduration = (short) BreweryUtil.getRandomIntInRange(range[0]);
-            minduration = (short) (maxduration / 8);
+            maxDuration = (short) BreweryUtil.getRandomIntInRange(range[0]);
+            minDuration = (short) (maxDuration / 8);
         } else {
-            maxduration = (short) BreweryUtil.getRandomIntInRange(range[1]);
-            minduration = (short) BreweryUtil.getRandomIntInRange(range[0]);
+            maxDuration = (short) BreweryUtil.getRandomIntInRange(range[1]);
+            minDuration = (short) BreweryUtil.getRandomIntInRange(range[0]);
         }
     }
 
@@ -125,11 +124,6 @@ public class BreweryEffect implements Cloneable {
         }
 
         duration *= 20;
-        if (BreweryPlugin.getMCVersion().isOrEarlier(MinecraftVersion.V1_14)) {
-            @SuppressWarnings("deprecation")
-            double modifier = type.getDurationModifier();
-            duration /= modifier;
-        }
         return type.createEffect(duration, lvl - 1);
     }
 
@@ -141,46 +135,43 @@ public class BreweryEffect implements Cloneable {
     }
 
     public int calcDuration(float quality) {
-        return (int) Math.round(minduration + ((maxduration - minduration) * (quality / 10.0)));
+        return (int) Math.round(minDuration + ((maxDuration - minDuration) * (quality / 10.0)));
     }
 
     public int calcLvl(float quality) {
-        return (int) Math.round(minlvl + ((maxlvl - minlvl) * (quality / 10.0)));
+        return (int) Math.round(minLevel + ((maxLevel - minLevel) * (quality / 10.0)));
     }
 
-    public void writeInto(PotionMeta meta, int quality) {
+    public void writeInto(PotionMeta itemMeta, int quality) {
         if ((calcDuration(quality) > 0 || type.isInstant()) && calcLvl(quality) > 0) {
-            meta.addCustomEffect(type.createEffect(0, 0), true);
+            itemMeta.addCustomEffect(type.createEffect(0, 0), true);
         } else {
-            meta.removeCustomEffect(type);
+            itemMeta.removeCustomEffect(type);
         }
     }
 
     public boolean isValid() {
-        return type != null && minlvl >= 0 && maxlvl >= 0 && minduration >= 0 && maxduration >= 0;
-    }
-
-    public boolean isHidden() {
-        return hidden;
-    }
-
-    public PotionEffectType getType() {
-        return type;
+        return type != null && minLevel >= 0 && maxLevel >= 0 && minDuration >= 0 && maxDuration >= 0;
     }
 
     @Override
     public String toString() {
-        return type.getName() + "/" + minlvl + "-" + maxlvl + "/" + minduration + "-" + maxduration;
+        return "BreweryEffect{" +
+            "type = " + type.getName() +
+            ", level = " + minLevel + '-' + maxLevel +
+            ", duration = " + minDuration + '-' + maxDuration +
+            ", hidden = " + hidden +
+            '}';
     }
 
     @Override
     public BreweryEffect clone() {
         try {
             BreweryEffect clone = (BreweryEffect) super.clone();
-            clone.minlvl = minlvl;
-            clone.maxlvl = maxlvl;
-            clone.minduration = minduration;
-            clone.maxduration = maxduration;
+            clone.minLevel = minLevel;
+            clone.maxLevel = maxLevel;
+            clone.minDuration = minDuration;
+            clone.maxDuration = maxDuration;
             clone.hidden = hidden;
             return clone;
         } catch (CloneNotSupportedException e) {

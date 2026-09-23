@@ -44,7 +44,6 @@ import com.dre.brewery.recipe.BreweryCauldronRecipe;
 import com.dre.brewery.recipe.items.RecipeItem;
 import com.dre.brewery.utility.Logging;
 import com.dre.brewery.utility.utils.MaterialUtil;
-import com.dre.brewery.utility.MinecraftVersion;
 import io.lumine.mythic.lib.api.item.NBTItem;
 import io.papermc.lib.PaperLib;
 import org.bukkit.GameMode;
@@ -85,10 +84,10 @@ public class IntegrationListener implements Listener {
                     Logging.errorLog("Disable the WorldGuard support in the config and do /brew reload");
                     Player player = event.getPlayer();
                     if (player.hasPermission("brewery.admin") || player.hasPermission("brewery.mod")) {
-                        Logging.msg(player, "&cWorldGuard check Error, Brewery was tested with up to v7.0 of Worldguard");
-                        Logging.msg(player, "&cSet &7useWorldGuard: false &cin the config and /brew reload");
+                        Logging.message(player, "&cWorldGuard check Error, Brewery was tested with up to v7.0 of Worldguard");
+                        Logging.message(player, "&cSet &7useWorldGuard: false &cin the config and /brew reload");
                     } else {
-                        Logging.msg(player, "&cError opening Barrel, please report to an Admin!");
+                        Logging.message(player, "&cError opening Barrel, please report to an Admin!");
                     }
                 }
             }
@@ -137,10 +136,10 @@ public class IntegrationListener implements Listener {
                 Logging.errorLog("Disable the GriefPrevention support in the config and do /brew reload");
                 Player player = event.getPlayer();
                 if (player.hasPermission("brewery.admin") || player.hasPermission("brewery.mod")) {
-                    Logging.msg(player, "&cGriefPrevention check Error, Brewery was tested with up to v16.9 of GriefPrevention");
-                    Logging.msg(player, "&cSet &7useGriefPrevention: false &cin the config and /brew reload");
+                    Logging.message(player, "&cGriefPrevention check Error, Brewery was tested with up to v16.9 of GriefPrevention");
+                    Logging.message(player, "&cSet &7useGriefPrevention: false &cin the config and /brew reload");
                 } else {
-                    Logging.msg(player, "&cError opening Barrel, please report to an Admin!");
+                    Logging.message(player, "&cError opening Barrel, please report to an Admin!");
                 }
                 return;
             }
@@ -165,10 +164,10 @@ public class IntegrationListener implements Listener {
                         Logging.errorLog("Brewery was tested with version 4.5.0 of LWC!");
                         Logging.errorLog("Disable the LWC support in the config and do /brew reload");
                         if (player.hasPermission("brewery.admin") || player.hasPermission("brewery.mod")) {
-                            Logging.msg(player, "&cLWC check Error, Brewery was tested with up to v4.5.0 of LWC");
-                            Logging.msg(player, "&cSet &7useLWC: false &cin the config and /brew reload");
+                            Logging.message(player, "&cLWC check Error, Brewery was tested with up to v4.5.0 of LWC");
+                            Logging.message(player, "&cSet &7useLWC: false &cin the config and /brew reload");
                         } else {
-                            Logging.msg(player, "&cError opening Barrel, please report to an Admin!");
+                            Logging.message(player, "&cError opening Barrel, please report to an Admin!");
                         }
                         return;
                     }
@@ -190,10 +189,10 @@ public class IntegrationListener implements Listener {
                 Logging.errorLog("Disable the Towny support in the config and do /brew reload");
                 Player player = event.getPlayer();
                 if (player.hasPermission("brewery.admin") || player.hasPermission("brewery.mod")) {
-                    Logging.msg(player, "&cTowny check Error, Brewery was tested with up to v0.96.3.0 of Towny");
-                    Logging.msg(player, "&cSet &7useTowny: false &cin the config and /brew reload");
+                    Logging.message(player, "&cTowny check Error, Brewery was tested with up to v0.96.3.0 of Towny");
+                    Logging.message(player, "&cSet &7useTowny: false &cin the config and /brew reload");
                 } else {
-                    Logging.msg(player, "&cError opening Barrel, please report to an Admin!");
+                    Logging.message(player, "&cError opening Barrel, please report to an Admin!");
                 }
                 return;
             }
@@ -221,10 +220,10 @@ public class IntegrationListener implements Listener {
                 Logging.errorLog("Disable the BlockLocker support in the config and do /brew reload");
                 Player player = event.getPlayer();
                 if (player.hasPermission("brewery.admin") || player.hasPermission("brewery.mod")) {
-                    Logging.msg(player, "&cBlockLocker check Error, Brewery was tested with v1.9 of BlockLocker");
-                    Logging.msg(player, "&cSet &7useBlockLocker: false &cin the config and /brew reload");
+                    Logging.message(player, "&cBlockLocker check Error, Brewery was tested with v1.9 of BlockLocker");
+                    Logging.message(player, "&cSet &7useBlockLocker: false &cin the config and /brew reload");
                 } else {
-                    Logging.msg(player, "&cError opening Barrel, please report to an Admin!");
+                    Logging.message(player, "&cError opening Barrel, please report to an Admin!");
                 }
                 return;
             }
@@ -250,10 +249,10 @@ public class IntegrationListener implements Listener {
                 Logging.errorLog("Disable useVirtualChestPerms in the config and do /brew reload");
 
                 if (player.hasPermission("brewery.admin") || player.hasPermission("brewery.mod")) {
-                    Logging.msg(player, "&cVirtual Chest Error");
-                    Logging.msg(player, "&cSet &7useVirtualChestPerms: false &cin the config and /brew reload");
+                    Logging.message(player, "&cVirtual Chest Error");
+                    Logging.message(player, "&cSet &7useVirtualChestPerms: false &cin the config and /brew reload");
                 } else {
-                    Logging.msg(player, "&cError opening Barrel, please report to an Admin!");
+                    Logging.message(player, "&cError opening Barrel, please report to an Admin!");
                 }
             } finally {
                 event.getClickedBlock().setType(Material.AIR, false);
@@ -286,10 +285,10 @@ public class IntegrationListener implements Listener {
                 Logging.errorLog("Disable the LWC support in the config and do /brew reload");
 
                 if (player.hasPermission("brewery.admin") || player.hasPermission("brewery.mod")) {
-                    Logging.msg(player, "&cLWC check Error, Brewery was tested with up to v4.5.0 of LWC");
-                    Logging.msg(player, "&cSet &7useLWC: false &cin the config and /brew reload");
+                    Logging.message(player, "&cLWC check Error, Brewery was tested with up to v4.5.0 of LWC");
+                    Logging.message(player, "&cSet &7useLWC: false &cin the config and /brew reload");
                 } else {
-                    Logging.msg(player, "&cError breaking Barrel, please report to an Admin!");
+                    Logging.message(player, "&cError breaking Barrel, please report to an Admin!");
                 }
             }
         } else {
@@ -342,7 +341,6 @@ public class IntegrationListener implements Listener {
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     public void onInteract(PlayerInteractEvent event) {
         // Catch the Interact Event early, so MMOItems does not act before us and cancel the event while we try to add it to the Cauldron
-        if (BreweryPlugin.getMCVersion().isOrEarlier(MinecraftVersion.V1_9)) return;
         if (!Hook.MMOITEMS.isEnabled()) return;
         try {
             if (event.getAction() == Action.RIGHT_CLICK_BLOCK && event.hasItem() && event.getHand() == EquipmentSlot.HAND) {

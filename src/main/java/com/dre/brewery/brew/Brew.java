@@ -18,8 +18,9 @@
  * along with BreweryX. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
-package com.dre.brewery;
+package com.dre.brewery.brew;
 
+import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.api.events.brew.BrewModifyEvent;
 import com.dre.brewery.configuration.ConfigManager;
 import com.dre.brewery.configuration.files.Config;
@@ -89,12 +90,15 @@ public class Brew implements Cloneable {
 
     private BreweryIngredients ingredients;
     private int quality;
-    private int alc;
+    private int alcohol;
     private byte distillRuns;
     private float ageTime;
     private BarrelWoodType wood = BarrelWoodType.ANY;
-    // TODO: This should extend BRecipe, not hold a reference.
-    private BreweryRecipe currentRecipe; // Recipe this Brew is currently based off. May change between modifications and is often null when not modifying
+    // A Brew holds a reference to the recipe it is based on rather than extending BreweryRecipe: a Brew is mutable
+    // brewing state (quality, alcohol, distill runs, age) that is serialized per item, while a recipe is a config
+    // template that gets replaced whenever the recipes are reloaded.
+    // Recipe this Brew is currently based off. May change between modifications and is often null when not modifying
+    private BreweryRecipe currentRecipe;
     private boolean unlabeled;
     private boolean persistent; // Only for legacy
     private boolean immutable; // static/immutable potions should not be changed
@@ -112,12 +116,12 @@ public class Brew implements Cloneable {
     }
 
     /**
-     * A Brew with quality, alc and recipe already set
+     * A Brew with quality, alcohol and recipe already set
      */
-    public Brew(int quality, int alc, BreweryRecipe recipe, BreweryIngredients ingredients) {
+    public Brew(int quality, int alcohol, BreweryRecipe recipe, BreweryIngredients ingredients) {
         this.ingredients = ingredients;
         this.quality = quality;
-        this.alc = alc;
+        this.alcohol = alcohol;
         this.currentRecipe = recipe;
         touch();
     }
@@ -125,10 +129,10 @@ public class Brew implements Cloneable {
     /**
      * Loading a Brew with all values set
      */
-    public Brew(BreweryIngredients ingredients, int quality, int alc, byte distillRuns, float ageTime, BarrelWoodType wood, String recipe, boolean unlabeled, boolean immutable, int lastUpdate) {
+    public Brew(BreweryIngredients ingredients, int quality, int alcohol, byte distillRuns, float ageTime, BarrelWoodType wood, String recipe, boolean unlabeled, boolean immutable, int lastUpdate) {
         this.ingredients = ingredients;
         this.quality = quality;
-        this.alc = alc;
+        this.alcohol = alcohol;
         this.distillRuns = distillRuns;
         this.ageTime = ageTime;
         this.wood = wood;
@@ -145,18 +149,18 @@ public class Brew implements Cloneable {
     /**
      * returns a Brew by ItemMeta
      *
-     * @param meta The meta to get the brew from
-     * @return The Brew if meta is a brew, null if not
+     * @param itemMeta The item meta to get the brew from
+     * @return The Brew if the item meta is a brew, null if not
      */
     @Nullable
-    public static Brew get(ItemMeta meta) {
-        if (!MinecraftVersion.isUseNBT() && !meta.hasLore()) return null;
+    public static Brew get(ItemMeta itemMeta) {
+        if (!MinecraftVersion.isUseNBT() && !itemMeta.hasLore()) return null;
 
-        Brew brew = load(meta);
+        Brew brew = load(itemMeta);
 
-        if (brew == null && meta instanceof PotionMeta && ((PotionMeta) meta).hasCustomEffect(BukkitEffectConstants.REGENERATION)) {
+        if (brew == null && itemMeta instanceof PotionMeta && ((PotionMeta) itemMeta).hasCustomEffect(BukkitEffectConstants.REGENERATION)) {
             // Load Legacy
-            return getFromPotionEffect(((PotionMeta) meta), false);
+            return getFromPotionEffect(((PotionMeta) itemMeta), false);
         }
         return brew;
     }
@@ -172,27 +176,27 @@ public class Brew implements Cloneable {
         if (item.getType() != Material.POTION) return null;
         if (!item.hasItemMeta()) return null;
 
-        ItemMeta meta = item.getItemMeta();
-        assert meta != null;
-        if (!MinecraftVersion.isUseNBT() && !meta.hasLore()) return null;
+        ItemMeta itemMeta = item.getItemMeta();
+        assert itemMeta != null;
+        if (!MinecraftVersion.isUseNBT() && !itemMeta.hasLore()) return null;
 
-        Brew brew = load(meta);
+        Brew brew = load(itemMeta);
 
-        if (brew == null && meta instanceof PotionMeta && ((PotionMeta) meta).hasCustomEffect(BukkitEffectConstants.REGENERATION)) {
+        if (brew == null && itemMeta instanceof PotionMeta && ((PotionMeta) itemMeta).hasCustomEffect(BukkitEffectConstants.REGENERATION)) {
             // Load Legacy and convert
-            brew = getFromPotionEffect(((PotionMeta) meta), true);
+            brew = getFromPotionEffect(((PotionMeta) itemMeta), true);
             if (brew == null) return null;
-            new BrewLore(brew, (PotionMeta) meta).removeLegacySpacing();
-            brew.save(meta);
-            item.setItemMeta(meta);
+            new BrewLore(brew, (PotionMeta) itemMeta).removeLegacySpacing();
+            brew.save(itemMeta);
+            item.setItemMeta(itemMeta);
         } else if (brew != null && brew.needsSave) {
             // Brew needs saving from a previous format
             if (MinecraftVersion.isUseNBT()) {
-                new BrewLore(brew, (PotionMeta) meta).removeLoreData();
+                new BrewLore(brew, (PotionMeta) itemMeta).removeLoreData();
                 Logging.debugLog("removed Data from Lore");
             }
-            brew.save(meta);
-            item.setItemMeta(meta);
+            brew.save(itemMeta);
+            item.setItemMeta(itemMeta);
         }
         return brew;
     }
@@ -203,11 +207,11 @@ public class Brew implements Cloneable {
             if (effect.getType().equals(BukkitEffectConstants.REGENERATION)) {
                 if (effect.getDuration() < -1) {
                     if (remove) {
-                        Brew b = legacyPotions.get(effect.getDuration());
-                        if (b != null) {
+                        Brew legacyBrew = legacyPotions.get(effect.getDuration());
+                        if (legacyBrew != null) {
                             potionMeta.removeCustomEffect(BukkitEffectConstants.REGENERATION);
-                            if (b.persistent) {
-                                return b;
+                            if (legacyBrew.persistent) {
+                                return legacyBrew;
                             } else {
                                 return legacyPotions.remove(effect.getDuration());
                             }
@@ -228,16 +232,16 @@ public class Brew implements Cloneable {
      * @deprecated Does not work anymore with new save system
      */
     @Deprecated
-    public static Brew get(int uid) {
-        if (uid < -1) {
-            if (!legacyPotions.containsKey(uid)) {
-                Logging.errorLog("Database failure! unable to find UID " + uid + " of a custom Potion!");
+    public static Brew get(int uniqueId) {
+        if (uniqueId < -1) {
+            if (!legacyPotions.containsKey(uniqueId)) {
+                Logging.errorLog("Database failure! unable to find UID " + uniqueId + " of a custom Potion!");
                 return null;// throw some exception?
             }
         } else {
             return null;
         }
-        return legacyPotions.get(uid);
+        return legacyPotions.get(uniqueId);
     }
 
     /**
@@ -250,11 +254,11 @@ public class Brew implements Cloneable {
         return getUID((PotionMeta) item.getItemMeta());
     }
 
-    // returns UID of custom Potion meta
+    // returns the unique id of a custom Potion's item meta
     // Does not work anymore with new save system
 
     /**
-     * returns UID of custom Potion meta
+     * returns the unique id of a custom Potion's item meta
      *
      * @deprecated Does not work anymore with new save system
      */
@@ -286,7 +290,7 @@ public class Brew implements Cloneable {
      */
     public boolean setRecipeFromString(String name) {
         currentRecipe = null;
-        if (name != null && !name.equals("")) {
+        if (name != null && !name.isEmpty()) {
             for (BreweryRecipe recipe : BreweryRecipe.getAllRecipes()) {
                 if (recipe.getRecipeName().equalsIgnoreCase(name)) {
                     currentRecipe = recipe;
@@ -314,27 +318,11 @@ public class Brew implements Cloneable {
         return currentRecipe == null || setRecipeFromString(currentRecipe.getRecipeName());
     }
 
-    // Copy a Brew with a new unique ID and return its item
-    // Not needed anymore
-	/*public ItemStack copy(ItemStack item) {
-		ItemStack copy = item.clone();
-		int uid = generateUID();
-		clone(uid);
-		PotionMeta meta = (PotionMeta) copy.getItemMeta();
-		if (!P.use1_14) {
-			// This is due to the Duration Modifier, that is removed in 1.14
-			uid *= 4;
-		}
-		meta.addCustomEffect((PotionEffectType.REGENERATION).createEffect(uid, 0), true);
-		copy.setItemMeta(meta);
-		return copy;
-	}*/
-
     public boolean isSimilar(Brew brew) {
         if (brew == null) return false;
         if (equals(brew)) return true;
         return quality == brew.quality &&
-            alc == brew.alc &&
+            alcohol == brew.alcohol &&
             distillRuns == brew.distillRuns &&
             Float.compare(brew.ageTime, ageTime) == 0 &&
             brew.wood == wood &&
@@ -362,18 +350,19 @@ public class Brew implements Cloneable {
 
     @Override
     public String toString() {
-        return "Brew{" +
-            "ingredients=" + ingredients +
-            ", quality=" + quality +
-            ", alc=" + alc +
-            ", distillRuns=" + distillRuns +
-            ", ageTime=" + ageTime +
-            ", wood=" + wood +
-            ", currentRecipe=" + currentRecipe +
-            ", unlabeled=" + unlabeled +
-            ", immutable=" + immutable +
-            ", stripped=" + stripped +
-            '}';
+        return new StringBuilder("Brew{")
+            .append("ingredients = ").append(ingredients)
+            .append(", quality = ").append(quality)
+            .append(", alcohol = ").append(alcohol)
+            .append(", distillRuns = ").append(distillRuns)
+            .append(", ageTime = ").append(ageTime)
+            .append(", wood = ").append(wood)
+            .append(", currentRecipe = ").append(currentRecipe)
+            .append(", unlabeled = ").append(unlabeled)
+            .append(", immutable = ").append(immutable)
+            .append(", stripped = ").append(stripped)
+            .append('}')
+            .toString();
     }
 
     // remove potion from file (drinking, despawning, combusting, cmdDeleting, should be more!)
@@ -390,7 +379,7 @@ public class Brew implements Cloneable {
     @Contract(pure = true)
     public int calcAlcohol() {
         if (quality == 0) {
-            // Give bad potions some alc
+            // Give bad potions some alcohol
             int badAlc = 0;
             if (distillRuns > 1) {
                 badAlc = distillRuns;
@@ -408,21 +397,21 @@ public class Brew implements Cloneable {
         }
 
         if (currentRecipe != null) {
-            int alc = currentRecipe.getAlcohol();
+            int alcohol = currentRecipe.getAlcohol();
             if (currentRecipe.needsDistilling()) {
                 if (distillRuns == 0) {
                     return 0;
                 }
-                // bad quality can decrease alc by up to 40%
-                alc *= 1 - ((float) (10 - quality) * 0.04f);
-                // distillable Potions should have half alc after one and full alc after all needed distills
-                alc /= 2;
-                alc *= 1.0F + ((float) distillRuns / currentRecipe.getDistillruns());
+                // bad quality can decrease the alcohol by up to 40%
+                alcohol *= (int) (1 - ((float) (10 - quality) * 0.04f));
+                // distillable Potions should have half the alcohol after one and full alcohol after all needed distills
+                alcohol /= 2;
+                alcohol *= (int) (1.0F + ((float) distillRuns / currentRecipe.getDistillRuns()));
             } else {
                 // quality decides 10% - 100%
-                alc *= ((float) quality / 10.0f);
+                alcohol *= (int) ((float) quality / 10.0f);
             }
-            return alc;
+            return alcohol;
         }
         return 0;
     }
@@ -447,14 +436,13 @@ public class Brew implements Cloneable {
     public boolean canDistill() {
         if (immutable) return false;
         if (currentRecipe != null) {
-            return currentRecipe.getDistillruns() > distillRuns;
+            return currentRecipe.getDistillRuns() > distillRuns;
         } else {
             return distillRuns < 6;
         }
     }
 
-    public void updateCustomModelData(ItemMeta meta) {
-        if (VERSION.isOrEarlier(MinecraftVersion.V1_14)) return;
+    public void updateCustomModelData(ItemMeta itemMeta) {
         if (VERSION.isOrLater(MinecraftVersion.V1_21_4) && currentRecipe != null  && currentRecipe.getItemModel() != null && !currentRecipe.getItemModel()[0].isEmpty()) {
             String cm;
             if (quality > 7) {
@@ -465,28 +453,28 @@ public class Brew implements Cloneable {
                 cm = currentRecipe.getItemModel()[0];
             }
             if (cm == null || cm.isEmpty()) {
-                meta.setItemModel(null);
+                itemMeta.setItemModel(null);
             } else {
-                meta.setItemModel(NamespacedKey.fromString(cm.toLowerCase()));
-//                BreweryPlugin.getInstance().getLogger().info("set itemmodel to "+cm.toLowerCase());
+                itemMeta.setItemModel(NamespacedKey.fromString(cm.toLowerCase()));
+//              BreweryPlugin.getInstance().getLogger().info("set itemmodel to "+cm.toLowerCase());
             }
         }
-        else if (currentRecipe != null && currentRecipe.getCmData() != null) {
+        else if (currentRecipe != null && currentRecipe.getCustomModelData() != null) {
             int cm;
             if (quality > 7) {
-                cm = currentRecipe.getCmData()[2];
+                cm = currentRecipe.getCustomModelData()[2];
             } else if (quality > 3) {
-                cm = currentRecipe.getCmData()[1];
+                cm = currentRecipe.getCustomModelData()[1];
             } else {
-                cm = currentRecipe.getCmData()[0];
+                cm = currentRecipe.getCustomModelData()[0];
             }
             if (cm == 0) {
-                meta.setCustomModelData(null);
+                itemMeta.setCustomModelData(null);
             } else {
-                meta.setCustomModelData(cm);
+                itemMeta.setCustomModelData(cm);
             }
         } else {
-            meta.setCustomModelData(null);
+            itemMeta.setCustomModelDataComponent(null);
         }
     }
 
@@ -508,9 +496,9 @@ public class Brew implements Cloneable {
     public void unLabel(ItemStack item) {
         if (unlabeled) return;
         unlabeled = true;
-        ItemMeta meta = item.getItemMeta();
-        if (meta instanceof PotionMeta && meta.hasLore()) {
-            BrewLore lore = new BrewLore(this, ((PotionMeta) meta));
+        ItemMeta itemMeta = item.getItemMeta();
+        if (itemMeta instanceof PotionMeta && itemMeta.hasLore()) {
+            BrewLore lore = new BrewLore(this, ((PotionMeta) itemMeta));
             if (distillRuns > 0) {
                 lore.updateDistillLore(false);
             }
@@ -525,7 +513,7 @@ public class Brew implements Cloneable {
             lore.updateQualityStars(false);
             lore.updateAlc(false);
             lore.write();
-            item.setItemMeta(meta);
+            item.setItemMeta(itemMeta);
         }
     }
 
@@ -545,12 +533,12 @@ public class Brew implements Cloneable {
         } else if (quality % 2 == 1) {
             quality--;
         }
-        alc = calcAlcohol();
+        alcohol = calcAlcohol();
 
-        setStatic(true, potion);
+        setStatic(true);
         unLabel(potion);
-        PotionMeta meta = (PotionMeta) potion.getItemMeta();
-        BrewLore lore = new BrewLore(this, meta);
+        PotionMeta itemMeta = (PotionMeta) potion.getItemMeta();
+        BrewLore lore = new BrewLore(this, itemMeta);
         lore.updateQualityStars(false, true);
         lore.write();
 
@@ -560,17 +548,17 @@ public class Brew implements Cloneable {
         wood = BarrelWoodType.NONE;
         touch();
 
-        BrewModifyEvent modifyEvent = new BrewModifyEvent(this, meta, BrewModifyEvent.Type.SEAL, player);
+        BrewModifyEvent modifyEvent = new BrewModifyEvent(this, itemMeta, BrewModifyEvent.Type.SEAL, player);
         BreweryPlugin.getInstance().getServer().getPluginManager().callEvent(modifyEvent);
 
         if (modifyEvent.isCancelled()) {
-            // As the brew and everything connected to it is only saved on the meta from now on,
+            // As the brew and everything connected to it is only saved on the item meta from now on,
             // restoring the origMeta is enough in this case
             potion.setItemMeta(origMeta);
             return;
         }
-        save(meta);
-        potion.setItemMeta(meta);
+        save(itemMeta);
+        potion.setItemMeta(itemMeta);
     }
 
     /**
@@ -581,11 +569,11 @@ public class Brew implements Cloneable {
         lastUpdate = (int) ((double) (System.currentTimeMillis() - installTime) / 3600000D);
     }
 
-    public int getOrCalcAlc() {
-        if (alc == 0) {
-            alc = calcAlcohol();
+    public int getOrCalcAlcohol() {
+        if (alcohol == 0) {
+            alcohol = calcAlcohol();
         }
-        return alc;
+        return alcohol;
     }
 
     public boolean hasRecipe() {
@@ -604,12 +592,9 @@ public class Brew implements Cloneable {
     /**
      * Set the Static flag, so potion is unchangeable
      */
-    public void setStatic(boolean immutable, ItemStack potion) {
+    public void setStatic(boolean immutable) {
         if (!immutable && isStripped()) {
             throw new IllegalStateException("Cannot make stripped Brews non-static");
-        }
-        if (BreweryPlugin.getMCVersion().isOrEarlier(MinecraftVersion.V1_9) && currentRecipe != null && canDistill()) {
-            currentRecipe.getColor().colorBrew(((PotionMeta) potion.getItemMeta()), potion, !immutable);
         }
         this.immutable = immutable;
     }
@@ -619,14 +604,17 @@ public class Brew implements Cloneable {
     /**
      * distill all custom potions in the brewer
      *
-     * @param inv      The Inventory of the Distiller
-     * @param contents The Brews in the 3 slots of the Inventory
+     * @param inventory The Inventory of the Distiller
+     * @param contents  The Brews in the 3 slots of the Inventory
      */
-    public static void distillAll(BrewerInventory inv, Brew[] contents) {
+    public static void distillAll(BrewerInventory inventory, Brew[] contents) {
         for (int slot = 0; slot < 3; slot++) {
             if (contents[slot] != null) {
-                ItemStack slotItem = inv.getItem(slot);
-                PotionMeta potionMeta = (PotionMeta) slotItem.getItemMeta();
+                ItemStack slotItem = inventory.getItem(slot);
+                PotionMeta potionMeta = null;
+                if (slotItem != null) {
+                    potionMeta = (PotionMeta) slotItem.getItemMeta();
+                }
                 contents[slot].distillSlot(slotItem, potionMeta);
             }
         }
@@ -649,9 +637,8 @@ public class Brew implements Cloneable {
             currentRecipe = found.recipe();
             quality = calcQuality();
 
-            lore.addOrReplaceEffects(getEffects(), quality);
-            potionMeta.setDisplayName(BreweryUtil.color("&f" + currentRecipe.getName(quality)));
-            currentRecipe.getColor().colorBrew(potionMeta, slotItem, canDistill());
+            potionMeta.displayName(BreweryUtil.component("&f" + currentRecipe.getName(quality)));
+            currentRecipe.getColor().colorBrew(potionMeta);
 
         } else {
             quality = 0;
@@ -662,10 +649,10 @@ public class Brew implements Cloneable {
                 assert defect != null; // since no recipe was found, there must be a defect
                 lore.updateDefect(BreweryUtil.choose(defect.getMessages(lang)));
             }
-            potionMeta.setDisplayName(BreweryUtil.color("&f" + lang.getEntry("Brew_DistillUndefined")));
-            PotionColor.GREY.colorBrew(potionMeta, slotItem, canDistill());
+            potionMeta.displayName(BreweryUtil.component("&f" + lang.getEntry("Brew_DistillUndefined")));
+            PotionColor.GREY.colorBrew(potionMeta);
         }
-        alc = calcAlcohol();
+        alcohol = calcAlcohol();
         updateCustomModelData(potionMeta);
 
         // Distill Lore
@@ -682,7 +669,7 @@ public class Brew implements Cloneable {
         BrewModifyEvent modifyEvent = new BrewModifyEvent(this, potionMeta, BrewModifyEvent.Type.DISTILL);
         BreweryPlugin.getInstance().getServer().getPluginManager().callEvent(modifyEvent);
         if (modifyEvent.isCancelled()) {
-            // As the brew and everything connected to it is only saved on the meta from now on,
+            // As the brew and everything connected to it is only saved on the item meta from now on,
             // not saving the brew into potionMeta is enough to not change anything in case of cancel
             return;
         }
@@ -724,9 +711,8 @@ public class Brew implements Cloneable {
                 currentRecipe = found.recipe();
                 quality = calcQuality();
 
-                lore.addOrReplaceEffects(getEffects(), quality);
-                potionMeta.setDisplayName(BreweryUtil.color("&f" + currentRecipe.getName(quality)));
-                currentRecipe.getColor().colorBrew(potionMeta, item, canDistill());
+                potionMeta.displayName(BreweryUtil.component("&f" + currentRecipe.getName(quality)));
+                currentRecipe.getColor().colorBrew(potionMeta);
 
                 if (currentRecipe.isGlint()) {
                     potionMeta.addEnchant(Enchantment.MENDING, 1, true);
@@ -743,11 +729,11 @@ public class Brew implements Cloneable {
                     lore.updateDefect(BreweryUtil.choose(defect.getMessages(lang)));
                 }
                 currentRecipe = null;
-                potionMeta.setDisplayName(BreweryUtil.color("&f" + lang.getEntry("Brew_BadPotion")));
-                PotionColor.GREY.colorBrew(potionMeta, item, canDistill());
+                potionMeta.displayName(BreweryUtil.component("&f" + lang.getEntry("Brew_BadPotion")));
+                PotionColor.GREY.colorBrew(potionMeta);
             }
         }
-        alc = calcAlcohol();
+        alcohol = calcAlcohol();
         updateCustomModelData(potionMeta);
 
         // Lore
@@ -773,7 +759,7 @@ public class Brew implements Cloneable {
         BrewModifyEvent modifyEvent = new BrewModifyEvent(this, potionMeta, BrewModifyEvent.Type.AGE);
         BreweryPlugin.getInstance().getServer().getPluginManager().callEvent(modifyEvent);
         if (modifyEvent.isCancelled()) {
-            // As the brew and everything connected to it is only saved on the meta from now on,
+            // As the brew and everything connected to it is only saved on the item meta from now on,
             // not saving the brew into potionMeta is enough to not change anything in case of cancel
             return;
         }
@@ -864,7 +850,7 @@ public class Brew implements Cloneable {
      * @param event  Set event to true if a BrewModifyEvent type CREATE should be called and may be cancelled. Only then may this method return null
      * @return The created Item, null if the Event is cancelled
      */
-    @Contract("_, false -> !null")
+    @Contract("_, false, _ -> !null")
     public ItemStack createItem(@Nullable BreweryRecipe recipe, boolean event, @Nullable Player player) {
         if (recipe == null) {
             recipe = getCurrentRecipe();
@@ -875,7 +861,7 @@ public class Brew implements Cloneable {
         ItemStack potion = new ItemStack(Material.POTION);
         PotionMeta potionMeta = (PotionMeta) potion.getItemMeta();
 
-        recipe.getColor().colorBrew(potionMeta, potion, false);
+        recipe.getColor().colorBrew(potionMeta);
         updateCustomModelData(potionMeta);
 
 
@@ -884,18 +870,10 @@ public class Brew implements Cloneable {
             potionMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
         }
 
-        potionMeta.setDisplayName(BreweryUtil.color("&f" + recipe.getName(quality)));
-        //if (!P.use1_14) {
-        // Before 1.14 the effects duration would strangely be only a quarter of what we tell it to be
-        // This is due to the Duration Modifier, that is removed in 1.14
-        //	uid *= 4;
-        //}
-        // This effect stores the UID in its Duration
-        //potionMeta.addCustomEffect((PotionEffectType.REGENERATION).createEffect((uid * 4), 0), true);
+        potionMeta.displayName(BreweryUtil.component("&f" + recipe.getName(quality)));
 
         BrewLore lore = new BrewLore(this, potionMeta);
         lore.convertLore(false);
-        lore.addOrReplaceEffects(recipe.getEffects(), quality);
         lore.write();
         touch();
         if (event) {
@@ -922,29 +900,29 @@ public class Brew implements Cloneable {
         if (item == null || item.getType() != Material.POTION) return false;
         if (!item.hasItemMeta()) return false;
 
-        ItemMeta meta = item.getItemMeta();
-        assert meta != null;
-        if (!MinecraftVersion.isUseNBT() && !meta.hasLore()) return false;
+        ItemMeta itemMeta = item.getItemMeta();
+        assert itemMeta != null;
+        if (!MinecraftVersion.isUseNBT() && !itemMeta.hasLore()) return false;
 
         if (MinecraftVersion.isUseNBT()) {
             // Check for Data on PersistentDataContainer
-            if (NBTLoadStream.hasDataInMeta(meta)) {
+            if (NBTLoadStream.hasDataInMeta(itemMeta)) {
                 return true;
             }
         }
         // If either NBT is not supported or no data was found in NBT, try finding data in lore
-        if (meta.hasLore()) {
+        if (itemMeta.hasLore()) {
             // Find the Data Identifier in Lore
-            return BreweryUtil.indexOfStart(meta.getLore(), LoreLoadStream.IDENTIFIER) > -1;
+            return BreweryUtil.indexOfStart(Objects.requireNonNull(itemMeta.getLore()), LoreLoadStream.IDENTIFIER) > -1;
         }
         return false;
     }
 
-    private static Brew load(ItemMeta meta) {
+    private static Brew load(ItemMeta itemMeta) {
         InputStream itemLoadStream = null;
         if (MinecraftVersion.isUseNBT()) {
             // Try loading the Item Data from PersistentDataContainer
-            NBTLoadStream nbtStream = new NBTLoadStream(meta);
+            NBTLoadStream nbtStream = new NBTLoadStream(itemMeta);
             if (nbtStream.hasData()) {
                 itemLoadStream = nbtStream;
             }
@@ -952,7 +930,7 @@ public class Brew implements Cloneable {
         if (itemLoadStream == null) {
             // If either NBT is not supported or no data was found in NBT, try loading from Lore
             try {
-                itemLoadStream = new Base91DecoderStream(new LoreLoadStream(meta, 0));
+                itemLoadStream = new Base91DecoderStream(new LoreLoadStream(itemMeta, 0));
             } catch (IllegalArgumentException ignored) {
                 // No Brew data found in Meta
                 return null;
@@ -968,20 +946,16 @@ public class Brew implements Cloneable {
             }
             Brew brew = new Brew();
             byte ver = in.readByte();
-            switch (ver) {
-                case 1:
-
-                    unscrambler.start();
-                    brew.loadFromStream(in, ver);
-
-                    break;
-                default:
-                    if (parityFailed) {
-                        Logging.errorLog("Failed to load Brew. Maybe something corrupted the Lore of the Item?");
-                    } else {
-                        Logging.errorLog("Brew has data stored in v" + ver + " this Plugin version supports up to v" + SAVE_VER);
-                    }
-                    return null;
+            if (ver == 1) {
+                unscrambler.start();
+                brew.loadFromStream(in, ver);
+            } else {
+                if (parityFailed) {
+                    Logging.errorLog("Failed to load Brew. Maybe something corrupted the Lore of the Item?");
+                } else {
+                    Logging.errorLog("Brew has data stored in v" + ver + " this Plugin version supports up to v" + SAVE_VER);
+                }
+                return null;
             }
 
             XORUnscrambleStream.SuccessType successType = unscrambler.getSuccessType();
@@ -1011,7 +985,7 @@ public class Brew implements Cloneable {
         quality = in.readByte();
         int bools = in.readUnsignedByte();
         if ((bools & 64) != 0) {
-            alc = in.readShort();
+            alcohol = in.readShort();
         }
         if ((bools & 1) != 0) {
             distillRuns = in.readByte();
@@ -1034,15 +1008,15 @@ public class Brew implements Cloneable {
     }
 
     /**
-     * Save brew data into meta: lore/nbt.
+     * Save brew data into the item meta: lore/nbt.
      * <p>Should be called after any changes made to the brew
      */
-    public void save(ItemMeta meta) {
+    public void save(ItemMeta itemMeta) {
         OutputStream itemSaveStream;
         if (MinecraftVersion.isUseNBT()) {
-            itemSaveStream = new NBTSaveStream(meta);
+            itemSaveStream = new NBTSaveStream(itemMeta);
         } else {
-            itemSaveStream = new Base91EncoderStream(new LoreSaveStream(meta, 0));
+            itemSaveStream = new Base91EncoderStream(new LoreSaveStream(itemMeta, 0));
         }
         XORScrambleStream scrambler = new XORScrambleStream(itemSaveStream, saveSeed);
         try (DataOutputStream out = new DataOutputStream(scrambler)) {
@@ -1061,28 +1035,28 @@ public class Brew implements Cloneable {
     }
 
     /**
-     * Save brew data into the meta/lore of the specified item.
-     * <p>The meta on the item changes, so to make further changes to the meta, item.getItemMeta() has to be called again after this
+     * Save brew data into the item meta/lore of the specified item.
+     * <p>The item meta on the item changes, so to make further changes to it, item.getItemMeta() has to be called again after this
      *
      * @param item The item to save this brew into
      */
     public void save(ItemStack item) {
-        ItemMeta meta;
+        ItemMeta itemMeta;
         if (!item.hasItemMeta()) {
-            meta = BreweryPlugin.getInstance().getServer().getItemFactory().getItemMeta(item.getType());
+            itemMeta = BreweryPlugin.getInstance().getServer().getItemFactory().getItemMeta(item.getType());
         } else {
-            meta = item.getItemMeta();
+            itemMeta = item.getItemMeta();
         }
-        save(meta);
-        item.setItemMeta(meta);
+        save(itemMeta);
+        item.setItemMeta(itemMeta);
     }
 
     public void saveToStream(DataOutputStream out) throws IOException {
         if (quality > 10) {
             quality = 10;
         }
-        alc = Math.min(alc, Short.MAX_VALUE);
-        alc = Math.max(alc, Short.MIN_VALUE);
+        alcohol = Math.min(alcohol, Short.MAX_VALUE);
+        alcohol = Math.max(alcohol, Short.MIN_VALUE);
 
         out.writeByte((byte) quality);
         int bools = 0;
@@ -1092,11 +1066,11 @@ public class Brew implements Cloneable {
         bools |= (currentRecipe != null ? 8 : 0);
         bools |= (unlabeled ? 16 : 0);
         bools |= (immutable ? 32 : 0);
-        bools |= (alc != 0 ? 64 : 0);
+        bools |= (alcohol != 0 ? 64 : 0);
         bools |= (stripped ? 128 : 0);
         out.writeByte(bools);
-        if (alc != 0) {
-            out.writeShort(alc);
+        if (alcohol != 0) {
+            out.writeShort(alcohol);
         }
         if (distillRuns != 0) {
             out.writeByte(distillRuns);
@@ -1148,14 +1122,14 @@ public class Brew implements Cloneable {
     /**
      * Load potion data from data file for backwards compatibility
      */
-    public static void loadLegacy(BreweryIngredients ingredients, int uid, int quality, int alc, byte distillRuns, float ageTime, BarrelWoodType wood, String recipe, boolean unlabeled, boolean persistent, boolean stat, int lastUpdate) {
-        Brew brew = new Brew(ingredients, quality, alc, distillRuns, ageTime, wood, recipe, unlabeled, stat, lastUpdate);
+    public static void loadLegacy(BreweryIngredients ingredients, int uniqueId, int quality, int alcohol, byte distillRuns, float ageTime, BarrelWoodType wood, String recipe, boolean unlabeled, boolean persistent, boolean stat, int lastUpdate) {
+        Brew brew = new Brew(ingredients, quality, alcohol, distillRuns, ageTime, wood, recipe, unlabeled, stat, lastUpdate);
         brew.persistent = persistent;
         if (brew.lastUpdate <= 0) {
             // We failed to save the lastUpdate, restart the countdown
             brew.touch();
         }
-        legacyPotions.put(uid, brew);
+        legacyPotions.put(uniqueId, brew);
     }
 
     /**
@@ -1164,9 +1138,9 @@ public class Brew implements Cloneable {
     public static void removeLegacy(ItemStack item) {
         if (legacyPotions.isEmpty()) return;
         if (!item.hasItemMeta()) return;
-        ItemMeta meta = item.getItemMeta();
-        if (!(meta instanceof PotionMeta)) return;
-        getFromPotionEffect(((PotionMeta) meta), true);
+        ItemMeta itemMeta = item.getItemMeta();
+        if (!(itemMeta instanceof PotionMeta)) return;
+        getFromPotionEffect(((PotionMeta) itemMeta), true);
     }
 
     public void convertPre1_9(ItemStack item) {
@@ -1178,9 +1152,9 @@ public class Brew implements Cloneable {
         lore.removeEffects();
 
         if (hasRecipe()) {
-            currentRecipe.getColor().colorBrew(potionMeta, item, canDistill());
+            currentRecipe.getColor().colorBrew(potionMeta);
         } else {
-            PotionColor.GREY.colorBrew(potionMeta, item, canDistill());
+            PotionColor.GREY.colorBrew(potionMeta);
         }
         lore.removeLegacySpacing();
         save(potionMeta);
@@ -1197,10 +1171,9 @@ public class Brew implements Cloneable {
         lore.removeEffects();
 
         if (hasRecipe()) {
-            lore.addOrReplaceEffects(currentRecipe.getEffects(), getQuality());
-            currentRecipe.getColor().colorBrew(potionMeta, item, canDistill());
+            currentRecipe.getColor().colorBrew(potionMeta);
         } else {
-            PotionColor.GREY.colorBrew(potionMeta, item, canDistill());
+            PotionColor.GREY.colorBrew(potionMeta);
         }
         lore.removeLegacySpacing();
         save(potionMeta);
@@ -1213,15 +1186,15 @@ public class Brew implements Cloneable {
      */
     public static void saveLegacy(ConfigurationSection config) {
         for (Map.Entry<Integer, Brew> entry : legacyPotions.entrySet()) {
-            int uid = entry.getKey();
+            int uniqueId = entry.getKey();
             Brew brew = entry.getValue();
-            ConfigurationSection idConfig = config.createSection("" + uid);
+            ConfigurationSection idConfig = config.createSection("" + uniqueId);
             // not saving unneccessary data
             if (brew.quality != 0) {
                 idConfig.set("quality", brew.quality);
             }
-            if (brew.alc != 0) {
-                idConfig.set("alc", brew.alc);
+            if (brew.alcohol != 0) {
+                idConfig.set("alc", brew.alcohol);
             }
             if (brew.distillRuns != 0) {
                 idConfig.set("distillRuns", brew.distillRuns);

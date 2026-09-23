@@ -29,8 +29,9 @@ import com.dre.brewery.instruments.BrewerySealer;
 import com.dre.brewery.instruments.barrel.BreweryBarrel;
 import com.dre.brewery.integration.BlockLockerHook;
 import com.dre.brewery.integration.barrel.BlockLockerBarrel;
+import com.dre.brewery.mechanics.BreweryPlayer;
+import com.dre.brewery.mechanics.DistortChat;
 import com.dre.brewery.utility.utils.BreweryUtil;
-import com.dre.brewery.utility.MinecraftVersion;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -40,7 +41,6 @@ import org.bukkit.event.block.*;
 
 public class BlockListener implements Listener {
 
-    private static final MinecraftVersion VERSION = BreweryPlugin.getMCVersion();
     private final Config config = ConfigManager.getConfig(Config.class);
     private final Lang lang = ConfigManager.getConfig(Lang.class);
 
@@ -86,7 +86,7 @@ public class BlockListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onBlockPlace(BlockPlaceEvent event) {
-        if (VERSION.isOrEarlier(MinecraftVersion.V1_14) || event.getBlock().getType() != config.getSealingTableBlock())
+        if (event.getBlock().getType() != config.getSealingTableBlock())
             return;
         BrewerySealer.blockPlace(event.getItemInHand(), event.getBlock());
     }

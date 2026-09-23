@@ -35,7 +35,7 @@ import com.dre.brewery.recipe.PotionColor;
 import com.dre.brewery.recipe.items.RecipeItem;
 import com.dre.brewery.utility.utils.BreweryUtil;
 import com.dre.brewery.utility.Logging;
-import com.dre.brewery.utility.Tuple;
+import com.dre.brewery.utility.BinaryTuple;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -78,15 +78,15 @@ public class RecipeDefinition {
     private Integer alcohol;
 
     @JsonDeserialize(using = LoreStringsDeserializer.class)
-    private List<Tuple<Integer, String>> lore;
+    private List<BinaryTuple<Integer, String>> lore;
 
     @JsonProperty("servercommands")
     @JsonDeserialize(using = CommandStringsDeserializer.class)
-    private List<Tuple<Integer, String>> serverCommands;
+    private List<BinaryTuple<Integer, String>> serverCommands;
 
     @JsonProperty("playercommands")
     @JsonDeserialize(using = CommandStringsDeserializer.class)
-    private List<Tuple<Integer, String>> playerCommands;
+    private List<BinaryTuple<Integer, String>> playerCommands;
 
     @JsonProperty("drinkmessage")
     private String drinkMessage;
@@ -135,7 +135,7 @@ public class RecipeDefinition {
         recipe.setCookingTime(this.cookingTime != null ? this.cookingTime : 0);
 
         int distillRuns = this.distillRuns != null ? this.distillRuns : 0;
-        recipe.setDistillruns(distillRuns > Byte.MAX_VALUE ? Byte.MAX_VALUE : (byte) distillRuns);
+        recipe.setDistillRuns(distillRuns > Byte.MAX_VALUE ? Byte.MAX_VALUE : (byte) distillRuns);
 
         recipe.setDistillTime((this.distillTime != null ? this.distillTime : 0) * 20);
         recipe.setBarrelTypes(this.wood != null ? this.wood : BarrelWoodType.listFromAny(null));
@@ -151,15 +151,15 @@ public class RecipeDefinition {
         }
 
         recipe.setLore(this.lore != null ? this.lore : new ArrayList<>());
-        recipe.setServercmds(this.serverCommands != null ? this.serverCommands : new ArrayList<>());
-        recipe.setPlayercmds(this.playerCommands != null ? this.playerCommands : new ArrayList<>());
+        recipe.setServerCommands(this.serverCommands != null ? this.serverCommands : new ArrayList<>());
+        recipe.setPlayerCommands(this.playerCommands != null ? this.playerCommands : new ArrayList<>());
 
-        recipe.setDrinkMsg(BreweryUtil.color(this.drinkMessage));
+        recipe.setDrinkMessage(BreweryUtil.color(this.drinkMessage));
         recipe.setDrinkTitle(BreweryUtil.color(this.drinkTitle));
         recipe.setGlint(this.glint != null && this.glint);
 
         if (this.customModelData != null) {
-            recipe.setCmData(this.customModelData);
+            recipe.setCustomModelData(this.customModelData);
         }
         if (this.itemModel != null) {
             recipe.setItemModel(this.itemModel);

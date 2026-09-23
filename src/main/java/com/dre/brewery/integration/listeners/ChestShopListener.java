@@ -21,11 +21,12 @@
 package com.dre.brewery.integration.listeners;
 
 import com.Acrobot.ChestShop.Events.ShopCreatedEvent;
-import com.dre.brewery.Brew;
+import com.dre.brewery.brew.Brew;
 import com.dre.brewery.configuration.ConfigManager;
 import com.dre.brewery.configuration.files.Lang;
 import com.dre.brewery.integration.Hook;
 import com.dre.brewery.utility.Logging;
+import com.dre.brewery.utility.utils.BreweryUtil;
 import org.bukkit.Material;
 import org.bukkit.block.Container;
 import org.bukkit.event.EventHandler;
@@ -46,7 +47,7 @@ public class ChestShopListener implements Listener {
                     if (item != null && item.getType() == Material.POTION) {
                         Brew brew = Brew.get(item);
                         if (brew != null && !brew.isSealed()) {
-                            event.getPlayer().sendTitle("", lang.getEntry("Player_ShopSealBrew"), 10, 70, 20);
+                            event.getPlayer().showTitle(BreweryUtil.title(lang.getEntry("Player_ShopSealBrew"), 10, 70, 20));
                             return;
                         }
                     }

@@ -20,7 +20,7 @@
 
 package com.dre.brewery.commands.subcommands;
 
-import com.dre.brewery.Brew;
+import com.dre.brewery.brew.Brew;
 import com.dre.brewery.commands.BreweryCommandManager;
 import com.dre.brewery.commands.CommandUtil;
 import com.dre.brewery.configuration.files.Lang;

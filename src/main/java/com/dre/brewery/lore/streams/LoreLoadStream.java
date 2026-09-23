@@ -29,17 +29,17 @@ public class LoreLoadStream extends ByteArrayInputStream {
 
     public static final String IDENTIFIER = "§%";
 
-    public LoreLoadStream(ItemMeta meta) throws IllegalArgumentException {
-        this(meta, -1);
+    public LoreLoadStream(ItemMeta itemMeta) throws IllegalArgumentException {
+        this(itemMeta, -1);
     }
 
-    public LoreLoadStream(ItemMeta meta, int line) throws IllegalArgumentException {
-        super(loreToBytes(meta, line));
+    public LoreLoadStream(ItemMeta itemMeta, int line) throws IllegalArgumentException {
+        super(loreToBytes(itemMeta, line));
     }
 
-    private static byte[] loreToBytes(ItemMeta meta, int lineNum) throws IllegalArgumentException {
-        if (meta.hasLore()) {
-            List<String> lore = meta.getLore();
+    private static byte[] loreToBytes(ItemMeta itemMeta, int lineNum) throws IllegalArgumentException {
+        if (itemMeta.hasLore()) {
+            List<String> lore = itemMeta.getLore();
             if (lineNum >= 0) {
                 String line = lore.get(lineNum);
                 if (line.startsWith(IDENTIFIER)) {

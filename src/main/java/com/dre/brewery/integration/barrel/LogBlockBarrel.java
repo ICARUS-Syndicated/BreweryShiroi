@@ -20,22 +20,15 @@
 
 package com.dre.brewery.integration.barrel;
 
-import com.dre.brewery.BreweryPlugin;
-import com.dre.brewery.utility.Logging;
-import com.dre.brewery.utility.utils.MaterialUtil;
-import com.dre.brewery.utility.MinecraftVersion;
 import de.diddiz.LogBlock.Actor;
 import de.diddiz.LogBlock.Consumer;
 import de.diddiz.LogBlock.LogBlock;
-import de.diddiz.util.BukkitUtils;
 import org.bukkit.Location;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,104 +36,64 @@ import static de.diddiz.LogBlock.config.Config.isLogging;
 import static de.diddiz.util.BukkitUtils.compareInventories;
 import static de.diddiz.util.BukkitUtils.compressInventory;
 
-@SuppressWarnings("JavaReflectionMemberAccess")
 public class LogBlockBarrel {
 
-    private static final MinecraftVersion VERSION = BreweryPlugin.getMCVersion();
     private static final List<LogBlockBarrel> opened = new ArrayList<>();
 
-    public static Consumer consumer = LogBlock.getInstance().getConsumer();
-    private static Method rawData;
-    private static Method queueChestAccess;
+    public static final Consumer consumer = LogBlock.getInstance().getConsumer();
 
-    static {
-        if (VERSION.isOrEarlier(MinecraftVersion.V1_13)) {
-            try {
-                rawData = BukkitUtils.class.getDeclaredMethod("rawData", ItemStack.class);
-                queueChestAccess = Consumer.class.getDeclaredMethod("queueChestAccess", String.class, Location.class, int.class, short.class, short.class, short.class);
-            } catch (NoSuchMethodException e) {
-                Logging.errorLog("Failed to hook into LogBlock to log barrels. Logging barrel contents is not going to work.", e);
-                Logging.errorLog("Brewery was tested with version 1.12 to 1.13.1 of LogBlock.");
-                Logging.errorLog("Disable LogBlock support in the configuration file and type /brew reload.");
-            }
-        }
-    }
+    private final HumanEntity player;
+    private final ItemStack[] items;
+    private final Location location;
 
-    private HumanEntity player;
-    private ItemStack[] items;
-    private Location loc;
-
-    public LogBlockBarrel(HumanEntity player, ItemStack[] items, Location spigotLoc) {
+    public LogBlockBarrel(HumanEntity player, ItemStack[] items, Location location) {
         this.player = player;
         this.items = items;
-        this.loc = spigotLoc;
+        this.location = location;
         opened.add(this);
     }
 
-    private void compareInv(final ItemStack[] after) {
+    private void compareInv(ItemStack[] after) {
         if (consumer == null) {
             return;
         }
-        final ItemStack[] diff = compareInventories(items, after);
-        for (final ItemStack item : diff) {
-            if (VERSION.isOrEarlier(MinecraftVersion.V1_13)) {
-                try {
-                    //noinspection deprecation
-                    queueChestAccess.invoke(consumer, player.getName(), loc, MaterialUtil.getBlockTypeIdAt(loc), (short) item.getType().getId(), (short) item.getAmount(), rawData.invoke(null, item));
-                } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-                    Logging.errorLog("Failed to log barrel access.", e);
-                }
-            } else {
-                ItemStack i2 = item;
-                if (item.getAmount() < 0) {
-                    i2 = item.clone();
-                    i2.setAmount(Math.abs(item.getAmount()));
-                }
-                consumer.queueChestAccess(Actor.actorFromEntity(player), loc, loc.getBlock().getBlockData(), i2, item.getAmount() < 0);
+        for (ItemStack item : compareInventories(items, after)) {
+            ItemStack logged = item;
+            if (item.getAmount() < 0) {
+                logged = item.clone();
+                logged.setAmount(Math.abs(item.getAmount()));
             }
+            consumer.queueChestAccess(Actor.actorFromEntity(player), location, location.getBlock().getBlockData(), logged, item.getAmount() < 0);
         }
     }
 
     public static LogBlockBarrel get(HumanEntity player) {
-        for (LogBlockBarrel open : opened) {
-            if (open.player.equals(player)) {
-                return open;
-            }
-        }
-        return null;
+        return opened.stream()
+            .filter(open -> open.player.equals(player))
+            .findFirst()
+            .orElse(null);
     }
 
-    public static void openBarrel(HumanEntity player, Inventory inv, Location spigotLoc) {
+    public static void openBarrel(HumanEntity player, Inventory inventory, Location spigotLoc) {
         if (!isLogging(player.getWorld(), de.diddiz.LogBlock.Logging.CHESTACCESS)) return;
-        new LogBlockBarrel(player, compressInventory(inv.getContents()), spigotLoc);
+        new LogBlockBarrel(player, compressInventory(inventory.getContents()), spigotLoc);
     }
 
-    public static void closeBarrel(HumanEntity player, Inventory inv) {
+    public static void closeBarrel(HumanEntity player, Inventory inventory) {
         if (!isLogging(player.getWorld(), de.diddiz.LogBlock.Logging.CHESTACCESS)) return;
         LogBlockBarrel open = get(player);
         if (open != null) {
-            open.compareInv(compressInventory(inv.getContents()));
+            open.compareInv(compressInventory(inventory.getContents()));
             opened.remove(open);
         }
     }
 
-    public static void breakBarrel(Player player, ItemStack[] contents, Location spigotLoc) {
-        if (consumer == null) {
+    public static void breakBarrel(Player player, ItemStack[] contents, Location location) {
+        if (consumer == null || !isLogging(location.getWorld(), de.diddiz.LogBlock.Logging.CHESTACCESS)) {
             return;
         }
-        if (!isLogging(spigotLoc.getWorld(), de.diddiz.LogBlock.Logging.CHESTACCESS)) return;
-        final ItemStack[] items = compressInventory(contents);
-        for (final ItemStack item : items) {
-            if (VERSION.isOrEarlier(MinecraftVersion.V1_13)) {
-                try {
-                    //noinspection deprecation
-                    queueChestAccess.invoke(consumer, player.getName(), spigotLoc, MaterialUtil.getBlockTypeIdAt(spigotLoc), (short) item.getType().getId(), (short) (item.getAmount() * -1), rawData.invoke(null, item));
-                } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-                    Logging.errorLog("Failed to log barrel break.", e);
-                }
-            } else {
-                consumer.queueChestAccess(Actor.actorFromEntity(player), spigotLoc, spigotLoc.getBlock().getBlockData(), item, false);
-            }
+        for (ItemStack item : compressInventory(contents)) {
+            consumer.queueChestAccess(Actor.actorFromEntity(player), location, location.getBlock().getBlockData(), item, false);
         }
     }
 

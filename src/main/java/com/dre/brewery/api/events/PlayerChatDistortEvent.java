@@ -20,7 +20,8 @@
 
 package com.dre.brewery.api.events;
 
-import com.dre.brewery.BreweryPlayer;
+import com.dre.brewery.mechanics.BreweryPlayer;
+import lombok.Getter;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
@@ -37,58 +38,36 @@ import java.util.Objects;
 public class PlayerChatDistortEvent extends Event implements Cancellable {
     private static final HandlerList handlers = new HandlerList();
 
-    private final Player player;
-    private final BreweryPlayer breweryPlayer;
-    private final String prevMsg;
-    private String distortMsg;
+    /** The Player that wrote the message. */
+    @Getter private final Player player;
+    /** The brewer of the player, if any. */
+    @Getter private final BreweryPlayer breweryPlayer;
+    /** The Message the Player had actually written. */
+    @Getter private final String writtenMessage;
+    /** The message after it was distorted. */
+    @Getter private String distortedMessage;
     private boolean cancelled;
 
-    public PlayerChatDistortEvent(boolean async, Player player, BreweryPlayer breweryPlayer, String prevMsg, String distortMsg) {
+    public PlayerChatDistortEvent(boolean async, Player player, BreweryPlayer breweryPlayer, String writtenMessage, String distortedMessage) {
         super(async);
         this.player = player;
         this.breweryPlayer = breweryPlayer;
-        this.prevMsg = prevMsg;
-        this.distortMsg = distortMsg;
-    }
-
-    @NotNull
-    public Player getPlayer() {
-        return player;
-    }
-
-    @NotNull
-    public BreweryPlayer getbPlayer() {
-        return breweryPlayer;
-    }
-
-    /**
-     * @return The Message the Player had actually written
-     */
-    @NotNull
-    public String getWrittenMessage() {
-        return prevMsg;
-    }
-
-    /**
-     * @return The message after it was distorted
-     */
-    @NotNull
-    public String getDistortedMessage() {
-        return distortMsg;
+        this.writtenMessage = writtenMessage;
+        this.distortedMessage = distortedMessage;
     }
 
     /**
      * @return The drunkenness of the player that is writing the message
      */
-    public int getDrunkeness() {
-        return breweryPlayer.getDrunkeness();
+    public int getDrunkenness() {
+        return breweryPlayer.getDrunkenness();
     }
 
     /**
      * Set the Message that the player will say instead of what he wrote
      */
-    public void setDistortedMessage(String distortMsg) {
-        this.distortMsg = Objects.requireNonNull(distortMsg);
+    public void setDistortedMessage(String distortedMessage) {
+        this.distortedMessage = Objects.requireNonNull(distortedMessage);
     }
 
     @Override

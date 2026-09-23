@@ -22,7 +22,7 @@ package com.dre.brewery.recipe.items;
 
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.utility.Logging;
-import com.dre.brewery.utility.MinecraftVersion;
+import lombok.Getter;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -40,10 +40,9 @@ import java.util.Objects;
  */
 public class SimpleItem extends RecipeItem implements Ingredient {
 
-    private static final MinecraftVersion VERSION = BreweryPlugin.getMCVersion();
 
-    private Material material;
-    private short duration; // Old Mc
+    @Getter private final Material material;
+    private final short duration; // Old Mc
 
 
     public SimpleItem(Material material) {
@@ -60,15 +59,11 @@ public class SimpleItem extends RecipeItem implements Ingredient {
         return material != null;
     }
 
-    public Material getMaterial() {
-        return material;
-    }
-
     @Override
     public List<Material> getMaterials() {
-        List<Material> l = new ArrayList<>(1);
-        l.add(material);
-        return l;
+        List<Material> materials = new ArrayList<>(1);
+        materials.add(material);
+        return materials;
     }
 
     @NotNull
@@ -85,11 +80,7 @@ public class SimpleItem extends RecipeItem implements Ingredient {
 
     @Override
     public boolean matches(ItemStack item) {
-        if (!material.equals(item.getType())) {
-            return false;
-        }
-        //noinspection deprecation
-        return VERSION.isOrLater(MinecraftVersion.V1_13) || duration == item.getDurability();
+        return material == item.getType();
     }
 
     @Override
@@ -101,11 +92,10 @@ public class SimpleItem extends RecipeItem implements Ingredient {
             if (!((RecipeItem) ingredient).hasMaterials()) {
                 return false;
             }
-            if (ingredient instanceof CustomItem) {
+            if (ingredient instanceof CustomItem customItem) {
                 // Only match if the Custom Item also only defines material
                 // If the custom item has more info like name and lore, it is not supposed to match a simple item
-                CustomItem ci = (CustomItem) ingredient;
-                return !ci.hasLore() && !ci.hasName() && material == ci.getMaterial();
+                return !customItem.hasLore() && !customItem.hasName() && material == customItem.getMaterial();
             }
         }
         return false;
@@ -116,9 +106,8 @@ public class SimpleItem extends RecipeItem implements Ingredient {
         if (this == item) {
             return true;
         }
-        if (item instanceof SimpleItem) {
-            SimpleItem si = ((SimpleItem) item);
-            return si.material == material && si.duration == duration;
+        if (item instanceof SimpleItem simpleItem) {
+            return simpleItem.material == material && simpleItem.duration == duration;
         }
         return false;
     }
@@ -140,10 +129,11 @@ public class SimpleItem extends RecipeItem implements Ingredient {
 
     @Override
     public String toString() {
-        return "SimpleItem{" +
-            "mat=" + getDebugID() +
-            " amount=" + getAmount() +
-            '}';
+        return new StringBuilder("SimpleItem{")
+            .append("material = ").append(getDebugID())
+            .append(", amount = ").append(getAmount())
+            .append('}')
+            .toString();
     }
 
     @Override
@@ -160,12 +150,11 @@ public class SimpleItem extends RecipeItem implements Ingredient {
 
     public static SimpleItem loadFrom(ItemLoader loader) {
         try {
-            DataInputStream in = loader.getInputStream();
-            Material mat = Material.getMaterial(in.readUTF());
-            short dur = in.readShort();
-            if (mat != null) {
-                SimpleItem item = new SimpleItem(mat, dur);
-                return item;
+            DataInputStream in = loader.inputStream();
+            Material material = Material.getMaterial(in.readUTF());
+            short duration = in.readShort();
+            if (material != null) {
+                return new SimpleItem(material, duration);
             }
         } catch (IOException e) {
             Logging.errorLog("Failed to load SimpleItem", e);

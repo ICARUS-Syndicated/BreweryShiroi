@@ -20,7 +20,7 @@
 
 package com.dre.brewery.api.events.brew;
 
-import com.dre.brewery.Brew;
+import com.dre.brewery.brew.Brew;
 import com.dre.brewery.lore.BrewLore;
 import lombok.Getter;
 import lombok.Setter;
@@ -49,13 +49,13 @@ public class BrewModifyEvent extends BrewEvent implements Cancellable {
     private Player player;
 
 
-    public BrewModifyEvent(@NotNull Brew brew, @NotNull ItemMeta meta, @NotNull Type type) {
-        super(brew, meta);
+    public BrewModifyEvent(@NotNull Brew brew, @NotNull ItemMeta itemMeta, @NotNull Type type) {
+        super(brew, itemMeta);
         this.type = type;
     }
 
-    public BrewModifyEvent(@NotNull Brew brew, @NotNull ItemMeta meta, @NotNull Type type, @Nullable Player player) {
-        this(brew, meta, type);
+    public BrewModifyEvent(@NotNull Brew brew, @NotNull ItemMeta itemMeta, @NotNull Type type, @Nullable Player player) {
+        this(brew, itemMeta, type);
         this.player = player;
     }
 

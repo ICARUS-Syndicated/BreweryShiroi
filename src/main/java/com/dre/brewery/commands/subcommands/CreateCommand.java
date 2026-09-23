@@ -20,11 +20,11 @@
 
 package com.dre.brewery.commands.subcommands;
 
-import com.dre.brewery.Brew;
+import com.dre.brewery.brew.Brew;
 import com.dre.brewery.commands.BreweryCommandManager;
 import com.dre.brewery.commands.CommandUtil;
 import com.dre.brewery.configuration.files.Lang;
-import com.dre.brewery.utility.Tuple;
+import com.dre.brewery.utility.BinaryTuple;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -70,19 +70,20 @@ public class CreateCommand {
                             String recipeName, Integer quality, String playerName) {
         Lang lang = commands.lang();
 
-        Tuple<Brew, Player> brewForPlayer = CommandUtil.createBrew(sender, recipeName, quality, playerName, lang);
-        if (brewForPlayer == null) {
+        BinaryTuple<Brew, Player> created = CommandUtil.createBrew(sender, recipeName, quality, playerName, lang);
+        if (created == null) {
             return;
         }
 
-        if (brewForPlayer.b().getInventory().firstEmpty() == -1) {
+        Player player = created.second();
+        if (player.getInventory().firstEmpty() == -1) {
             lang.sendEntry(sender, "CMD_Copy_Error", "1");
             return;
         }
 
-        ItemStack item = brewForPlayer.a().createItem(null, brewForPlayer.b());
+        ItemStack item = created.first().createItem(null, player);
         if (item != null) {
-            brewForPlayer.b().getInventory().addItem(item);
+            player.getInventory().addItem(item);
             lang.sendEntry(sender, "CMD_Created");
         }
     }

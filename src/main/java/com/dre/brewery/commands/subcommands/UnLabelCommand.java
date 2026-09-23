@@ -20,7 +20,7 @@
 
 package com.dre.brewery.commands.subcommands;
 
-import com.dre.brewery.Brew;
+import com.dre.brewery.brew.Brew;
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.api.events.brew.BrewModifyEvent;
 import com.dre.brewery.commands.BreweryCommandManager;
@@ -71,16 +71,16 @@ public class UnLabelCommand {
         ItemMeta origMeta = hand.getItemMeta();
         brew.unLabel(hand);
         brew.touch();
-        ItemMeta meta = hand.getItemMeta();
-        assert meta != null;
-        BrewModifyEvent modifyEvent = new BrewModifyEvent(brew, meta, BrewModifyEvent.Type.UNLABEL);
+        ItemMeta itemMeta = hand.getItemMeta();
+        assert itemMeta != null;
+        BrewModifyEvent modifyEvent = new BrewModifyEvent(brew, itemMeta, BrewModifyEvent.Type.UNLABEL);
         BreweryPlugin.getInstance().getServer().getPluginManager().callEvent(modifyEvent);
         if (modifyEvent.isCancelled()) {
             hand.setItemMeta(origMeta);
             return;
         }
-        brew.save(meta);
-        hand.setItemMeta(meta);
+        brew.save(itemMeta);
+        hand.setItemMeta(itemMeta);
         lang.sendEntry(player, "CMD_UnLabel");
     }
 }

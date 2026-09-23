@@ -32,14 +32,14 @@ public class NBTLoadStream extends ByteArrayInputStream {
     private static final NamespacedKey KEY = new NamespacedKey(BreweryPlugin.getInstance(), TAG);
     private static final NamespacedKey LEGACY_KEY = new NamespacedKey("brewery", TAG.toLowerCase());
 
-    public NBTLoadStream(ItemMeta meta) {
-        super(getNBTBytes(meta));
+    public NBTLoadStream(ItemMeta itemMeta) {
+        super(getNBTBytes(itemMeta));
     }
 
-    private static byte[] getNBTBytes(ItemMeta meta) {
-        byte[] bytes = NBTUtil.readBytesItem(meta, KEY);
+    private static byte[] getNBTBytes(ItemMeta itemMeta) {
+        byte[] bytes = NBTUtil.readBytesItem(itemMeta, KEY);
         if (bytes == null) {
-            bytes = NBTUtil.readBytesItem(meta, LEGACY_KEY);
+            bytes = NBTUtil.readBytesItem(itemMeta, LEGACY_KEY);
         }
         if (bytes == null) {
             return new byte[0];
@@ -51,7 +51,7 @@ public class NBTLoadStream extends ByteArrayInputStream {
         return count > 0;
     }
 
-    public static boolean hasDataInMeta(ItemMeta meta) {
-        return NBTUtil.hasBytesItem(meta, KEY) || NBTUtil.hasBytesItem(meta, LEGACY_KEY);
+    public static boolean hasDataInMeta(ItemMeta itemMeta) {
+        return NBTUtil.hasBytesItem(itemMeta, KEY) || NBTUtil.hasBytesItem(itemMeta, LEGACY_KEY);
     }
 }

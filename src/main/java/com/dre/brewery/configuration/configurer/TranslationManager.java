@@ -136,18 +136,18 @@ public class TranslationManager {
      * If a key hasn't been translated yet, english is used as a fallback.
      */
     public void updateTranslationFiles() {
-        ConfigHead tempHead = new ConfigHead(); // Prevent polluting ConfigManager global state
+        ConfigHead temporaryHead = new ConfigHead(); // Prevent polluting ConfigManager global state
 
-        Lang fallback = loadFromResources(tempHead, Translation.EN);
-        for (Translation trans : Translation.getDefaultTranslations()) {
-            String langFilePathStr = "languages/" + trans.fileName();
+        Lang fallback = loadFromResources(temporaryHead, Translation.EN);
+        for (Translation translation : Translation.getDefaultTranslations()) {
+            String langFilePathStr = "languages/" + translation.fileName();
             Path langFilePath = dataFolder.toPath().resolve(langFilePathStr);
 
-            Lang langFromFile = tempHead.createConfig(Lang.class, langFilePath);
-            Lang langFromResources = loadFromResources(tempHead, trans);
+            Lang langFromFile = temporaryHead.createConfig(Lang.class, langFilePath);
+            Lang langFromResources = loadFromResources(temporaryHead, translation);
 
             langFromFile.updateMissingValuesFrom(langFromResources);
-            if (trans != Translation.EN) {
+            if (translation != Translation.EN) {
                 langFromFile.updateMissingValuesFrom(fallback);
             }
             langFromFile.save();
@@ -155,10 +155,10 @@ public class TranslationManager {
 
     }
 
-    // Loads a lang from resources... by loading from file then overwriting with resources InputStream
-    // A bit of a hack, but avoids having to modify Okaeri
+    // Builds a Lang from the bundled resource: the config is bound to the on-disk path (so it produces a
+    // Lang with the right bind file and header) and then has all its values overwritten by the resource.
     @Nullable
-    private Lang loadFromResources(ConfigHead tempHead, Translation translation) {
+    private Lang loadFromResources(ConfigHead temporaryHead, Translation translation) {
         String langFilePathStr = "languages/" + translation.fileName();
         Path langFilePath = dataFolder.toPath().resolve(langFilePathStr);
 
@@ -166,7 +166,7 @@ public class TranslationManager {
             if (inputStream == null || !Files.exists(langFilePath)) {
                 throw new IOException("Lang file not found: " + langFilePathStr);
             }
-            Lang langFromResources = tempHead.createConfig(Lang.class, langFilePath);
+            Lang langFromResources = temporaryHead.createConfig(Lang.class, langFilePath);
             langFromResources.load(inputStream);
             return langFromResources;
         } catch (IOException e) {

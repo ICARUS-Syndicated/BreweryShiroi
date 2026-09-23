@@ -20,7 +20,7 @@
 
 package com.dre.brewery.commands.subcommands;
 
-import com.dre.brewery.Brew;
+import com.dre.brewery.brew.Brew;
 import com.dre.brewery.commands.BreweryCommandManager;
 import com.dre.brewery.commands.CommandUtil;
 import com.dre.brewery.configuration.files.Lang;
@@ -59,10 +59,10 @@ public class DistillCommand {
             lang.sendEntry(player, "Error_ItemNotPotion");
             return;
         }
-        PotionMeta meta = (PotionMeta) item.getItemMeta();
+        PotionMeta itemMeta = (PotionMeta) item.getItemMeta();
 
         for (int i = 0; i < distillRuns; i++) {
-            brew.distillSlot(item, meta);
+            brew.distillSlot(item, itemMeta);
         }
         Logging.debugLog(String.format("distill: distilled for %d runs: %s",
             distillRuns, ChatColor.stripColor(brew.toString())));

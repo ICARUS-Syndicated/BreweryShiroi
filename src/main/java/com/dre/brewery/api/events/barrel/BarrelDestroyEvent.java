@@ -21,6 +21,7 @@
 package com.dre.brewery.api.events.barrel;
 
 import com.dre.brewery.instruments.barrel.BreweryBarrel;
+import lombok.Getter;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
@@ -36,8 +37,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public class BarrelDestroyEvent extends BarrelEvent implements Cancellable {
     private static final HandlerList handlers = new HandlerList();
-    private final Block broken;
-    private final Reason reason;
+    @Getter private final Block broken;
+    @Getter private final Reason reason;
     private final Player player;
     private boolean cancelled;
 
@@ -60,20 +61,6 @@ public class BarrelDestroyEvent extends BarrelEvent implements Cancellable {
     @Override
     public void setCancelled(boolean cancelled) {
         this.cancelled = cancelled;
-    }
-
-    /**
-     * @return The Block of the Barrel that was broken
-     */
-    public Block getBroken() {
-        return broken;
-    }
-
-    /**
-     * @return The Reason of destruction of this barrel, see Reason
-     */
-    public Reason getReason() {
-        return reason;
     }
 
     /**

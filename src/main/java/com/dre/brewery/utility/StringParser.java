@@ -24,8 +24,15 @@ import com.dre.brewery.utility.utils.BreweryUtil;
 
 public class StringParser {
 
-    public static Tuple<Integer, String> parseQuality(String line, ParseType type) {
-        line = BreweryUtil.color(line);
+    /**
+     * Colour given to lore lines that the recipe did not colour itself.
+     * <p>
+     * Recipe lore stays in the legacy string format on purpose: it ends up in the item's
+     * lore and in the serialized brew data, both of which are plain strings.
+     */
+    private static final String DEFAULT_LORE_COLOR = "&9";
+
+    public static BinaryTuple<Integer, String> parseQuality(String line, ParseType type) {
         int plus = 0;
         if (line.startsWith("+++")) {
             plus = 3;
@@ -45,10 +52,10 @@ public class StringParser {
             line = line.substring(1);
         }
 
-        if (type == ParseType.LORE && !line.startsWith("§")) {
-            line = "§9" + line;
+        if (type == ParseType.LORE && !line.startsWith("&") && !line.startsWith("\u00A7")) {
+            line = DEFAULT_LORE_COLOR + line;
         }
-        return new Tuple<>(plus, line);
+        return new BinaryTuple<>(plus, BreweryUtil.color(line));
     }
 
     public enum ParseType {

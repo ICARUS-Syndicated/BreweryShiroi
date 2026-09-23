@@ -21,7 +21,7 @@
 package com.dre.brewery.configuration.recipes.serdes;
 
 import com.dre.brewery.utility.StringParser;
-import com.dre.brewery.utility.Tuple;
+import com.dre.brewery.utility.BinaryTuple;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
@@ -37,17 +37,17 @@ import java.util.List;
  * Accepts a single string or a list of strings. The concrete {@link StringParser.ParseType} decides how
  * the text is post-processed (lore is colourised, commands get a leading slash stripped).
  */
-public abstract class QualityStringsDeserializer extends JsonDeserializer<List<Tuple<Integer, String>>> {
+public abstract class QualityStringsDeserializer extends JsonDeserializer<List<BinaryTuple<Integer, String>>> {
 
     protected abstract StringParser.ParseType parseType();
 
     @Override
-    public List<Tuple<Integer, String>> deserialize(JsonParser parser, DeserializationContext context) throws IOException {
+    public List<BinaryTuple<Integer, String>> deserialize(JsonParser parser, DeserializationContext context) throws IOException {
         JsonNode node = context.readTree(parser);
         if (node == null || node.isNull()) {
             return null;
         }
-        List<Tuple<Integer, String>> lines = new ArrayList<>();
+        List<BinaryTuple<Integer, String>> lines = new ArrayList<>();
         if (node.isArray()) {
             for (JsonNode element : node) {
                 lines.add(StringParser.parseQuality(element.asText(), parseType()));

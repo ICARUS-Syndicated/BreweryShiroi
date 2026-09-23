@@ -23,6 +23,7 @@ package com.dre.brewery.recipe.items;
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.utility.Logging;
 import com.dre.brewery.utility.ItemMetaCompat;
+import com.dre.brewery.utility.utils.BreweryUtil;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
@@ -43,7 +44,7 @@ import java.util.Objects;
  */
 public class CustomItem extends RecipeItem implements Ingredient {
 
-    private Material mat;
+    private Material material;
     private String name;
     private List<String> lore;
     private int customModelData = 0;
@@ -51,32 +52,32 @@ public class CustomItem extends RecipeItem implements Ingredient {
     public CustomItem() {
     }
 
-    public CustomItem(Material mat) {
-        this.mat = mat;
+    public CustomItem(Material material) {
+        this.material = material;
     }
 
-    public CustomItem(Material mat, String name, List<String> lore) {
-        this.mat = mat;
+    public CustomItem(Material material, String name, List<String> lore) {
+        this.material = material;
         this.name = name;
         this.lore = lore;
     }
 
-    public CustomItem(Material mat, String name, List<String> lore, int customModelData) {
-        this.mat = mat;
+    public CustomItem(Material material, String name, List<String> lore, int customModelData) {
+        this.material = material;
         this.name = name;
         this.lore = lore;
         this.customModelData = customModelData;
     }
 
     public CustomItem(ItemStack item) {
-        mat = item.getType();
+        material = item.getType();
         if (!item.hasItemMeta()) {
             return;
         }
         ItemMeta itemMeta = item.getItemMeta();
         assert itemMeta != null;
         if (itemMeta.hasDisplayName()) {
-            name = itemMeta.getDisplayName();
+            name = BreweryUtil.displayName(itemMeta);
         } else if (itemMeta.hasItemName()) {
             name = itemMeta.getItemName();
         }
@@ -91,7 +92,7 @@ public class CustomItem extends RecipeItem implements Ingredient {
 
     @Override
     public boolean hasMaterials() {
-        return mat != null;
+        return material != null;
     }
 
     public boolean hasName() {
@@ -108,18 +109,18 @@ public class CustomItem extends RecipeItem implements Ingredient {
 
     @Override
     public List<Material> getMaterials() {
-        List<Material> l = new ArrayList<>(1);
-        l.add(mat);
-        return l;
+        List<Material> materials = new ArrayList<>(1);
+        materials.add(material);
+        return materials;
     }
 
     @Nullable
     public Material getMaterial() {
-        return mat;
+        return material;
     }
 
-    protected void setMat(Material mat) {
-        this.mat = mat;
+    protected void setMaterial(Material material) {
+        this.material = material;
     }
 
     @Nullable
@@ -173,7 +174,7 @@ public class CustomItem extends RecipeItem implements Ingredient {
                 return hasMaterials() && !hasLore() && !hasName() && getMaterial() == ((SimpleItem) rItem).getMaterial();
             } else if (rItem instanceof CustomItem other) {
                 // If the other is a CustomItem as well and not Similar to ours, it might have more data and we still match
-                if (mat == null || mat == other.mat) {
+                if (material == null || material == other.material) {
                     if (!hasName() || (other.name != null && name.equalsIgnoreCase(other.name))) {
                         if (hasCustomModelData() && customModelData != other.customModelData) {
                             return false;
@@ -188,31 +189,27 @@ public class CustomItem extends RecipeItem implements Ingredient {
 
     @Override
     public boolean matches(ItemStack item) {
-        if (mat != null) {
-            if (item.getType() != mat) {
-                return false;
-            }
+        if (material != null && item.getType() != material) {
+            return false;
         }
         if (!item.hasItemMeta()) {
             return false;
         }
-        ItemMeta meta = item.getItemMeta();
-        assert meta != null;
-        if (name != null) {
-            if (!meta.hasDisplayName() || !name.equalsIgnoreCase(meta.getDisplayName())) {
-                return false;
-            }
+        ItemMeta itemMeta = item.getItemMeta();
+        assert itemMeta != null;
+        if (name != null && (!itemMeta.hasDisplayName() || !name.equalsIgnoreCase(BreweryUtil.displayName(itemMeta)))) {
+            return false;
         }
 
         if (hasLore()) {
-            if (!meta.hasLore()) {
+            if (!itemMeta.hasLore()) {
                 return false;
             }
-            return matchLore(meta.getLore());
+            return matchLore(itemMeta.getLore());
         }
 
         if (customModelData != 0) {
-            Integer usedCustomModelData = ItemMetaCompat.getCustomModelData(meta);
+            Integer usedCustomModelData = ItemMetaCompat.getCustomModelData(itemMeta);
             return usedCustomModelData != null && usedCustomModelData == customModelData;
         }
         return true;
@@ -257,7 +254,7 @@ public class CustomItem extends RecipeItem implements Ingredient {
             return true;
         }
         if (item instanceof CustomItem ci) {
-            return mat == ci.mat && Objects.equals(name, ci.name) && Objects.equals(lore, ci.lore) && customModelData == ci.customModelData;
+            return material == ci.material && Objects.equals(name, ci.name) && Objects.equals(lore, ci.lore) && customModelData == ci.customModelData;
         }
         return false;
     }
@@ -273,18 +270,19 @@ public class CustomItem extends RecipeItem implements Ingredient {
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), mat, name, lore, customModelData);
+        return Objects.hash(super.hashCode(), material, name, lore, customModelData);
     }
 
     @Override
     public String toString() {
-        return "CustomItem{" +
-            "id=" + getConfigId() +
-            ", mat=" + (mat != null ? mat.name().toLowerCase() : "null") +
-            ", name='" + name + '\'' +
-            ", loresize: " + (lore != null ? lore.size() : 0) +
-            ", modelData=" + customModelData +
-            '}';
+        return new StringBuilder("CustomItem{")
+            .append("id = ").append(getConfigId())
+            .append(", material = ").append(material)
+            .append(", name = '").append(name).append('\'')
+            .append(", loreSize = ").append(lore != null ? lore.size() : 0)
+            .append(", customModelData = ").append(customModelData)
+            .append('}')
+            .toString();
     }
 
     @Override
@@ -295,9 +293,9 @@ public class CustomItem extends RecipeItem implements Ingredient {
     @Override
     public void saveTo(DataOutputStream out) throws IOException {
         out.writeUTF("CI");
-        if (mat != null) {
+        if (material != null) {
             out.writeBoolean(true);
-            out.writeUTF(mat.name());
+            out.writeUTF(material.name());
         } else {
             out.writeBoolean(false);
         }
@@ -326,10 +324,10 @@ public class CustomItem extends RecipeItem implements Ingredient {
 
     public static CustomItem loadFrom(ItemLoader loader) {
         try {
-            DataInputStream in = loader.getInputStream();
+            DataInputStream in = loader.inputStream();
             CustomItem item = new CustomItem();
             if (in.readBoolean()) {
-                item.mat = Material.getMaterial(in.readUTF());
+                item.material = Material.getMaterial(in.readUTF());
             }
             if (in.readBoolean()) {
                 item.name = in.readUTF();

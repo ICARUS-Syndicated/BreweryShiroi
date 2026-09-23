@@ -41,13 +41,13 @@ public final class ItemMetaCompat {
     private ItemMetaCompat() {
     }
 
-    public static boolean hasCustomModelData(@NotNull ItemMeta meta) {
+    public static boolean hasCustomModelData(@NotNull ItemMeta itemMeta) {
         if (HAS_COMPONENT_METHOD != null && GET_COMPONENT_METHOD != null) {
-            return getCustomModelData(meta) != null;
+            return getCustomModelData(itemMeta) != null;
         }
         if (HAS_LEGACY_METHOD != null) {
             try {
-                return (boolean) HAS_LEGACY_METHOD.invoke(meta);
+                return (boolean) HAS_LEGACY_METHOD.invoke(itemMeta);
             } catch (IllegalAccessException | InvocationTargetException ignored) {
                 return false;
             }
@@ -55,17 +55,17 @@ public final class ItemMetaCompat {
         return false;
     }
 
-    public static @Nullable Integer getCustomModelData(@NotNull ItemMeta meta) {
+    public static @Nullable Integer getCustomModelData(@NotNull ItemMeta itemMeta) {
         if (HAS_COMPONENT_METHOD != null && GET_COMPONENT_METHOD != null) {
-            Integer componentValue = readComponentValue(meta);
+            Integer componentValue = readComponentValue(itemMeta);
             if (componentValue != null) {
                 return componentValue;
             }
         }
         if (HAS_LEGACY_METHOD != null && GET_LEGACY_METHOD != null) {
             try {
-                if ((boolean) HAS_LEGACY_METHOD.invoke(meta)) {
-                    return (Integer) GET_LEGACY_METHOD.invoke(meta);
+                if ((boolean) HAS_LEGACY_METHOD.invoke(itemMeta)) {
+                    return (Integer) GET_LEGACY_METHOD.invoke(itemMeta);
                 }
             } catch (IllegalAccessException | InvocationTargetException ignored) {
                 return null;
@@ -74,9 +74,12 @@ public final class ItemMetaCompat {
         return null;
     }
 
-    private static @Nullable Integer readComponentValue(@NotNull ItemMeta meta) {
+    private static @Nullable Integer readComponentValue(@NotNull ItemMeta itemMeta) {
         try {
-            Object component = GET_COMPONENT_METHOD.invoke(meta);
+            Object component = null;
+            if (GET_COMPONENT_METHOD != null) {
+                component = GET_COMPONENT_METHOD.invoke(itemMeta);
+            }
             if (component == null) {
                 return null;
             }
@@ -91,7 +94,7 @@ public final class ItemMetaCompat {
                 return null;
             }
 
-            Object first = floats.get(0);
+            Object first = floats.getFirst();
             if (first instanceof Number number) {
                 return number.intValue();
             }

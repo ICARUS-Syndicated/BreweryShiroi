@@ -20,7 +20,7 @@
 
 package com.dre.brewery.commands.subcommands;
 
-import com.dre.brewery.BreweryPlayer;
+import com.dre.brewery.mechanics.BreweryPlayer;
 import com.dre.brewery.commands.BreweryCommandManager;
 import com.dre.brewery.commands.CommandUtil;
 import com.dre.brewery.configuration.files.Lang;
@@ -65,7 +65,7 @@ public class SetCommand {
                     breweryPlayer = BreweryPlayer.addPlayer(Bukkit.getOfflinePlayer(target.getUniqueId()));
                 }
 
-                breweryPlayer.setDrunkeness(drunkenness);
+                breweryPlayer.setDrunkenness(drunkenness);
                 breweryPlayer.setQuality(quality * drunkenness);
 
                 lang.sendEntry(sender, "CMD_Set", playerName, String.valueOf(drunkenness), String.valueOf(quality));

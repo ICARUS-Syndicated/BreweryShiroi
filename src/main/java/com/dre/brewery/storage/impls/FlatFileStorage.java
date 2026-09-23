@@ -21,10 +21,10 @@
 package com.dre.brewery.storage.impls;
 
 import com.dre.brewery.instruments.BreweryCauldron;
-import com.dre.brewery.BreweryIngredients;
-import com.dre.brewery.BreweryPlayer;
+import com.dre.brewery.brew.BreweryIngredients;
+import com.dre.brewery.mechanics.BreweryPlayer;
 import com.dre.brewery.instruments.barrel.BreweryBarrel;
-import com.dre.brewery.Wakeup;
+import com.dre.brewery.mechanics.Wakeup;
 import com.dre.brewery.configuration.sector.capsule.ConfiguredDataManager;
 import com.dre.brewery.storage.DataManager;
 import com.dre.brewery.storage.StorageInitException;
@@ -48,21 +48,20 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-// TODO: Simplify methods
 public class FlatFileStorage extends DataManager {
 
     private final File rawFile;
     private final YamlConfiguration dataFile;
-    private SQLDataSerializer serializer;
+    private final SQLDataSerializer serializer = new SQLDataSerializer();
 
     public FlatFileStorage(ConfiguredDataManager record) throws StorageInitException {
         super(record.getType());
@@ -89,13 +88,6 @@ public class FlatFileStorage extends DataManager {
         }
     }
 
-    private SQLDataSerializer getLazySerializerInstance() {
-        if (serializer == null) {
-            serializer = new SQLDataSerializer();
-        }
-        return serializer;
-    }
-
     @Override
     public boolean createTable(String name, int maxIdLength) {
         if (dataFile.contains(name)) {
@@ -116,20 +108,13 @@ public class FlatFileStorage extends DataManager {
 
     @Override
     public <T extends SerializableThing> T getGeneric(String id, String table, Class<T> type) {
-        String path = table + "." + id;
-
-        ConfigurationSection section = dataFile.getConfigurationSection(path);
+        ConfigurationSection section = dataFile.getConfigurationSection(table + "." + id);
         if (section == null) {
             return null;
         }
-
-        // Get all values at the path as a Map
-        Map<String, Object> map = section.getValues(false);
-        Gson gson = getLazySerializerInstance().getGson();
-
-        // Gson writes ints as doubles sometimes, but they seem to serialize back to ints just fine.
-        String json = gson.toJson(map);
-        return gson.fromJson(json, type);
+        // Go through JsonElement, Gson writes ints as doubles sometimes,
+        // but they seem to serialize back to ints just fine.
+        return serializer.getGson().fromJson(serializer.getGson().toJsonTree(section.getValues(false)), type);
     }
 
     @Override
@@ -138,11 +123,9 @@ public class FlatFileStorage extends DataManager {
         if (section == null) {
             return Collections.emptyList();
         }
-        List<T> things = new ArrayList<>();
-        for (String key : section.getKeys(false)) {
-            things.add(getGeneric(key, table, type));
-        }
-        return things;
+        return section.getKeys(false).stream()
+            .map(key -> getGeneric(key, table, type))
+            .toList();
     }
 
     @Override
@@ -164,7 +147,7 @@ public class FlatFileStorage extends DataManager {
     public <T extends SerializableThing> void saveGeneric(T serializableThing, String table) {
         String path = table + "." + serializableThing.getId();
 
-        Gson gson = getLazySerializerInstance().getGson();
+        Gson gson = serializer.getGson();
         JsonObject jsonObject = gson.toJsonTree(serializableThing).getAsJsonObject();
         Type mapType = new TypeToken<Map<String, Object>>() {
         }.getType();
@@ -212,16 +195,9 @@ public class FlatFileStorage extends DataManager {
         if (section == null) {
             return CompletableFuture.completedFuture(Collections.emptyList());
         }
-
-        List<CompletableFuture<BreweryBarrel>> barrels = new ArrayList<>();
-
-        for (String key : section.getKeys(false)) {
-            CompletableFuture<BreweryBarrel> barrel = getBarrel(BreweryUtil.uuidFromString(key));
-            if (barrel != null) {
-                barrels.add(barrel);
-            }
-        }
-        return FutureUtil.mergeFutures(barrels);
+        return FutureUtil.mergeFutures(section.getKeys(false).stream()
+            .map(key -> getBarrel(BreweryUtil.uuidFromString(key)))
+            .toList());
     }
 
     @Override
@@ -242,7 +218,7 @@ public class FlatFileStorage extends DataManager {
         dataFile.set(path + ".spigot", serializeLocation(breweryBarrel.getSpigot().getLocation()));
         dataFile.set(path + ".bounds", breweryBarrel.getBounds().serialize());
         dataFile.set(path + ".time", breweryBarrel.getTime());
-        dataFile.set(path + ".sign", breweryBarrel.getSignoffset());
+        dataFile.set(path + ".sign", breweryBarrel.getSignOffset());
         dataFile.set(path + ".items", BukkitSerialization.itemStackArrayToBase64(breweryBarrel.getInventory().getContents()));
         save();
     }
@@ -257,33 +233,26 @@ public class FlatFileStorage extends DataManager {
     public BreweryCauldron getCauldron(UUID id) {
         String path = "cauldrons." + id;
 
-        Location loc = deserializeLocation(dataFile.getString(path + ".block"));
-        if (loc == null) {
+        Location location = deserializeLocation(dataFile.getString(path + ".block"));
+        if (location == null) {
             return null;
         }
         BreweryIngredients ingredients = BreweryIngredients.deserializeIngredients(dataFile.getString(path + ".ingredients"));
         int state = dataFile.getInt(path + ".state", 0);
 
-        return new BreweryCauldron(loc.getBlock(), ingredients, state, id);
+        return new BreweryCauldron(location.getBlock(), ingredients, state, id);
     }
 
     @Override
     public Collection<BreweryCauldron> getAllCauldrons() {
         ConfigurationSection section = dataFile.getConfigurationSection("cauldrons");
-
         if (section == null) {
             return Collections.emptyList();
         }
-
-        List<BreweryCauldron> cauldrons = new ArrayList<>();
-
-        for (String key : section.getKeys(false)) {
-            BreweryCauldron cauldron = getCauldron(BreweryUtil.uuidFromString(key));
-            if (cauldron != null) {
-                cauldrons.add(cauldron);
-            }
-        }
-        return cauldrons;
+        return section.getKeys(false).stream()
+            .map(key -> getCauldron(BreweryUtil.uuidFromString(key)))
+            .filter(Objects::nonNull)
+            .toList();
     }
 
     @Override
@@ -325,20 +294,13 @@ public class FlatFileStorage extends DataManager {
     @Override
     public Collection<BreweryPlayer> getAllPlayers() {
         ConfigurationSection section = dataFile.getConfigurationSection("players");
-
         if (section == null) {
             return Collections.emptyList();
         }
-
-        List<BreweryPlayer> players = new ArrayList<>();
-
-        for (String key : section.getKeys(false)) {
-            BreweryPlayer player = getPlayer(BreweryUtil.uuidFromString(key));
-            if (player != null) {
-                players.add(player);
-            }
-        }
-        return players;
+        return section.getKeys(false).stream()
+            .map(key -> getPlayer(BreweryUtil.uuidFromString(key)))
+            .filter(Objects::nonNull)
+            .toList();
     }
 
     @Override
@@ -354,8 +316,8 @@ public class FlatFileStorage extends DataManager {
         String path = "players." + player.getUuid();
 
         dataFile.set(path + ".quality", player.getQuality());
-        dataFile.set(path + ".drunkenness", player.getDrunkeness());
-        dataFile.set(path + ".offlineDrunkenness", player.getOfflineDrunkeness());
+        dataFile.set(path + ".drunkenness", player.getDrunkenness());
+        dataFile.set(path + ".offlineDrunkenness", player.getOfflineDrunkenness());
         save();
     }
 
@@ -378,20 +340,13 @@ public class FlatFileStorage extends DataManager {
     @Override
     public Collection<Wakeup> getAllWakeups() {
         ConfigurationSection section = dataFile.getConfigurationSection("wakeups");
-
         if (section == null) {
             return Collections.emptyList();
         }
-
-        List<Wakeup> wakeups = new ArrayList<>();
-
-        for (String key : section.getKeys(false)) {
-            Wakeup wakeup = getWakeup(BreweryUtil.uuidFromString(key));
-            if (wakeup != null) {
-                wakeups.add(wakeup);
-            }
-        }
-        return wakeups;
+        return section.getKeys(false).stream()
+            .map(key -> getWakeup(BreweryUtil.uuidFromString(key)))
+            .filter(Objects::nonNull)
+            .toList();
     }
 
     @Override
@@ -405,7 +360,7 @@ public class FlatFileStorage extends DataManager {
     @Override
     public void saveWakeup(Wakeup wakeup) {
         String path = "wakeups." + wakeup.getId();
-        dataFile.set(path + ".location", serializeLocation(wakeup.getLoc(), true));
+        dataFile.set(path + ".location", serializeLocation(wakeup.getLocation(), true));
         save();
     }
 

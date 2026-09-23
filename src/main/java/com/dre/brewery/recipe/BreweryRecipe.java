@@ -20,11 +20,10 @@
 
 package com.dre.brewery.recipe;
 
-import com.dre.brewery.BreweryIngredients;
+import com.dre.brewery.brew.BreweryIngredients;
 import com.dre.brewery.instruments.barrel.BarrelWoodType;
-import com.dre.brewery.Brew;
+import com.dre.brewery.brew.Brew;
 import com.dre.brewery.BreweryPlugin;
-import com.dre.brewery.Translatable;
 import com.dre.brewery.configuration.ConfigManager;
 import com.dre.brewery.configuration.files.Lang;
 import com.dre.brewery.configuration.recipes.CustomItemLoader;
@@ -38,7 +37,8 @@ import com.dre.brewery.utility.utils.BreweryUtil;
 import com.dre.brewery.utility.Logging;
 import com.dre.brewery.utility.utils.MaterialUtil;
 import com.dre.brewery.utility.StringParser;
-import com.dre.brewery.utility.Tuple;
+import com.dre.brewery.utility.BinaryTuple;
+import net.kyori.adventure.title.Title;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -77,7 +77,7 @@ public class BreweryRecipe implements Cloneable {
     private List<RecipeItem> ingredients = new ArrayList<>(); // Items and amounts
     private int difficulty; // difficulty to brew the potion, how exact the instruction has to be followed
     private int cookingTime; // time to cook in cauldron
-    private byte distillruns; // runs through the brewer
+    private byte distillRuns; // runs through the brewer
     private int distillTime; // time for one distill run in seconds
     private List<BarrelWoodType> barrelTypes = new ArrayList<>(); // barrel types the brew should be aged in
     private int age; // time in minecraft days for the potions to age in barrels
@@ -85,15 +85,15 @@ public class BreweryRecipe implements Cloneable {
     // outcome
     private PotionColor color; // color of the distilled/finished potion
     private int alcohol; // Alcohol in perfect potion
-    private List<Tuple<Integer, String>> lore; // Custom Lore on the Potion. The int is for Quality Lore, 0 = any, 1,2,3 = Bad,Middle,Good
-    private int[] cmData; // Custom Model Data[3] for each quality
+    private List<BinaryTuple<Integer, String>> lore; // Custom Lore on the Potion. The int is for Quality Lore, 0 = any, 1,2,3 = Bad,Middle,Good
+    private int[] customModelData; // Custom Model Data[3] for each quality
     private String[] itemModel; // item model Data[3] for each quality
 
     // drinking
     private List<BreweryEffect> effects = new ArrayList<>(); // Special Effects when drinking
-    private @Nullable List<Tuple<Integer, String>> playercmds; // Commands executed as the player when drinking
-    private @Nullable List<Tuple<Integer, String>> servercmds; // Commands executed as the server when drinking
-    private String drinkMsg; // Message when drinking
+    private @Nullable List<BinaryTuple<Integer, String>> playerCommands; // Commands executed as the player when drinking
+    private @Nullable List<BinaryTuple<Integer, String>> serverCommands; // Commands executed as the server when drinking
+    private String drinkMessage; // Message when drinking
     private String drinkTitle; // Title to show when drinking
     private boolean glint; // If the potion should have a glint effect
 
@@ -153,18 +153,18 @@ public class BreweryRecipe implements Cloneable {
                 return new IngredientResult.Error(IngredientError.INVALID_AMOUNT, ingredParts[1]);
             }
         }
-        String[] matParts;
+        String[] materialParts;
         if (ingredParts[0].contains(",")) {
-            matParts = ingredParts[0].split(",");
+            materialParts = ingredParts[0].split(",");
         } else if (ingredParts[0].contains(";")) {
-            matParts = ingredParts[0].split(";");
+            materialParts = ingredParts[0].split(";");
         } else {
-            matParts = ingredParts[0].split("\\.");
+            materialParts = ingredParts[0].split("\\.");
         }
 
 
         // Check if this is a Plugin Item
-        String[] pluginItem = matParts[0].split(":", 2);
+        String[] pluginItem = materialParts[0].split(":", 2);
         if (pluginItem.length > 1) {
             RecipeItem custom = PluginItem.fromConfig(pluginItem[0], pluginItem[1]);
             if (custom != null) {
@@ -180,7 +180,7 @@ public class BreweryRecipe implements Cloneable {
 
         // Try to find this Ingredient as Custom Item
         for (RecipeItem custom : CustomItemLoader.getRecipeItems()) {
-            if (custom.getConfigId().equalsIgnoreCase(matParts[0])) {
+            if (custom.getConfigId().equalsIgnoreCase(materialParts[0])) {
                 custom = custom.getMutableCopy();
                 custom.setAmount(amount);
                 custom.makeImmutable();
@@ -195,22 +195,22 @@ public class BreweryRecipe implements Cloneable {
             }
         }
 
-        Material mat = MaterialUtil.getMaterialSafely(matParts[0]);
+        Material material = MaterialUtil.getMaterialSafely(materialParts[0]);
         short durability = -1;
-        if (matParts.length == 2) {
-            durability = (short) BreweryUtil.getRandomIntInRange(matParts[1]);
+        if (materialParts.length == 2) {
+            durability = (short) BreweryUtil.getRandomIntInRange(materialParts[1]);
         }
-        if (mat != null) {
+        if (material != null) {
             RecipeItem rItem;
             if (durability > -1) {
-                rItem = new SimpleItem(mat, durability);
+                rItem = new SimpleItem(material, durability);
             } else {
-                rItem = new SimpleItem(mat);
+                rItem = new SimpleItem(material);
             }
             rItem.setAmount(amount);
             rItem.makeImmutable();
-            BreweryCauldronRecipe.acceptedMaterials.add(mat);
-            BreweryCauldronRecipe.acceptedSimple.add(mat);
+            BreweryCauldronRecipe.acceptedMaterials.add(material);
+            BreweryCauldronRecipe.acceptedSimple.add(material);
             return new IngredientResult.Success(rItem);
         } else {
             return new IngredientResult.Error(IngredientError.INVALID_MATERIAL, ingredParts[0]);
@@ -235,8 +235,8 @@ public class BreweryRecipe implements Cloneable {
         private final String translationKey;
     }
 
-    public static List<Tuple<Integer, String>> loadQualityStringList(List<String> stringList, StringParser.ParseType parseType) {
-        List<Tuple<Integer, String>> result = new ArrayList<>();
+    public static List<BinaryTuple<Integer, String>> loadQualityStringList(List<String> stringList, StringParser.ParseType parseType) {
+        List<BinaryTuple<Integer, String>> result = new ArrayList<>();
         if (stringList == null) {
             return result;
         }
@@ -262,8 +262,8 @@ public class BreweryRecipe implements Cloneable {
             Logging.errorLog("Invalid cooking time '" + cookingTime + "' in Recipe: " + getRecipeName());
             return false;
         }
-        if (distillruns < 0) {
-            Logging.errorLog("Invalid distillruns '" + distillruns + "' in Recipe: " + getRecipeName());
+        if (distillRuns < 0) {
+            Logging.errorLog("Invalid distillruns '" + distillRuns + "' in Recipe: " + getRecipeName());
             return false;
         }
         if (distillTime < 0) {
@@ -352,11 +352,11 @@ public class BreweryRecipe implements Cloneable {
     }
 
     public boolean isCookingOnly() {
-        return age == 0 && distillruns == 0;
+        return age == 0 && distillRuns == 0;
     }
 
     public boolean needsDistilling() {
-        return distillruns != 0;
+        return distillRuns != 0;
     }
 
     public boolean needsToAge() {
@@ -403,56 +403,56 @@ public class BreweryRecipe implements Cloneable {
     }
 
     public void applyDrinkFeatures(Player player, int quality) {
-        List<String> playerCmdsForQuality = getPlayercmdsForQuality(quality);
-        if (playerCmdsForQuality != null) {
-            for (String cmd : playerCmdsForQuality) {
-                scheduleCommand(player, cmd, player.getName(), quality, false);
+        List<String> playerCommandsForQuality = getPlayercmdsForQuality(quality);
+        if (playerCommandsForQuality != null) {
+            for (String command : playerCommandsForQuality) {
+                scheduleCommand(player, command, player.getName(), quality, false);
             }
         }
-        List<String> serverCmdsForQuality = getServercmdsForQuality(quality);
-        if (serverCmdsForQuality != null) {
-            for (String cmd : serverCmdsForQuality) {
-                scheduleCommand(player, cmd, player.getName(), quality, true);
+        List<String> serverCommandsForQuality = getServercmdsForQuality(quality);
+        if (serverCommandsForQuality != null) {
+            for (String command : serverCommandsForQuality) {
+                scheduleCommand(player, command, player.getName(), quality, true);
             }
         }
-        if (drinkMsg != null) {
-            player.sendMessage(BreweryUtil.applyPlaceholders(drinkMsg, player.getName(), quality));
+        if (drinkMessage != null) {
+            player.sendMessage(BreweryUtil.applyPlaceholders(drinkMessage, player.getName(), quality));
         }
         if (drinkTitle != null) {
-            player.sendTitle("", BreweryUtil.applyPlaceholders(drinkTitle, player.getName(), quality), 10, 90, 30);
+            player.showTitle(BreweryUtil.title(BreweryUtil.applyPlaceholders(drinkTitle, player.getName(), quality), 10, 90, 30));
         }
     }
 
-    private void scheduleCommand(Player player, String cmd, String playerName, int quality, boolean isServerCommand) {
-        if (cmd.startsWith("/")) cmd = cmd.substring(1);
-        if (cmd.contains("/")) {
-            String[] parts = cmd.split("/");
-            String command = parts[0].trim(); // Needs to be effectively final for scheduling
-            cmd = parts[0].trim();
+    private void scheduleCommand(Player player, String command, String playerName, int quality, boolean isServerCommand) {
+        if (command.startsWith("/")) command = command.substring(1);
+        if (command.contains("/")) {
+            String[] parts = command.split("/");
+            String trimmed = parts[0].trim(); // Needs to be effectively final for scheduling
+            trimmed = parts[0].trim();
             String delay = parts[1].trim();
             long delayTicks = parseDelayToTicks(delay);
             if (delayTicks > 0) {
+                String finalTrimmed = trimmed;
                 new BukkitRunnable() {
                     @Override
                     public void run() {
-                        executeCommand(player, command, playerName, quality, isServerCommand);
+                        executeCommand(player, finalTrimmed, playerName, quality, isServerCommand);
                     }
                 }.runTaskLater(BreweryPlugin.getInstance(), delayTicks);
                 return;
             }
         }
         // Execute command immediately if no delay is specified
-        executeCommand(player, cmd, playerName, quality, isServerCommand);
+        executeCommand(player, command, playerName, quality, isServerCommand);
     }
 
     private long parseDelayToTicks(String delay) {
         try {
+            int parseInt = Integer.parseInt(delay.substring(0, delay.length() - 1));
             if (delay.endsWith("s")) {
-                int seconds = Integer.parseInt(delay.substring(0, delay.length() - 1));
-                return seconds * 20L; // 20 ticks per second
+                return parseInt * 20L; // 20 ticks per second
             } else if (delay.endsWith("m")) {
-                int minutes = Integer.parseInt(delay.substring(0, delay.length() - 1));
-                return minutes * 1200L; // 1200 ticks per minute
+                return parseInt * 1200L; // 1200 ticks per minute
             }
         } catch (NumberFormatException e) {
             // Invalid format: Default to 0
@@ -460,8 +460,8 @@ public class BreweryRecipe implements Cloneable {
         return 0; // Immediately execute command
     }
 
-    private void executeCommand(Player player, String cmd, String playerName, int quality, boolean isServerCommand) {
-        String finalCommand = PlaceholderAPIHook.PLACEHOLDERAPI.setPlaceholders(player, BreweryUtil.applyPlaceholders(cmd, playerName, quality));
+    private void executeCommand(Player player, String command, String playerName, int quality, boolean isServerCommand) {
+        String finalCommand = PlaceholderAPIHook.PLACEHOLDERAPI.setPlaceholders(player, BreweryUtil.applyPlaceholders(command, playerName, quality));
         BreweryPlugin.getScheduler().execute(() -> {
                 if (isServerCommand) {
                     Bukkit.dispatchCommand(Bukkit.getConsoleSender(), finalCommand);
@@ -504,10 +504,14 @@ public class BreweryRecipe implements Cloneable {
 
         BreweryIngredients breweryIngredients = new BreweryIngredients(list, cookingTime);
 
-        return new Brew(breweryIngredients, quality, 0, distillruns, getAge(), getWood(), getRecipeName(), false, true, 0);
+        return new Brew(breweryIngredients, quality, 0, distillRuns, getAge(), getWood(), getRecipeName(), false, true, 0);
     }
 
     public void updateAcceptedLists() {
+        updateLists();
+    }
+
+    private void updateLists() {
         for (RecipeItem ingredient : getIngredients()) {
             if (ingredient.hasMaterials()) {
                 BreweryCauldronRecipe.acceptedMaterials.addAll(ingredient.getMaterials());
@@ -596,7 +600,7 @@ public class BreweryRecipe implements Cloneable {
     }
 
     @Nullable
-    public List<Tuple<Integer, String>> getLore() {
+    public List<BinaryTuple<Integer, String>> getLore() {
         return lore;
     }
 
@@ -607,19 +611,19 @@ public class BreweryRecipe implements Cloneable {
 
     @Nullable
     public List<String> getPlayercmdsForQuality(int quality) {
-        return getStringsForQuality(quality, playercmds);
+        return getStringsForQuality(quality, playerCommands);
     }
 
     @Nullable
     public List<String> getServercmdsForQuality(int quality) {
-        return getStringsForQuality(quality, servercmds);
+        return getStringsForQuality(quality, serverCommands);
     }
 
     /**
      * Get a quality filtered list of supported attributes
      */
     @Nullable
-    public List<String> getStringsForQuality(int quality, List<Tuple<Integer, String>> source) {
+    public List<String> getStringsForQuality(int quality, List<BinaryTuple<Integer, String>> source) {
         if (source == null) return null;
         int plus;
         if (quality <= 3) {
@@ -630,7 +634,7 @@ public class BreweryRecipe implements Cloneable {
             plus = 3;
         }
         List<String> list = new ArrayList<>(source.size());
-        for (Tuple<Integer, String> line : source) {
+        for (BinaryTuple<Integer, String> line : source) {
             if (line.first() == 0 || line.first() == plus) {
                 list.add(line.second());
             }
@@ -646,26 +650,27 @@ public class BreweryRecipe implements Cloneable {
 
     @Override
     public String toString() {
-        return "BRecipe{" +
-            "name=" + Arrays.toString(name) +
-            ", ingredients=" + ingredients +
-            ", difficulty=" + difficulty +
-            ", cookingTime=" + cookingTime +
-            ", distillruns=" + distillruns +
-            ", distillTime=" + distillTime +
-            ", barrelTypes=" + barrelTypes +
-            ", age=" + age +
-            ", color=" + color +
-            ", alcohol=" + alcohol +
-            ", lore=" + lore +
-            ", cmData=" + Arrays.toString(cmData) +
-            ", effects=" + effects +
-            ", playercmds=" + playercmds +
-            ", servercmds=" + servercmds +
-            ", drinkMsg='" + drinkMsg + '\'' +
-            ", drinkTitle='" + drinkTitle + '\'' +
-            ", glint=" + glint +
-            '}';
+        return new StringBuilder("BreweryRecipe{")
+            .append("name = ").append(Arrays.toString(name))
+            .append(", ingredients = ").append(ingredients)
+            .append(", difficulty = ").append(difficulty)
+            .append(", cookingTime = ").append(cookingTime)
+            .append(", distillRuns = ").append(distillRuns)
+            .append(", distillTime = ").append(distillTime)
+            .append(", barrelTypes = ").append(barrelTypes)
+            .append(", age = ").append(age)
+            .append(", color = ").append(color)
+            .append(", alcohol = ").append(alcohol)
+            .append(", lore = ").append(lore)
+            .append(", customModelData = ").append(Arrays.toString(customModelData))
+            .append(", effects = ").append(effects)
+            .append(", playerCommands = ").append(playerCommands)
+            .append(", serverCommands = ").append(serverCommands)
+            .append(", drinkMessage = '").append(drinkMessage).append('\'')
+            .append(", drinkTitle = '").append(drinkTitle).append('\'')
+            .append(", glint = ").append(glint)
+            .append('}')
+            .toString();
     }
 
     /**
@@ -754,21 +759,21 @@ public class BreweryRecipe implements Cloneable {
                 clone.ingredients.add(item.getMutableCopy());
             }
             clone.lore = (this.lore != null) ? new ArrayList<>(this.lore) : null;
-            clone.playercmds = (this.playercmds != null) ? new ArrayList<>(this.playercmds) : null;
-            clone.servercmds = (this.servercmds != null) ? new ArrayList<>(this.servercmds) : null;
+            clone.playerCommands = (this.playerCommands != null) ? new ArrayList<>(this.playerCommands) : null;
+            clone.serverCommands = (this.serverCommands != null) ? new ArrayList<>(this.serverCommands) : null;
             clone.effects = new ArrayList<>(this.effects.size());
             for (BreweryEffect effect : this.effects) {
                 clone.effects.add(effect.clone());
             }
-            clone.cmData = (this.cmData != null) ? this.cmData.clone() : null;
-            clone.drinkMsg = this.drinkMsg;
+            clone.customModelData = (this.customModelData != null) ? this.customModelData.clone() : null;
+            clone.drinkMessage = this.drinkMessage;
             clone.drinkTitle = this.drinkTitle;
             clone.glint = this.glint;
             clone.saveInData = this.saveInData;
             clone.id = this.id;
             clone.difficulty = this.difficulty;
             clone.cookingTime = this.cookingTime;
-            clone.distillruns = this.distillruns;
+            clone.distillRuns = this.distillRuns;
             clone.distillTime = this.distillTime;
             clone.barrelTypes = this.barrelTypes;
             clone.age = this.age;
@@ -845,7 +850,7 @@ public class BreweryRecipe implements Cloneable {
         }
 
         public Builder distill(byte distillRuns, int distillTime) {
-            recipe.distillruns = distillRuns;
+            recipe.distillRuns = distillRuns;
             recipe.distillTime = distillTime;
             return this;
         }
@@ -885,23 +890,23 @@ public class BreweryRecipe implements Cloneable {
             if (recipe.lore == null) {
                 recipe.lore = new ArrayList<>();
             }
-            recipe.lore.add(new Tuple<>(quality, line));
+            recipe.lore.add(new BinaryTuple<>(quality, line));
             return this;
         }
 
         /**
          * Add Commands that are executed by the player on drinking
          */
-        public Builder addPlayerCmds(String... cmds) {
-            List<Tuple<Integer, String>> playercmds = new ArrayList<>(cmds.length);
+        public Builder addPlayerCommands(String... commands) {
+            List<BinaryTuple<Integer, String>> playerCommands = new ArrayList<>(commands.length);
 
-            for (String cmd : cmds) {
-                playercmds.add(StringParser.parseQuality(cmd, StringParser.ParseType.CMD));
+            for (String command : commands) {
+                playerCommands.add(StringParser.parseQuality(command, StringParser.ParseType.CMD));
             }
-            if (recipe.playercmds == null) {
-                recipe.playercmds = playercmds;
+            if (recipe.playerCommands == null) {
+                recipe.playerCommands = playerCommands;
             } else {
-                recipe.playercmds.addAll(playercmds);
+                recipe.playerCommands.addAll(playerCommands);
             }
             return this;
         }
@@ -909,16 +914,16 @@ public class BreweryRecipe implements Cloneable {
         /**
          * Add Commands that are executed by the server on drinking
          */
-        public Builder addServerCmds(String... cmds) {
-            List<Tuple<Integer, String>> servercmds = new ArrayList<>(cmds.length);
+        public Builder addServerCommands(String... commands) {
+            List<BinaryTuple<Integer, String>> serverCommands = new ArrayList<>(commands.length);
 
-            for (String cmd : cmds) {
-                servercmds.add(StringParser.parseQuality(cmd, StringParser.ParseType.CMD));
+            for (String command : commands) {
+                serverCommands.add(StringParser.parseQuality(command, StringParser.ParseType.CMD));
             }
-            if (recipe.servercmds == null) {
-                recipe.servercmds = servercmds;
+            if (recipe.serverCommands == null) {
+                recipe.serverCommands = serverCommands;
             } else {
-                recipe.servercmds.addAll(servercmds);
+                recipe.serverCommands.addAll(serverCommands);
             }
             return this;
         }
@@ -926,8 +931,8 @@ public class BreweryRecipe implements Cloneable {
         /**
          * Add Message that is sent to the player in chat when he drinks the brew
          */
-        public Builder drinkMsg(String msg) {
-            recipe.drinkMsg = msg;
+        public Builder drinkMessage(String message) {
+            recipe.drinkMessage = message;
             return this;
         }
 
@@ -959,7 +964,7 @@ public class BreweryRecipe implements Cloneable {
          * Add Custom Model Data for each Quality
          */
         public Builder addCustomModelData(int bad, int normal, int good) {
-            recipe.cmData = new int[]{ bad, normal, good };
+            recipe.customModelData = new int[]{ bad, normal, good };
             return this;
         }
 

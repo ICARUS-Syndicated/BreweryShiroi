@@ -18,7 +18,7 @@
  * along with BreweryX. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
-package com.dre.brewery;
+package com.dre.brewery.recipe;
 
 public interface Translatable {
 

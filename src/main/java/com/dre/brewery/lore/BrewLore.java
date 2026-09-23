@@ -20,14 +20,12 @@
 
 package com.dre.brewery.lore;
 
-import com.dre.brewery.BreweryIngredients;
-import com.dre.brewery.Brew;
-import com.dre.brewery.BreweryPlugin;
+import com.dre.brewery.brew.BreweryIngredients;
+import com.dre.brewery.brew.Brew;
 import com.dre.brewery.configuration.ConfigManager;
 import com.dre.brewery.configuration.files.Config;
 import com.dre.brewery.configuration.files.Lang;
 import com.dre.brewery.lore.streams.LoreSaveStream;
-import com.dre.brewery.recipe.BreweryEffect;
 import com.dre.brewery.recipe.BreweryRecipe;
 import com.dre.brewery.utility.utils.BreweryUtil;
 import com.dre.brewery.utility.MinecraftVersion;
@@ -49,14 +47,14 @@ public class BrewLore {
     private static final Lang lang = ConfigManager.getConfig(Lang.class);
 
     private final Brew brew;
-    private final PotionMeta meta;
+    private final PotionMeta itemMeta;
     private final List<String> lore;
     private boolean lineAddedOrRem = false;
 
-    public BrewLore(Brew brew, PotionMeta meta) {
+    public BrewLore(Brew brew, PotionMeta itemMeta) {
         this.brew = brew;
-        this.meta = meta;
-        this.lore = meta.hasLore() ? meta.getLore() : new ArrayList<>();
+        this.itemMeta = itemMeta;
+        this.lore = itemMeta.hasLore() ? itemMeta.getLore() : new ArrayList<>();
     }
 
     /**
@@ -68,8 +66,8 @@ public class BrewLore {
             updateSpacer();
         }
 
-        meta.setLore(lore);
-        return meta;
+        itemMeta.setLore(lore);
+        return itemMeta;
     }
 
     /**
@@ -79,12 +77,12 @@ public class BrewLore {
         boolean hasCustom = false;
         boolean hasSpace = false;
         for (int i = 0; i < lore.size(); i++) {
-            Type t = Type.get(lore.get(i));
-            if (t == Type.CUSTOM) {
+            Type type = Type.get(lore.get(i));
+            if (type == Type.CUSTOM) {
                 hasCustom = true;
-            } else if (t == Type.SPACE) {
+            } else if (type == Type.SPACE) {
                 hasSpace = true;
-            } else if (t != null && t.isAfter(Type.SPACE)) {
+            } else if (type != null && type.isAfter(Type.SPACE)) {
                 if (hasSpace) return;
 
                 if (hasCustom || MinecraftVersion.isUseNBT()) {
@@ -175,7 +173,7 @@ public class BrewLore {
                 prefix = prefix + distillRuns + " " + lang.getEntry("Brew_times") + " ";
             }
         }
-        if (brew.isUnlabeled() && brew.hasRecipe() && distillRuns < brew.getCurrentRecipe().getDistillruns()) {
+        if (brew.isUnlabeled() && brew.hasRecipe() && distillRuns < brew.getCurrentRecipe().getDistillRuns()) {
             addOrReplaceLore(Type.DISTILL, prefix, lang.getEntry("Brew_LessDistilled"), suffix);
         } else {
             addOrReplaceLore(Type.DISTILL, prefix, lang.getEntry("Brew_Distilled"), suffix);
@@ -262,7 +260,7 @@ public class BrewLore {
             int stars = quality / 2;
             boolean half = quality % 2 > 0;
             int noStars = 5 - stars - (half ? 1 : 0);
-            StringBuilder b = new StringBuilder(24);
+            StringBuilder builder = new StringBuilder(24);
             String color;
             if (qualityColor) {
                 color = getQualityColor(quality);
@@ -273,34 +271,34 @@ public class BrewLore {
                 color = "§8[" + color;
             }
             for (; stars > 0; stars--) {
-                b.append("⭑");
+                builder.append("⭑");
             }
             if (half) {
                 if (!qualityColor) {
-                    b.append("§8");
+                    builder.append("§8");
                 }
-                b.append("⭒");
+                builder.append("⭒");
             }
             if (withBars) {
                 if (noStars > 0) {
-                    b.append("§0");
+                    builder.append("§0");
                     for (; noStars > 0; noStars--) {
-                        b.append("⭑");
+                        builder.append("⭑");
                     }
                 }
-                b.append("§8]");
+                builder.append("§8]");
             }
-            addOrReplaceLore(Type.STARS, color, b.toString());
+            addOrReplaceLore(Type.STARS, color, builder.toString());
         } else {
             removeLore(Type.STARS);
         }
     }
 
     public void updateAlc(boolean inDistiller) {
-        int alc = brew.getOrCalcAlc();
-        if (!brew.isUnlabeled() && (inDistiller || config.isAlwaysShowAlc()) && alc != 0) {
-            addOrReplaceLore(Type.ALC, "§8", lang.getEntry("Brew_Alc", alc + ""));
-        } else if (config.isAlwaysShowAlcIndicator() && alc > 0) {
+        int alcohol = brew.getOrCalcAlcohol();
+        if (!brew.isUnlabeled() && (inDistiller || config.isAlwaysShowAlc()) && alcohol != 0) {
+            addOrReplaceLore(Type.ALC, "§8", lang.getEntry("Brew_Alc", alcohol + ""));
+        } else if (config.isAlwaysShowAlcIndicator() && alcohol > 0) {
             addOrReplaceLore(Type.ALC, "§8", lang.getEntry("Brew_Alcoholic"));
         } else {
             removeLore(Type.ALC);
@@ -418,14 +416,16 @@ public class BrewLore {
      */
     public int addLore(Type type, String prefix, String line, String suffix) {
         lineAddedOrRem = true;
+        // Colour once up front, so both the inserted and the appended line look the same
+        String colored = BreweryUtil.color(line);
         for (int i = 0; i < lore.size(); i++) {
             Type existing = Type.get(lore.get(i));
             if (existing != null && existing.isAfter(type)) {
-                lore.add(i, type.id + prefix + line + suffix);
+                lore.add(i, type.id + prefix + colored + suffix);
                 return i;
             }
         }
-        lore.add(type.id + prefix + BreweryUtil.color(line) + suffix); // TODO: Color
+        lore.add(type.id + prefix + colored + suffix);
         return lore.size() - 1;
     }
 
@@ -477,19 +477,7 @@ public class BrewLore {
     }
 
     /**
-     * Adds the Effect names to the Items description
-     */
-    public void addOrReplaceEffects(List<BreweryEffect> effects, int quality) {
-        if (BreweryPlugin.getMCVersion().isOrEarlier(MinecraftVersion.V1_9) && effects != null) {
-            for (BreweryEffect effect : effects) {
-                if (!effect.isHidden()) {
-                    effect.writeInto(meta, quality);
-                }
-            }
-        }
-    }
 
-    /**
      * If the Lore Line at index is a Brew Lore line
      *
      * @param index the index in lore to check
@@ -503,11 +491,11 @@ public class BrewLore {
      * Removes all effects
      */
     public void removeEffects() {
-        if (meta.hasCustomEffects()) {
-            for (PotionEffect effect : new ArrayList<>(meta.getCustomEffects())) {
+        if (itemMeta.hasCustomEffects()) {
+            for (PotionEffect effect : new ArrayList<>(itemMeta.getCustomEffects())) {
                 PotionEffectType type = effect.getType();
                 //if (!type.equals(PotionEffectType.REGENERATION)) {
-                meta.removeCustomEffect(type);
+                itemMeta.removeCustomEffect(type);
                 //}
             }
         }
@@ -541,10 +529,10 @@ public class BrewLore {
     /**
      * True if the PotionMeta has Lore in quality color
      */
-    public static boolean hasColorLore(PotionMeta meta) {
-        if (meta == null) return false;
-        if (!meta.hasLore()) return false;
-        List<String> lore = meta.getLore();
+    public static boolean hasColorLore(PotionMeta itemMeta) {
+        if (itemMeta == null) return false;
+        if (!itemMeta.hasLore()) return false;
+        List<String> lore = itemMeta.getLore();
         if (lore.size() < 2) {
             return false;
         }
@@ -553,7 +541,6 @@ public class BrewLore {
             return true;
         }
         return false;
-        //!meta.getLore().get(1).startsWith("§7");
     }
 
     /**

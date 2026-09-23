@@ -20,10 +20,8 @@
 
 package com.dre.brewery.commands.subcommands;
 
-import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.commands.BreweryCommandManager;
 import com.dre.brewery.configuration.files.Lang;
-import com.dre.brewery.utility.MinecraftVersion;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -47,10 +45,7 @@ public class ItemName {
                     return;
                 }
                 Lang lang = commands.lang();
-                @SuppressWarnings("deprecation")
-                ItemStack hand = BreweryPlugin.getMCVersion().isOrLater(MinecraftVersion.V1_9)
-                    ? player.getInventory().getItemInMainHand()
-                    : player.getItemInHand();
+                ItemStack hand = player.getInventory().getItemInMainHand();
                 if (hand != null) {
                     lang.sendEntry(sender, "CMD_Configname", hand.getType().name().toLowerCase(Locale.ENGLISH));
                 } else {

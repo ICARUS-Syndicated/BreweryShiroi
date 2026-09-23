@@ -45,17 +45,17 @@ public class BreweryProperties {
     public static final NamespacedKey MAX_BARRELS = new NamespacedKey("brewery-x", "max_barrels");
 
     private static @NotNull Pair<Boolean, ? extends Number> parseLimit(@NotNull Object input) {
-        if (!(input instanceof String str)) {
+        if (!(input instanceof String text)) {
             return new Pair<>(false, (double) input);
         }
 
-        if (!str.contains(NUMERIC_PREFIX)) {
-            return new Pair<>(false, Double.valueOf(str));
+        if (!text.contains(NUMERIC_PREFIX)) {
+            return new Pair<>(false, Double.valueOf(text));
         }
 
-        String[] parts = str.split(NUMERIC_PREFIX);
-        int val = Integer.parseInt(parts[1]);
-        return new Pair<>(true, val);
+        String[] parts = text.split(NUMERIC_PREFIX);
+        int value = Integer.parseInt(parts[1]);
+        return new Pair<>(true, value);
     }
 
     public static void register() {

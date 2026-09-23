@@ -20,11 +20,11 @@
 
 package com.dre.brewery.commands;
 
-import com.dre.brewery.Brew;
+import com.dre.brewery.brew.Brew;
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.configuration.files.Lang;
 import com.dre.brewery.recipe.BreweryRecipe;
-import com.dre.brewery.utility.Tuple;
+import com.dre.brewery.utility.BinaryTuple;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
@@ -40,8 +40,8 @@ import java.util.stream.Collectors;
  */
 public class CommandUtil {
 
-    private static Set<Tuple<String, String>> mainSet;
-    private static Set<Tuple<String, String>> altSet;
+    private static Set<BinaryTuple<String, String>> mainSet;
+    private static Set<BinaryTuple<String, String>> altSet;
 
     private CommandUtil() {
     }
@@ -88,8 +88,8 @@ public class CommandUtil {
      * @return The brew and the player it is meant for, or null after an error was sent
      */
     @Nullable
-    public static Tuple<Brew, Player> createBrew(CommandSender sender, String recipeName,
-                                                 @Nullable Integer quality, @Nullable String playerName, Lang lang) {
+    public static BinaryTuple<Brew, Player> createBrew(CommandSender sender, String recipeName,
+                                                       @Nullable Integer quality, @Nullable String playerName, Lang lang) {
         int brewQuality = quality != null ? quality : 10;
 
         Player player;
@@ -111,7 +111,7 @@ public class CommandUtil {
             lang.sendEntry(sender, "Error_NoBrewName", recipeName);
             return null;
         }
-        return new Tuple<>(recipe.createBrew(brewQuality), player);
+        return new BinaryTuple<>(recipe.createBrew(brewQuality), player);
     }
 
     /**
@@ -137,8 +137,8 @@ public class CommandUtil {
             }
         }
 
-        List<String> options = mainSet.stream().map(Tuple::second).collect(Collectors.toList());
-        options.addAll(altSet.stream().map(Tuple::second).toList());
+        List<String> options = mainSet.stream().map(BinaryTuple::second).collect(Collectors.toList());
+        options.addAll(altSet.stream().map(BinaryTuple::second).toList());
         return options.stream().distinct().toList();
     }
 
@@ -152,9 +152,9 @@ public class CommandUtil {
             .toList();
     }
 
-    private static List<Tuple<String, String>> createLookupFromName(final String name) {
+    private static List<BinaryTuple<String, String>> createLookupFromName(final String name) {
         return Arrays.stream(name.split(" "))
-            .map(word -> new Tuple<>(word.toLowerCase(), name))
+            .map(word -> new BinaryTuple<>(word.toLowerCase(), name))
             .collect(Collectors.toList());
     }
 

@@ -20,8 +20,8 @@
 
 package com.dre.brewery.configuration;
 
-import com.dre.brewery.Brew;
-import com.dre.brewery.DistortChat;
+import com.dre.brewery.brew.Brew;
+import com.dre.brewery.mechanics.DistortChat;
 import com.dre.brewery.configuration.annotation.OkaeriConfigFileOptions;
 import com.dre.brewery.configuration.files.Config;
 import com.dre.brewery.configuration.recipes.CauldronIngredientLoader;

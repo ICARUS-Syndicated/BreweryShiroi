@@ -20,9 +20,9 @@
 
 package com.dre.brewery.commands.subcommands;
 
-import com.dre.brewery.BreweryPlayer;
+import com.dre.brewery.mechanics.BreweryPlayer;
 import com.dre.brewery.BreweryPlugin;
-import com.dre.brewery.Wakeup;
+import com.dre.brewery.mechanics.Wakeup;
 import com.dre.brewery.commands.BreweryCommandManager;
 import com.dre.brewery.instruments.BreweryCauldron;
 import com.dre.brewery.instruments.barrel.BreweryBarrel;
@@ -44,11 +44,11 @@ public class ShowStatsCommand {
     }
 
     private static void show(CommandSender sender) {
-        Logging.msg(sender, "Drunk Players: " + BreweryPlayer.numDrunkPlayers());
-        Logging.msg(sender, "Brews created: " + BreweryPlugin.getInstance().getBreweryStats().brewsCreated);
-        Logging.msg(sender, "Barrels built: " + BreweryBarrel.getAllBarrels().size());
-        Logging.msg(sender, "Cauldrons boiling: " + BreweryCauldron.bcauldrons.size());
-        Logging.msg(sender, "Number of Recipes: " + BreweryRecipe.getAllRecipes().size());
-        Logging.msg(sender, "Wakeups: " + Wakeup.wakeups.size());
+        Logging.message(sender, "Drunk Players: " + BreweryPlayer.numDrunkPlayers());
+        Logging.message(sender, "Brews created: " + BreweryPlugin.getInstance().getBreweryStats().brewsCreated);
+        Logging.message(sender, "Barrels built: " + BreweryBarrel.getAllBarrels().size());
+        Logging.message(sender, "Cauldrons boiling: " + BreweryCauldron.bcauldrons.size());
+        Logging.message(sender, "Number of Recipes: " + BreweryRecipe.getAllRecipes().size());
+        Logging.message(sender, "Wakeups: " + Wakeup.wakeups.size());
     }
 }

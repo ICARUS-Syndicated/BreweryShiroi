@@ -22,6 +22,7 @@ package com.dre.brewery.lore.xor;
 
 import com.dre.brewery.lore.seed.SeedInputStream;
 import com.dre.brewery.utility.Logging;
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.FilterInputStream;
@@ -44,7 +45,10 @@ public class XORUnscrambleStream extends FilterInputStream {
     private boolean markRunning;
     private boolean markxor;
 
-    private SuccessType successType = SuccessType.NONE;
+    /**
+     * What was used to unscramble the stream: it was already unscrambled | Main Seed | Prev Seed
+     */
+    @Getter private SuccessType successType = SuccessType.NONE;
 
     /**
      * Create a new instance of an XORUnscrambler, unscrambling the given inputstream.
@@ -145,15 +149,6 @@ public class XORUnscrambleStream extends FilterInputStream {
             b[i] ^= xorStream.read();
         }
         return len;
-    }
-
-    /**
-     * What was used to unscramble the stream: it was already unscrambled | Main Seed | Prev Seed
-     *
-     * @return The Type of Seed used to unscramble this, if any
-     */
-    public SuccessType getSuccessType() {
-        return successType;
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")

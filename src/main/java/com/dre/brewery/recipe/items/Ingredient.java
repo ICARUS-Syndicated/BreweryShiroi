@@ -41,7 +41,7 @@ public interface Ingredient extends DebuggableItem {
      * <p>Amount will be saved automatically and does not have to be saved here.
      * <p>Saving is done to Brew or for BCauldron into data.yml
      *
-     * @param out The outputstream to write to
+     * @param out The output stream to write to
      * @throws IOException Any IOException
      */
     void saveTo(DataOutputStream out) throws IOException;

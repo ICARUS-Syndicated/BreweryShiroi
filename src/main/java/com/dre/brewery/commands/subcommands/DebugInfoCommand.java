@@ -20,9 +20,8 @@
 
 package com.dre.brewery.commands.subcommands;
 
-import com.dre.brewery.Brew;
-import com.dre.brewery.BreweryIngredients;
-import com.dre.brewery.BreweryPlugin;
+import com.dre.brewery.brew.Brew;
+import com.dre.brewery.brew.BreweryIngredients;
 import com.dre.brewery.commands.BreweryCommandManager;
 import com.dre.brewery.commands.CommandUtil;
 import com.dre.brewery.recipe.BestRecipeResult;
@@ -31,7 +30,6 @@ import com.dre.brewery.recipe.RecipeEvaluation;
 import com.dre.brewery.recipe.items.Ingredient;
 import com.dre.brewery.recipe.items.RecipeItem;
 import com.dre.brewery.utility.Logging;
-import com.dre.brewery.utility.MinecraftVersion;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -60,10 +58,6 @@ public class DebugInfoCommand {
     }
 
     private static void debugInfo(Player player, String recipeName) {
-        if (BreweryPlugin.getMCVersion().isOrEarlier(MinecraftVersion.V1_9)) {
-            return;
-        }
-
         ItemStack hand = player.getInventory().getItemInMainHand();
         Brew brew = Brew.get(hand);
         if (brew == null) {
@@ -79,7 +73,7 @@ public class DebugInfoCommand {
             logSpecificRecipe(player, ingredients, brew, recipeName);
         }
 
-        Logging.msg(player, "Debug Info for item written into Log");
+        Logging.message(player, "Debug Info for item written into Log");
     }
 
     private static void logAllRecipes(BreweryIngredients ingredients, Brew brew) {
@@ -100,7 +94,7 @@ public class DebugInfoCommand {
     private static void logSpecificRecipe(Player player, BreweryIngredients ingredients, Brew brew, String recipeName) {
         BreweryRecipe recipe = BreweryRecipe.getMatching(recipeName);
         if (recipe == null) {
-            Logging.msg(player, "Could not find Recipe " + recipeName);
+            Logging.message(player, "Could not find Recipe " + recipeName);
             return;
         }
         Logging.log("&lIngredients in Recipe " + recipe.getRecipeName() + "&r&l:&r");

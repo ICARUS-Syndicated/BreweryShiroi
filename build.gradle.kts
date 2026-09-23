@@ -305,8 +305,6 @@ hangarPublish {
         changelog.set(readChangeLog())
         platforms {
             register(Platforms.PAPER) {
-                // TODO: Ask in paper discord
-                //url.set("https://modrinth.com/plugin/breweryx/versions")
                 jar.set(tasks.shadowJar.flatMap { it.archiveFile })
                 platformVersions.set(listOf("1.20.x", "1.21.x"))
             }

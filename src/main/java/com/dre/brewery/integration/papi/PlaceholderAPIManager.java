@@ -20,7 +20,7 @@
 
 package com.dre.brewery.integration.papi;
 
-import com.dre.brewery.BreweryPlayer;
+import com.dre.brewery.mechanics.BreweryPlayer;
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.integration.papi.placeholders.DrunkennessBarsPlaceholder;
 import com.dre.brewery.integration.papi.placeholders.DrunkennessPlaceholder;

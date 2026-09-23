@@ -20,11 +20,9 @@
 
 package com.dre.brewery.recipe;
 
-import com.dre.brewery.BrewDefect;
+import com.dre.brewery.brew.BrewDefect;
 import com.dre.brewery.utility.utils.BreweryUtil;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.StringJoiner;
 
 /**
  * The set of possible results from trying to find the best recipe given some ingredients.
@@ -46,10 +44,10 @@ public sealed interface BestRecipeResult {
 
     /**
      * A recipe matching the ingredients was found.
-     * @param recipe the best recipe with the highest quality
-     * @param eval the recipe's evaluation
+     * @param recipe     the best recipe with the highest quality
+     * @param evaluation the recipe's evaluation
      */
-    record Found(BreweryRecipe recipe, RecipeEvaluation eval) implements BestRecipeResult {
+    record Found(BreweryRecipe recipe, RecipeEvaluation evaluation) implements BestRecipeResult {
 
         @Override
         public @Nullable BreweryRecipe getSuccessRecipe() {
@@ -63,21 +61,18 @@ public sealed interface BestRecipeResult {
 
         @Override
         public String toString() {
-            return new StringJoiner(", ", "Found{", "}")
-                .add("recipe=" + recipe)
-                .add("eval=" + eval)
-                .toString();
+            return "Found{recipe = " + recipe + ", evaluation = " + evaluation + '}';
         }
 
     }
 
     /**
      * No recipe with quality above 0 was found.
-     * @param guess the failed recipe with the highest quality (or least problems),
-     *              a "best guess" of what the user was trying to brew
-     * @param eval the recipe's evaluation
+     * @param guess      the failed recipe with the highest quality (or least problems),
+     *                   a "best guess" of what the user was trying to brew
+     * @param evaluation the recipe's evaluation
      */
-    record Error(BreweryRecipe guess, RecipeEvaluation eval) implements BestRecipeResult {
+    record Error(BreweryRecipe guess, RecipeEvaluation evaluation) implements BestRecipeResult {
 
         @Override
         public @Nullable BreweryRecipe getSuccessRecipe() {
@@ -86,15 +81,12 @@ public sealed interface BestRecipeResult {
 
         @Override
         public @Nullable BrewDefect getWorstDefect() {
-            return BreweryUtil.choose(eval.getWorstDefects());
+            return BreweryUtil.choose(evaluation.getWorstDefects());
         }
 
         @Override
         public String toString() {
-            return new StringJoiner(", ", "Error{", "}")
-                .add("guess=" + guess)
-                .add("eval=" + eval)
-                .toString();
+            return "Error{guess = " + guess + ", evaluation = " + evaluation + '}';
         }
 
     }

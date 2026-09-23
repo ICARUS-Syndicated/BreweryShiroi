@@ -20,7 +20,7 @@
 
 package com.dre.brewery.recipe;
 
-import com.dre.brewery.BrewDefect;
+import com.dre.brewery.brew.BrewDefect;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -71,16 +71,16 @@ public class QualityDeduction implements Comparable<QualityDeduction> {
 
     /**
      * Scales the deduction amount by the given factor.
-     * @param f the factor to scale by
+     * @param factor the factor to scale by
      * @return the scaled quality deduction
-     * @throws IllegalArgumentException if f is negative
+     * @throws IllegalArgumentException if the factor is negative
      */
-    public QualityDeduction scale(float f) {
-        if (f < 0) {
-            throw new IllegalArgumentException("f must be positive");
+    public QualityDeduction scale(float factor) {
+        if (factor < 0) {
+            throw new IllegalArgumentException("factor must be positive");
         }
         // ok since -inf * anything non-negative = -inf
-        return new QualityDeduction(defect, qualityDeduction * f);
+        return new QualityDeduction(defect, qualityDeduction * factor);
     }
 
     @Override

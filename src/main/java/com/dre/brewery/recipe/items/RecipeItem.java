@@ -20,9 +20,8 @@
 
 package com.dre.brewery.recipe.items;
 
-import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.recipe.BreweryCauldronRecipe;
-import com.dre.brewery.utility.MinecraftVersion;
+import lombok.Getter;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Contract;
@@ -41,10 +40,9 @@ import java.util.Objects;
  */
 public abstract class RecipeItem implements Cloneable, DebuggableItem {
 
-    private static final MinecraftVersion VERSION = BreweryPlugin.getMCVersion();
-
-    private String cfgId;
-    private int amount;
+    
+    @Getter private String configId;
+    @Getter private int amount;
     private boolean immutable = false;
 
 
@@ -93,20 +91,6 @@ public abstract class RecipeItem implements Cloneable, DebuggableItem {
      */
     @Nullable
     public abstract List<Material> getMaterials();
-
-    /**
-     * @return The Id this Item uses in the config in the custom-items section
-     */
-    public String getConfigId() {
-        return cfgId;
-    }
-
-    /**
-     * @return The Amount of this Item in a Recipe
-     */
-    public int getAmount() {
-        return amount;
-    }
 
     /**
      * Set the Amount of this Item in a Recipe.
@@ -180,13 +164,7 @@ public abstract class RecipeItem implements Cloneable, DebuggableItem {
         }
         if (rItem == null && (acceptAll || BreweryCauldronRecipe.acceptedSimple.contains(item.getType()))) {
             // No Custom item found
-            if (VERSION.isOrLater(MinecraftVersion.V1_13)) {
-                return new SimpleItem(item.getType());
-            } else {
-                @SuppressWarnings("deprecation")
-                short durability = item.getDurability();
-                return new SimpleItem(item.getType(), durability);
-            }
+            return new SimpleItem(item.getType());
         }
         return rItem;
     }
@@ -202,38 +180,37 @@ public abstract class RecipeItem implements Cloneable, DebuggableItem {
      * @param customModelDatas The custom model data values the item may have
      * @return The Custom Item, or null if nothing to match on was given
      */
-    @Nullable
-    public static RecipeItem fromConfigCustom(String id, boolean matchAny, List<Material> materials, List<String> names, List<String> lore, List<Integer> customModelDatas) {
-        RecipeItem rItem;
+    public static @NotNull RecipeItem fromConfigCustom(String id, boolean matchAny, List<Material> materials, List<String> names, List<String> lore, List<Integer> customModelDatas) {
+        RecipeItem recipeItem;
         if (matchAny) {
-            rItem = new CustomMatchAnyItem();
+            recipeItem = new CustomMatchAnyItem();
         } else {
-            rItem = new CustomItem();
+            recipeItem = new CustomItem();
         }
 
-        rItem.cfgId = id;
-        rItem.immutable = true;
+        recipeItem.configId = id;
+        recipeItem.immutable = true;
 
-        if (rItem instanceof CustomItem cItem) {
+        if (recipeItem instanceof CustomItem cItem) {
             if (!materials.isEmpty()) {
-                cItem.setMat(materials.get(0));
+                cItem.setMaterial(materials.getFirst());
             }
             if (!names.isEmpty()) {
-                cItem.setName(names.get(0));
+                cItem.setName(names.getFirst());
             }
             cItem.setLore(lore);
             if (!customModelDatas.isEmpty()) {
-                cItem.setCustomModelData(customModelDatas.get(0));
+                cItem.setCustomModelData(customModelDatas.getFirst());
             }
         } else {
-            CustomMatchAnyItem maItem = (CustomMatchAnyItem) rItem;
-            maItem.setMaterials(materials);
-            maItem.setNames(names);
-            maItem.setLore(lore);
-            maItem.setCustomModelDatas(customModelDatas);
+            CustomMatchAnyItem matchAnyItem = (CustomMatchAnyItem) recipeItem;
+            matchAnyItem.setMaterials(materials);
+            matchAnyItem.setNames(names);
+            matchAnyItem.setLore(lore);
+            matchAnyItem.setCustomModelDatas(customModelDatas);
         }
 
-        return rItem;
+        return recipeItem;
     }
 
     @Override
@@ -242,17 +219,22 @@ public abstract class RecipeItem implements Cloneable, DebuggableItem {
         if (!(o instanceof RecipeItem that)) return false;
         return amount == that.amount &&
             immutable == that.immutable &&
-            Objects.equals(cfgId, that.cfgId);
+            Objects.equals(configId, that.configId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(cfgId, amount, immutable);
+        return Objects.hash(configId, amount, immutable);
     }
 
     @Override
     public String toString() {
-        return "RecipeItem{(" + getClass().getSimpleName() + ") ID: " + getConfigId() + " Materials: " + (hasMaterials() ? getMaterials().size() : 0) + " Amount: " + getAmount();
+        return new StringBuilder(getClass().getSimpleName())
+            .append("{configId = ").append(getConfigId())
+            .append(", materials = ").append(hasMaterials() ? Objects.requireNonNull(getMaterials()).size() : 0)
+            .append(", amount = ").append(getAmount())
+            .append('}')
+            .toString();
     }
 
     @Override

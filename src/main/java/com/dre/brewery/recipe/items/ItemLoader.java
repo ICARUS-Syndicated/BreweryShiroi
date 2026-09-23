@@ -22,27 +22,6 @@ package com.dre.brewery.recipe.items;
 
 import java.io.DataInputStream;
 
-public class ItemLoader {
+public record ItemLoader(int version, DataInputStream inputStream, String saveId) {
 
-    private final int version;
-    private final DataInputStream in;
-    private final String saveID;
-
-    public ItemLoader(int version, DataInputStream in, String saveID) {
-        this.version = version;
-        this.in = in;
-        this.saveID = saveID;
-    }
-
-    public int getVersion() {
-        return version;
-    }
-
-    public DataInputStream getInputStream() {
-        return in;
-    }
-
-    public String getSaveID() {
-        return saveID;
-    }
 }

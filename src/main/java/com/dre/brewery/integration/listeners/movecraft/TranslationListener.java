@@ -70,11 +70,11 @@ public class TranslationListener implements Listener {
     }
 
     @NotNull
-    private BoundingBox.BlockPos move(@NotNull BoundingBox.BlockPos pos, @NotNull Vector vec) {
+    private BoundingBox.BlockPos move(@NotNull BoundingBox.BlockPos position, @NotNull Vector vec) {
         return new BoundingBox.BlockPos(
-            pos.x() + vec.getBlockX(),
-            pos.y() + vec.getBlockY(),
-            pos.z() + vec.getBlockZ()
+            position.x() + vec.getBlockX(),
+            position.y() + vec.getBlockY(),
+            position.z() + vec.getBlockZ()
         );
     }
 }

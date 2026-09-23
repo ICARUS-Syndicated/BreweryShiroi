@@ -18,13 +18,14 @@
  * along with BreweryX. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
-package com.dre.brewery;
+package com.dre.brewery.brew;
 
 import com.dre.brewery.configuration.files.Lang;
 import com.dre.brewery.instruments.barrel.BarrelWoodType;
 import com.dre.brewery.recipe.items.DebuggableItem;
 import com.dre.brewery.recipe.items.Ingredient;
 import com.dre.brewery.utility.utils.BreweryUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Locale;
@@ -43,7 +44,7 @@ public interface BrewDefect {
         }
 
         @Override
-        public String toString() {
+        public @NotNull String toString() {
             return String.format("WrongIngredient{%s}", ingredient.getDebugID());
         }
     }
@@ -55,7 +56,7 @@ public interface BrewDefect {
         }
 
         @Override
-        public String toString() {
+        public @NotNull String toString() {
             return String.format("MissingIngredient{%dx %s}", amountNeeded, ingredient.getDebugID());
         }
     }
@@ -77,7 +78,7 @@ public interface BrewDefect {
         }
 
         @Override
-        public String toString() {
+        public @NotNull String toString() {
             return String.format("WrongCount{%d/%d %s}", ingredient.getAmount(), amountNeeded, ingredient.getDebugID());
         }
     }
@@ -103,7 +104,7 @@ public interface BrewDefect {
         }
 
         @Override
-        public String toString() {
+        public @NotNull String toString() {
             return needed ? "DistillNeeded" : "DistillUnnecessary";
         }
     }
@@ -115,7 +116,7 @@ public interface BrewDefect {
         }
 
         @Override
-        public String toString() {
+        public @NotNull String toString() {
             return "CookingNotNeeded{}";
         }
     }
@@ -137,7 +138,7 @@ public interface BrewDefect {
         }
 
         @Override
-        public String toString() {
+        public @NotNull String toString() {
             return String.format("CookTimeMismatch{%d/%d}", actual, needed);
         }
     }
@@ -165,7 +166,7 @@ public interface BrewDefect {
         }
 
         @Override
-        public String toString() {
+        public @NotNull String toString() {
             return String.format("AgeMismatch{%.3f/%.3f}", actual, needed);
         }
     }
@@ -183,7 +184,7 @@ public interface BrewDefect {
         }
 
         @Override
-        public String toString() {
+        public @NotNull String toString() {
             return String.format("WrongWood{was %s, needs %s}", actual.getFormattedName(), needed.getFormattedName());
         }
     }
@@ -195,7 +196,7 @@ public interface BrewDefect {
         }
 
         @Override
-        public String toString() {
+        public @NotNull String toString() {
             return "NoRecipesRegistered{}";
         }
     }

@@ -20,7 +20,7 @@
 
 package com.dre.brewery.integration.papi;
 
-import com.dre.brewery.BreweryPlayer;
+import com.dre.brewery.mechanics.BreweryPlayer;
 import com.dre.brewery.BreweryPlugin;
 import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.Nullable;

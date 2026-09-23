@@ -18,8 +18,9 @@
  * along with BreweryX. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
  */
 
-package com.dre.brewery;
+package com.dre.brewery.mechanics;
 
+import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.api.events.PlayerChatDistortEvent;
 import com.dre.brewery.configuration.ConfigManager;
 import com.dre.brewery.configuration.files.Config;
@@ -132,11 +133,12 @@ public class DistortChat {
                                 }
 
                                 // exclude player parameters
+                                int beginIndex = chat.indexOf(' ', chat.indexOf(' ', 0) + 1) + 1;
                                 String message = playerParameterCommands.contains(command.toLowerCase())
-                                    ? chat.substring(chat.indexOf(' ', chat.indexOf(' ', 0) + 1) + 1).trim()
+                                    ? chat.substring(beginIndex).trim()
                                     : chat.substring(chat.indexOf(' ') + 1).trim();
 
-                                String distorted = distortMessage(message, breweryPlayer.getDrunkeness());
+                                String distorted = distortMessage(message, breweryPlayer.getDrunkenness());
                                 PlayerChatDistortEvent call = new PlayerChatDistortEvent(event.isAsynchronous(), event.getPlayer(), breweryPlayer, message, distorted);
                                 BreweryPlugin.getInstance().getServer().getPluginManager().callEvent(call);
                                 if (call.isCancelled()) {
@@ -146,7 +148,7 @@ public class DistortChat {
 
                                 // reassemble command
                                 event.setMessage(playerParameterCommands.contains(command.toLowerCase())
-                                    ? chat.substring(0, chat.indexOf(' ', chat.indexOf(' ', 0) + 1) + 1) + distorted
+                                    ? chat.substring(0, beginIndex) + distorted
                                     : chat.substring(0, chat.indexOf(' ') + 1) + distorted);
 
                                 waitPlayers.put(name, System.currentTimeMillis());
@@ -167,7 +169,7 @@ public class DistortChat {
                 int index = 0;
                 for (String message : event.getLines()) {
                     if (message.length() > 1) {
-                        String distorted = distortMessage(message, breweryPlayer.getDrunkeness());
+                        String distorted = distortMessage(message, breweryPlayer.getDrunkenness());
                         PlayerChatDistortEvent call = new PlayerChatDistortEvent(event.isAsynchronous(), event.getPlayer(), breweryPlayer, message, distorted);
                         BreweryPlugin.getInstance().getServer().getPluginManager().callEvent(call);
                         if (!call.isCancelled()) {
@@ -200,7 +202,7 @@ public class DistortChat {
             Logging.log(lang.getEntry("Player_TriedToSay", event.getPlayer().getName(), message));
         }
 
-        String distorted = distortMessage(message, breweryPlayer.getDrunkeness());
+        String distorted = distortMessage(message, breweryPlayer.getDrunkenness());
         PlayerChatDistortEvent call = new PlayerChatDistortEvent(event.isAsynchronous(), event.getPlayer(), breweryPlayer, message, distorted);
         BreweryPlugin.getInstance().getServer().getPluginManager().callEvent(call);
         if (call.isCancelled()) {
@@ -216,11 +218,11 @@ public class DistortChat {
         if (!ignoreText.isEmpty()) {
             for (String[] bypass : ignoreText) {
                 int indexStart = 0;
-                if (!bypass[0].equals("")) {
+                if (!bypass[0].isEmpty()) {
                     indexStart = message.indexOf(bypass[0]);
                 }
                 int indexEnd = message.length() - 1;
-                if (!bypass[1].equals("")) {
+                if (!bypass[1].isEmpty()) {
                     indexEnd = message.indexOf(bypass[1], indexStart + 2);
                 }
                 if (indexStart != -1 && indexEnd != -1) {
@@ -303,15 +305,15 @@ public class DistortChat {
                     words = words + " ";
                 }
                 // remove all "from" and split "words" there
-                String[] splitted = words.split(java.util.regex.Pattern.quote(from));
+                String[] parts = words.split(java.util.regex.Pattern.quote(from));
                 int index = 0;
                 String part;
 
                 // if there are occurences of "from"
-                if (splitted.length > 1) {
+                if (parts.length > 1) {
                     // - 1 because dont add "to" to the end of last part
-                    while (index < splitted.length - 1) {
-                        part = splitted[index];
+                    while (index < parts.length - 1) {
+                        part = parts[index];
                         // add current part of "words" to the output
                         newWords.append(part);
                         // check if the part ends with correct string
@@ -326,7 +328,7 @@ public class DistortChat {
                         index++;
                     }
                     // add the last part to finish the sentence
-                    part = splitted[index];
+                    part = parts[index];
                     if (part.equals(" ")) {
                         // dont add the space to the end
                         return newWords.toString();

@@ -20,13 +20,12 @@
 
 package com.dre.brewery.recipe;
 
-import com.dre.brewery.BrewDefect;
+import com.dre.brewery.brew.BrewDefect;
 import com.dre.brewery.utility.utils.BreweryUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 /**
@@ -66,8 +65,8 @@ public class RecipeEvaluation {
      */
     public static RecipeEvaluation combine(RecipeEvaluation... evals) {
         RecipeEvaluation combined = new RecipeEvaluation();
-        for (RecipeEvaluation eval : evals) {
-            List<QualityDeduction> scaledDown = eval.deductions.stream()
+        for (RecipeEvaluation evaluation : evals) {
+            List<QualityDeduction> scaledDown = evaluation.deductions.stream()
                 .map(d -> d.scale(1.0f / evals.length))
                 .toList();
             combined.deductions.addAll(scaledDown);
@@ -188,9 +187,10 @@ public class RecipeEvaluation {
             .map(QualityDeduction::toString)
             .collect(Collectors.joining(", ", "[", "]"));
 
-        return new StringJoiner(", ", "{", "}")
-            .add("quality=" + qualityStr)
-            .add("deductions=" + deductionsStr)
+        return new StringBuilder("RecipeEvaluation{")
+            .append("quality = ").append(qualityStr)
+            .append(", deductions = ").append(deductionsStr)
+            .append('}')
             .toString();
     }
 

@@ -17,18 +17,36 @@
  * You should have received a copy of the GNU General Public License
  * along with BreweryX. If not, see <http://www.gnu.org/licenses/gpl-3.0.html>.
  */
+package com.dre.brewery.utility;
 
-package com.dre.brewery.integration.papi.placeholders;
+import java.util.Objects;
 
-import com.dre.brewery.mechanics.BreweryPlayer;
-import com.dre.brewery.BreweryPlugin;
-import com.dre.brewery.integration.papi.Placeholder;
-import org.bukkit.OfflinePlayer;
-import org.jetbrains.annotations.Nullable;
+/**
+ * An immutable pair of two values.
+ *
+ * @param first  The first value in the tuple
+ * @param second The second value in the tuple
+ */
+public record BinaryTuple<A, B>(A first, B second) {
 
-public class QualityPlaceholder implements Placeholder {
     @Override
-    public @Nullable String onReceivedRequest(BreweryPlugin plugin, OfflinePlayer player, BreweryPlayer breweryPlayer, String[] args) {
-        return String.valueOf(breweryPlayer.getQuality());
+    public boolean equals(Object object) {
+        return object instanceof BinaryTuple<?, ?> other
+            && Objects.equals(first, other.first)
+            && Objects.equals(second, other.second);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(first, second);
+    }
+
+    @Override
+    public String toString() {
+        return new StringBuilder("BinaryTuple{")
+            .append("first = ").append(first)
+            .append(", second = ").append(second)
+            .append('}')
+            .toString();
     }
 }

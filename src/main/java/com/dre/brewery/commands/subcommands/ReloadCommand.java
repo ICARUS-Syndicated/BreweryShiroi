@@ -20,7 +20,7 @@
 
 package com.dre.brewery.commands.subcommands;
 
-import com.dre.brewery.Brew;
+import com.dre.brewery.brew.Brew;
 import com.dre.brewery.BreweryPlugin;
 import com.dre.brewery.commands.BreweryCommandManager;
 import com.dre.brewery.commands.CommandUtil;
@@ -100,18 +100,18 @@ public class ReloadCommand {
             // Let addons know this command was executed
             BreweryPlugin.getAddonManager().reloadAddons();
 
-            // Reload Recipes <-- TODO: Not really sure what this is doing...? - Jsinco
-            boolean successful = true;
+            // Re-resolve the recipe reference of every legacy brew, since the recipes were just replaced
+            boolean allReloaded = true;
             for (Brew brew : Brew.legacyPotions.values()) {
                 if (!brew.reloadRecipe()) {
-                    successful = false;
+                    allReloaded = false;
                 }
             }
 
-            if (!successful) {
-                lang.sendEntry(sender, "Error_Recipeload");
-            } else {
+            if (allReloaded) {
                 lang.sendEntry(sender, "CMD_Reload");
+            } else {
+                lang.sendEntry(sender, "Error_Recipeload");
             }
 
             ReleaseChecker releaseChecker = ReleaseChecker.getInstance(true);

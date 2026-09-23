@@ -21,7 +21,7 @@
 package com.dre.brewery.storage.records;
 
 import com.dre.brewery.instruments.BreweryCauldron;
-import com.dre.brewery.BreweryIngredients;
+import com.dre.brewery.brew.BreweryIngredients;
 import com.dre.brewery.storage.DataManager;
 import com.dre.brewery.storage.interfaces.SerializableThing;
 import com.dre.brewery.utility.utils.BreweryUtil;
@@ -42,11 +42,11 @@ public record SerializableCauldron(String id, String serializedLocation, String 
     }
 
     public BreweryCauldron toCauldron() {
-        Location loc = DataManager.deserializeLocation(serializedLocation);
-        if (loc == null) {
+        Location location = DataManager.deserializeLocation(serializedLocation);
+        if (location == null) {
             return null;
         }
-        return new BreweryCauldron(loc.getBlock(), BreweryIngredients.deserializeIngredients(serializedIngredients), state, BreweryUtil.uuidFromString(id));
+        return new BreweryCauldron(location.getBlock(), BreweryIngredients.deserializeIngredients(serializedIngredients), state, BreweryUtil.uuidFromString(id));
     }
 
     @Override

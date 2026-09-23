@@ -45,7 +45,7 @@ public abstract class BarrelBody {
 
     protected Block spigot;
     protected final BoundingBox bounds;
-    protected byte signoffset;
+    protected byte signOffset;
 
     private static final Map<BlockVector, BarrelPart> UNTRANSFORMED_SMALL_BARREL_PART_MAP = Map.of(
         new BlockVector(1, 0, 0), BarrelPart.BOTTOM_RIGHT,
@@ -95,9 +95,9 @@ public abstract class BarrelBody {
         .put(new BlockVector(4, 1, 0), BarrelPart.BLOCK)
         .build();
 
-    public BarrelBody(Block spigot, byte signoffset) {
+    public BarrelBody(Block spigot, byte signOffset) {
         this.spigot = spigot;
-        this.signoffset = signoffset;
+        this.signOffset = signOffset;
         this.bounds = new BoundingBox(0, 0, 0, 0, 0, 0);
 
         if (MinecraftVersion.isFolia()) { // Issues#70
@@ -113,9 +113,9 @@ public abstract class BarrelBody {
     /**
      * Loading from file
      */
-    public BarrelBody(Block spigot, byte signoffset, BoundingBox bounds) {
+    public BarrelBody(Block spigot, byte signOffset, BoundingBox bounds) {
         this.spigot = spigot;
-        this.signoffset = signoffset;
+        this.signOffset = signOffset;
         this.bounds = bounds;
         if (this.bounds == null || this.bounds.isBad()) {
             // Never load chunks on startup, therefore always scheduled
@@ -128,7 +128,7 @@ public abstract class BarrelBody {
      * If the Sign of a Large Barrel gets destroyed, set signOffset to 0
      */
     public void destroySign() {
-        signoffset = 0;
+        signOffset = 0;
     }
 
 
@@ -203,23 +203,23 @@ public abstract class BarrelBody {
      * <p>This prevents adding another sign to the barrel and clicking that.
      */
     public boolean isSignOfBarrel(byte offset) {
-        return offset == 0 || signoffset == 0 || signoffset == offset;
+        return offset == 0 || signOffset == 0 || signOffset == offset;
     }
 
     /**
      * returns the Sign of a large barrel, the spigot if there is none
      */
     public Block getSignOfSpigot() {
-        if (signoffset != 0) {
+        if (signOffset != 0) {
             if (BarrelAsset.isBarrelAsset(BarrelAsset.SIGN, spigot.getType())) {
                 return spigot;
             }
 
-            Block relative = spigot.getRelative(0, signoffset, 0);
+            Block relative = spigot.getRelative(0, signOffset, 0);
             if (BarrelAsset.isBarrelAsset(BarrelAsset.SIGN, relative.getType())) {
                 return relative;
             } else {
-                signoffset = 0;
+                signOffset = 0;
             }
         }
         return spigot;

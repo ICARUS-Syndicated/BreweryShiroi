@@ -20,8 +20,8 @@
 
 package com.dre.brewery.api.events.brew;
 
-import com.dre.brewery.BreweryPlayer;
-import com.dre.brewery.Brew;
+import com.dre.brewery.mechanics.BreweryPlayer;
+import com.dre.brewery.brew.Brew;
 import com.dre.brewery.utility.utils.PermissionUtil;
 import lombok.Getter;
 import lombok.Setter;
@@ -37,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A Player Drinks a Brew.
  * <p>The amount of alcohol and quality that will be added to the player can be get/set here
- * <p>If cancelled the drinking will fail silently
+ * <p>If canceled the drinking will fail silently
  */
 @Getter
 @Setter
@@ -52,11 +52,11 @@ public class BrewDrinkEvent extends BrewEvent implements Cancellable {
     @Nullable // Null if drinking from command
     private PlayerItemConsumeEvent predecessorEvent;
 
-    public BrewDrinkEvent(Brew brew, ItemMeta meta, Player player, BreweryPlayer breweryPlayer, @Nullable PlayerItemConsumeEvent predecessor) {
-        super(brew, meta);
+    public BrewDrinkEvent(Brew brew, ItemMeta itemMeta, Player player, BreweryPlayer breweryPlayer, @Nullable PlayerItemConsumeEvent predecessor) {
+        super(brew, itemMeta);
         this.player = player;
         this.breweryPlayer = breweryPlayer;
-        addedAlcohol = calcAlcWSensitivity(brew.getOrCalcAlc());
+        addedAlcohol = calcAlcWSensitivity(brew.getOrCalcAlcohol());
         quality = brew.getQuality();
         predecessorEvent = predecessor;
     }
@@ -67,18 +67,18 @@ public class BrewDrinkEvent extends BrewEvent implements Cancellable {
      * <p>If the player has been given the brewery.sensitive.xx permission, will factor in the sensitivity to the given alcohol amount.
      * <p>Will return the calculated value without changing the event
      *
-     * @param alc The base amount of alcohol
+     * @param alcohol The base amount of alcohol
      * @return The amount of alcohol given the players alcohol-sensitivity
      */
     @Contract(pure = true)
-    public int calcAlcWSensitivity(int alc) {
+    public int calcAlcWSensitivity(int alcohol) {
         int sensitive = PermissionUtil.getDrinkSensitive(player);
         if (sensitive == 0) {
-            alc = 0;
+            alcohol = 0;
         } else if (sensitive > 0) {
-            alc *= (int) (((float) sensitive) / 100f);
+            alcohol *= (int) (((float) sensitive) / 100f);
         }
-        return alc;
+        return alcohol;
     }
 
     public void setQuality(int quality) {

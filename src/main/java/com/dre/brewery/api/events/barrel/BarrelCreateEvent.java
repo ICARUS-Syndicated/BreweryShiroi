@@ -21,6 +21,7 @@
 package com.dre.brewery.api.events.barrel;
 
 import com.dre.brewery.instruments.barrel.BreweryBarrel;
+import lombok.Getter;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.HandlerList;
@@ -32,16 +33,12 @@ import org.jetbrains.annotations.NotNull;
  */
 public class BarrelCreateEvent extends BarrelEvent implements Cancellable {
     private static final HandlerList handlers = new HandlerList();
-    private final Player player;
+    @Getter private final Player player;
     private boolean cancelled;
 
     public BarrelCreateEvent(BreweryBarrel breweryBarrel, Player player) {
         super(breweryBarrel);
         this.player = player;
-    }
-
-    public Player getPlayer() {
-        return player;
     }
 
     @Override

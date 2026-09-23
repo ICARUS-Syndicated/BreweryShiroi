@@ -47,7 +47,7 @@ public class DataManagerCommand {
             .handler(context -> {
                 CommandSender sender = context.sender().source();
                 BreweryPlugin.getDataManager().saveAll(true,
-                    () -> Logging.msg(sender, "Saved all Brewery data!"));
+                    () -> Logging.message(sender, "Saved all Brewery data!"));
             }));
     }
 
@@ -57,7 +57,7 @@ public class DataManagerCommand {
             try {
                 BreweryPlugin.setDataManager(DataManager.createDataManager(
                     ConfigManager.getConfig(Config.class).getStorage()));
-                Logging.msg(sender, "Reloaded the DataManager!");
+                Logging.message(sender, "Reloaded the DataManager!");
             } catch (StorageInitException e) {
                 Logging.errorLog("Failed to initialize the DataManager! WARNING: This will cause issues and Brewery will NOT be able to save. Check your config and reload.", e);
             }

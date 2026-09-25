@@ -38,6 +38,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Color;
 import org.bukkit.Effect;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
@@ -78,7 +79,7 @@ public class BreweryCauldron {
 
     private BreweryIngredients ingredients = new BreweryIngredients();
     private final Block block;
-    private int state = 0;
+    private int cookingTime = 0;
     private boolean changed = false; // Not really needed anymore
     private BreweryCauldronRecipe particleRecipe; // null if we haven't checked, empty if there is none
     private Color particleColor;
@@ -93,9 +94,9 @@ public class BreweryCauldron {
     }
 
     // loading from file
-    public BreweryCauldron(Block block, BreweryIngredients ingredients, int state, UUID id) {
+    public BreweryCauldron(Block block, BreweryIngredients ingredients, int cookingTime, UUID id) {
         this.block = block;
-        this.state = state;
+        this.cookingTime = cookingTime;
         this.ingredients = ingredients;
         particleLocation = block.getLocation().add(0.5, 0.9, 0.5);
         this.id = id;
@@ -109,7 +110,7 @@ public class BreweryCauldron {
     public boolean onUpdate() {
         // add a minute to cooking time
         if (!BreweryUtil.isChunkLoaded(block)) {
-            increaseState();
+            increaseCookingTime();
         } else {
             if (!MaterialUtil.isWaterCauldron(block.getType())) {
                 // Catch any WorldEdit etc. removal
@@ -117,7 +118,7 @@ public class BreweryCauldron {
             }
             // Check if fire still alive
             if (MaterialUtil.isCauldronHeatSource(block.getRelative(BlockFace.DOWN))) {
-                increaseState();
+                increaseCookingTime();
             }
         }
         return true;
@@ -126,8 +127,8 @@ public class BreweryCauldron {
     /**
      * Will add a minute to the cooking time
      */
-    public void increaseState() {
-        state++;
+    public void increaseCookingTime() {
+        cookingTime++;
         if (changed) {
             ingredients = ingredients.copy();
             changed = false;
@@ -147,8 +148,8 @@ public class BreweryCauldron {
         particleColor = null;
         ingredients.add(ingredient, rItem);
         block.getWorld().playEffect(block.getLocation(), Effect.EXTINGUISH, 0);
-        if (state > 0) {
-            state--;
+        if (cookingTime > 0) {
+            cookingTime--;
         }
         if (config.isEnableCauldronParticles() && !config.isMinimalParticles()) {
             // Few little sparks and lots of water splashes. Offset by 0.2 in x and z
@@ -191,6 +192,7 @@ public class BreweryCauldron {
             BreweryPlugin.getInstance().getServer().getPluginManager().callEvent(event);
             if (!event.isCancelled()) {
                 breweryCauldron.add(event.getIngredient(), event.getRecipeItem());
+                player.swingMainHand();
                 //P.p.debugLog("Cauldron add: t2 " + ((t2 - t1) / 1000) + " t3: " + ((t3 - t2) / 1000) + " t4: " + ((t4 - t3) / 1000) + " t5: " + ((t5 - t4) / 1000) + "µs");
                 return event.willTakeItem();
             } else {
@@ -206,7 +208,9 @@ public class BreweryCauldron {
             lang.sendEntry(player, "Perms_NoCauldronFill");
             return true;
         }
-        ItemStack potion = ingredients.cook(state, player);
+        // Recipes may demand a specific fire, and only the cauldron knows what it is sitting on
+        ingredients.setHeatSource(BreweryHeatSource.of(block.getRelative(BlockFace.DOWN)));
+        ItemStack potion = ingredients.cook(cookingTime, player);
         if (potion == null) return false;
 
         BlockData data = block.getBlockData();
@@ -254,8 +258,8 @@ public class BreweryCauldron {
         }
         BreweryCauldron breweryCauldron = get(block);
         if (breweryCauldron != null) {
-            if (breweryCauldron.state > 1) {
-                lang.sendEntry(player, "Player_CauldronInfo1", "" + breweryCauldron.state);
+            if (breweryCauldron.cookingTime >= 1) {
+                lang.sendEntry(player, "Player_CauldronInfo1", "" + breweryCauldron.cookingTime);
             } else {
                 lang.sendEntry(player, "Player_CauldronInfo2");
             }
@@ -305,7 +309,7 @@ public class BreweryCauldron {
      */
     @NotNull
     public Color getParticleColor() {
-        if (state < 1) {
+        if (cookingTime < 1) {
             return Color.fromRGB(153, 221, 255); // Bright Blue
         }
         if (particleColor != null) {
@@ -327,13 +331,13 @@ public class BreweryCauldron {
             colorList.add(new BinaryTuple<>(10, Color.fromRGB(77, 166, 255))); // Dark Aqua kind of Blue
         }
         int index = 0;
-        while (index < colorList.size() - 1 && colorList.get(index).first() < state) {
+        while (index < colorList.size() - 1 && colorList.get(index).first() < cookingTime) {
             // Find the first index where the colorList Minute is higher than the state
             index++;
         }
 
         int minute = colorList.get(index).first();
-        if (minute > state) {
+        if (minute > cookingTime) {
             // going towards the minute
             int previousPosition;
             Color previousColor;
@@ -346,8 +350,8 @@ public class BreweryCauldron {
                 previousColor = Color.fromRGB(153, 221, 255); // Bright Blue
             }
 
-            particleColor = BreweryUtil.weightedMixColor(previousColor, previousPosition, state, colorList.get(index).second(), minute);
-        } else if (minute == state) {
+            particleColor = BreweryUtil.weightedMixColor(previousColor, previousPosition, cookingTime, colorList.get(index).second(), minute);
+        } else if (minute == cookingTime) {
             // reached the minute
             particleColor = colorList.get(index).second();
         } else {
@@ -360,11 +364,11 @@ public class BreweryCauldron {
                 Color nextColor = Color.fromRGB(138, 153, 168); // Dark Teal, Gray
                 int nextPosition = (int) (minute * 2.6f);
 
-                if (nextPosition <= state) {
+                if (nextPosition <= cookingTime) {
                     // We are past the next color (Gray) as well, keep using it
                     particleColor = nextColor;
                 } else {
-                    particleColor = BreweryUtil.weightedMixColor(colorList.get(index).second(), minute, state, nextColor, nextPosition);
+                    particleColor = BreweryUtil.weightedMixColor(colorList.get(index).second(), minute, cookingTime, nextColor, nextPosition);
                 }
             }
         }
@@ -472,6 +476,10 @@ public class BreweryCauldron {
 
                 event.setCancelled(true);
                 if (player.hasPermission("brewery.cauldron.fill")) {
+                    if (player.getGameMode() == GameMode.CREATIVE) {
+                        return;
+                    }
+
                     if (item.getAmount() > 1) {
                         item.setAmount(item.getAmount() - 1);
                     } else {
@@ -523,6 +531,10 @@ public class BreweryCauldron {
 
         boolean isBucket = item.getType().name().endsWith("_BUCKET");
         boolean isBottle = MaterialUtil.isBottle(item.getType());
+        if (player.getGameMode() == GameMode.CREATIVE) {
+            return;
+        }
+
         if (item.getAmount() > 1) {
             item.setAmount(item.getAmount() - 1);
             if (isBucket) {
@@ -619,8 +631,8 @@ public class BreweryCauldron {
                 }
 
                 config.set(prefix + ".block", cauldron.block.getX() + "/" + cauldron.block.getY() + "/" + cauldron.block.getZ());
-                if (cauldron.state != 0) {
-                    config.set(prefix + ".state", cauldron.state);
+                if (cauldron.cookingTime != 0) {
+                    config.set(prefix + ".state", cauldron.cookingTime);
                 }
                 config.set(prefix + ".ingredients", cauldron.ingredients.serializeIngredients());
                 id++;

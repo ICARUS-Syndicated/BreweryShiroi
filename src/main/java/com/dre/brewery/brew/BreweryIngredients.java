@@ -25,6 +25,7 @@ import com.dre.brewery.api.events.brew.BrewModifyEvent;
 import com.dre.brewery.configuration.ConfigManager;
 import com.dre.brewery.configuration.files.Config;
 import com.dre.brewery.configuration.files.Lang;
+import com.dre.brewery.instruments.BreweryHeatSource;
 import com.dre.brewery.instruments.barrel.BarrelWoodType;
 import com.dre.brewery.lore.base91.Base91DecoderStream;
 import com.dre.brewery.lore.base91.Base91EncoderStream;
@@ -41,6 +42,7 @@ import com.dre.brewery.recipe.items.RecipeItem;
 import com.dre.brewery.utility.utils.BreweryUtil;
 import com.dre.brewery.utility.Logging;
 import lombok.Getter;
+import lombok.Setter;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.enchantments.Enchantment;
@@ -74,6 +76,15 @@ public class BreweryIngredients {
     private int id; // Legacy
     private List<Ingredient> ingredients = new ArrayList<>();
     private int cookedTime;
+    /**
+     * What this brew was cooked over, or null while that is unknown.
+     * <p>
+     * Only a cauldron knows this, and only while it is being emptied, so it deliberately stays out of
+     * {@link #save(DataOutputStream)}: a brew that was already bottled keeps its recipe regardless of how it
+     * was cooked.
+     */
+    @Setter
+    private @Nullable BreweryHeatSource heatSource;
 
     /**
      * Init a new BIngredients
@@ -553,6 +564,15 @@ public class BreweryIngredients {
         RecipeEvaluation evaluation = new RecipeEvaluation();
         if (recipe.needsDistilling() != distilled) {
             evaluation.fatal(new BrewDefect.DistillMismatch(distilled, recipe.needsDistilling(), recipe.isAlcoholic()));
+        }
+
+        // A brew that was already bottled has no heat source recorded, so recipes requiring one are only
+        // judged on it while the cauldron is being emptied
+        if (heatSource != null) {
+            BreweryHeatSource.HeatSourceRequirement needed = recipe.getHeatSource();
+            if (!needed.accepts(heatSource)) {
+                evaluation.fatal(new BrewDefect.HeatSourceMismatch(heatSource, needed));
+            }
         }
 
         if (cookedTime < 1) {

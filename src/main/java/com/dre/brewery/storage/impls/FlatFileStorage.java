@@ -269,7 +269,7 @@ public class FlatFileStorage extends DataManager {
 
         dataFile.set(path + ".block", serializeLocation(cauldron.getBlock().getLocation()));
         dataFile.set(path + ".ingredients", cauldron.getIngredients().serializeIngredients());
-        dataFile.set(path + ".state", cauldron.getState());
+        dataFile.set(path + ".state", cauldron.getCookingTime());
         save();
     }
 

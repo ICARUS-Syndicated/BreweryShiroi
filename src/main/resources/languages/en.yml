@@ -94,6 +94,9 @@ Defect_BadAged:
 Defect_WrongWood:
   - 'Tastes too much like &v1...'
   - 'The &v1 is overpowering...'
+Defect_WrongHeatSource:
+  - 'The wrong fire was used... it needs &v1...'
+  - 'This was cooked over the wrong heat source, &v1 is needed...'
 Defect_NoRecipesRegistered:
   - 'This universe doesn''t support brewing...'
 
@@ -113,6 +116,7 @@ Error_UnknownCommand: Unknown Command
 Error_YmlRead: 'Could not read file config.yml, please make sure the file is in valid yml format (correct spaces, using '' '' etc.)'
 Error_NoPlayer: '&cPlayer not found: &v1'
 Error_InvalidAmount: '&cInvalid amount: &v1'
+Error_InvalidHeatSource: '&c''&v1'' is not a heat source'
 # Cloud fills in the <...> placeholders itself
 Error_InvalidArgument: '&c''<input>'' is not a valid argument'
 Error_InvalidNumber: '&c''<input>'' is not a valid number in the range <min> to <max>'
@@ -155,6 +159,7 @@ Help_Simulate_Options: '&eOptions:'
 Help_Simulate_Recipe: '&6-r/--recipe <Recipe>'
 Help_Simulate_Cook: '&6-c/--cook <Cook Time>'
 Help_Simulate_Distill: '&6-d/--distill <Distill Runs>'
+Help_Simulate_Heat: '&6-h/--heat <Heat Source>'
 Help_Simulate_Age: '&6-a/--age <Barrel Type> <Age Time>'
 Help_Simulate_Brewer: '&6-b/--brewer <Player>'
 Help_Simulate_Player: '&6-p/--player <Player>'

@@ -350,19 +350,18 @@ public class Brew implements Cloneable {
 
     @Override
     public String toString() {
-        return new StringBuilder("Brew{")
-            .append("ingredients = ").append(ingredients)
-            .append(", quality = ").append(quality)
-            .append(", alcohol = ").append(alcohol)
-            .append(", distillRuns = ").append(distillRuns)
-            .append(", ageTime = ").append(ageTime)
-            .append(", wood = ").append(wood)
-            .append(", currentRecipe = ").append(currentRecipe)
-            .append(", unlabeled = ").append(unlabeled)
-            .append(", immutable = ").append(immutable)
-            .append(", stripped = ").append(stripped)
-            .append('}')
-            .toString();
+        return "Brew{" +
+            "ingredients = " + ingredients +
+            ", quality = " + quality +
+            ", alcohol = " + alcohol +
+            ", distillRuns = " + distillRuns +
+            ", ageTime = " + ageTime +
+            ", wood = " + wood +
+            ", currentRecipe = " + currentRecipe +
+            ", unlabeled = " + unlabeled +
+            ", immutable = " + immutable +
+            ", stripped = " + stripped +
+            '}';
     }
 
     // remove potion from file (drinking, despawning, combusting, cmdDeleting, should be more!)

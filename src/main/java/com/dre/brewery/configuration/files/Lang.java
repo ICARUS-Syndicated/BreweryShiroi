@@ -290,6 +290,8 @@ public class Lang extends AbstractOkaeriConfigFile {
     private List<String> defectWrongIngredient;
     @CustomKey("Defect_WrongWood")
     private List<String> defectWrongWood;
+    @CustomKey("Defect_WrongHeatSource")
+    private List<String> defectWrongHeatSource;
 
     @Comment("CMD")
     @CustomKey("CMD_Aged")
@@ -362,6 +364,8 @@ public class Lang extends AbstractOkaeriConfigFile {
     private String errorConfigUpdate;
     @CustomKey("Error_InvalidAmount")
     private String errorInvalidAmount;
+    @CustomKey("Error_InvalidHeatSource")
+    private String errorInvalidHeatSource;
     @CustomKey("Error_InvalidArgument")
     private String errorInvalidArgument;
     @CustomKey("Error_InvalidNumber")
@@ -490,6 +494,8 @@ public class Lang extends AbstractOkaeriConfigFile {
     private String helpSimulateCook;
     @CustomKey("Help_Simulate_Distill")
     private String helpSimulateDistill;
+    @CustomKey("Help_Simulate_Heat")
+    private String helpSimulateHeat;
     @CustomKey("Help_Simulate_Options")
     private String helpSimulateOptions;
     @CustomKey("Help_Simulate_Player")

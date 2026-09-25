@@ -154,6 +154,20 @@ recipesFile:
 
     cookingtime: Time in real minutes ingredients have to boil
 
+    heatsource: Which fire the brew has to be cooked over (default: all)
+      Either a heat source block name, or one of the groups below, or a list of those.
+      heat source blocks: campfire, soul_campfire, fire, soul_fire, magma_block, lava
+      all       = every heat source
+      mild      = heat sources that warm without a flame, such as the magma block
+      fires     = any kind of fire
+      soulfire  = soul fire and soul campfires
+      campfires = any kind of campfire
+        heatsource: soul_campfire
+        heatsource: campfires
+        heatsource: [campfires, mild]
+      A campfire only counts while it is lit, everything else in this list heats a cauldron always.
+      Cooking the brew over anything else ruins it.
+
     distillruns: How often it has to be distilled for full alcohol (0=without distilling)
 
     distilltime: How long (in seconds) one distill-run takes (0=Default time of 40 sec) MC Default would be 20 sec

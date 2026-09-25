@@ -64,6 +64,9 @@ Defect_WrongIngredient:
 Defect_WrongWood:
   - '味道太像 &v1...'
   - '&v1 太强大了...'
+Defect_WrongHeatSource:
+  - '用错火了...需要用 &v1...'
+  - '热源不对，应以 &v1 烹煮...'
 
 # CMD
 CMD_Aged: '&a已陈酿 &v1 年'
@@ -148,6 +151,7 @@ Help_Simulate_Age: '&6-a/--age <酒桶类型> <陈酿时间>'
 Help_Simulate_Brewer: '&6-b/--brewer <玩家>'
 Help_Simulate_Cook: '&6-c/--cook <蒸煮时间>'
 Help_Simulate_Distill: '&6-d/--distill <蒸馏次数>'
+Help_Simulate_Heat: '&6-h/--heat <热源>'
 Help_Simulate_Options: '&e选项:'
 Help_Simulate_Player: '&6-p/--player <玩家>'
 Help_Simulate_Recipe: '&6-r/--recipe <配方>'

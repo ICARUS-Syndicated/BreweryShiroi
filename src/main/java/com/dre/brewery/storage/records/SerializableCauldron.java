@@ -38,7 +38,7 @@ import org.bukkit.Location;
 public record SerializableCauldron(String id, String serializedLocation, String serializedIngredients,
                                    int state) implements SerializableThing {
     public SerializableCauldron(BreweryCauldron cauldron) {
-        this(cauldron.getId().toString(), DataManager.serializeLocation(cauldron.getBlock().getLocation()), cauldron.getIngredients().serializeIngredients(), cauldron.getState());
+        this(cauldron.getId().toString(), DataManager.serializeLocation(cauldron.getBlock().getLocation()), cauldron.getIngredients().serializeIngredients(), cauldron.getCookingTime());
     }
 
     public BreweryCauldron toCauldron() {

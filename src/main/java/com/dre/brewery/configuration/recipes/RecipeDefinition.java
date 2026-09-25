@@ -24,10 +24,12 @@ import com.dre.brewery.configuration.recipes.serdes.BEffectsDeserializer;
 import com.dre.brewery.configuration.recipes.serdes.BarrelWoodTypesDeserializer;
 import com.dre.brewery.configuration.recipes.serdes.CommandStringsDeserializer;
 import com.dre.brewery.configuration.recipes.serdes.CustomModelDataDeserializer;
+import com.dre.brewery.configuration.recipes.serdes.HeatSourceDeserializer;
 import com.dre.brewery.configuration.recipes.serdes.ItemModelDeserializer;
 import com.dre.brewery.configuration.recipes.serdes.LoreStringsDeserializer;
 import com.dre.brewery.configuration.recipes.serdes.RecipeItemsDeserializer;
 import com.dre.brewery.configuration.recipes.serdes.RecipeNameDeserializer;
+import com.dre.brewery.instruments.BreweryHeatSource;
 import com.dre.brewery.instruments.barrel.BarrelWoodType;
 import com.dre.brewery.recipe.BreweryEffect;
 import com.dre.brewery.recipe.BreweryRecipe;
@@ -68,6 +70,10 @@ public class RecipeDefinition {
 
     @JsonProperty("distilltime")
     private Integer distillTime;
+
+    @JsonProperty("heatsource")
+    @JsonDeserialize(using = HeatSourceDeserializer.class)
+    private BreweryHeatSource.HeatSourceRequirement heatSource;
 
     @JsonDeserialize(using = BarrelWoodTypesDeserializer.class)
     private List<BarrelWoodType> wood;
@@ -142,6 +148,9 @@ public class RecipeDefinition {
         recipe.setAge(this.age != null ? this.age : 0);
         recipe.setDifficulty(this.difficulty != null ? this.difficulty : 0);
         recipe.setAlcohol(this.alcohol != null ? this.alcohol : 0);
+        if (this.heatSource != null) {
+            recipe.setHeatSource(this.heatSource);
+        }
 
         String colorName = this.color != null ? this.color : "BLUE";
         recipe.setColor(PotionColor.fromString(colorName));

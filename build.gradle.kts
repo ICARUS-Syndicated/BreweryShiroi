@@ -39,7 +39,7 @@ plugins {
 }
 
 group = "com.dre.brewery"
-version = "3.7.0"
+version = "4.1.0"
 
 val langVersion: Int = 21
 val runTaskJavaVersion: Int = 21
@@ -224,8 +224,15 @@ tasks {
 
 tasks.withType(xyz.jpenilla.runtask.task.AbstractRun::class) {
     javaLauncher = javaToolchains.launcherFor {
-        // Any vendor, otherwise the run tasks can not start unless Temurin is installed (and reachable)
+        // Run the dev server on the JetBrains Runtime, the JVM IntelliJ ships with, instead of whatever
+        // JDK happens to back the Gradle daemon.
         languageVersion = JavaLanguageVersion.of(runTaskJavaVersion)
+        // The vendor has to be pinned, otherwise the "current JVM" wins: that is the daemon started from
+        // JAVA_HOME, which is checked before any of the other detected toolchains.
+        // A JBR is a plain extracted folder, so Gradle does not discover it on its own; its location is
+        // registered per machine through org.gradle.java.installations.paths in ~/.gradle/gradle.properties.
+        // If the run tasks fail with "No matching toolchains found", that path is missing or wrong.
+        vendor = JvmVendorSpec.JETBRAINS
     }
 }
 

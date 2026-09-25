@@ -20,10 +20,10 @@
 
 package com.dre.brewery.utility.utils;
 
+import com.dre.brewery.instruments.BreweryHeatSource;
 import com.dre.brewery.utility.BukkitEffectConstants;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
-import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Levelled;
 import org.bukkit.block.data.type.Stairs;
 import org.jetbrains.annotations.Nullable;
@@ -33,10 +33,6 @@ public final class MaterialUtil {
     // Cauldron stuff
     public static final byte EMPTY = 0, SOME = 1, FULL = 2;
     public static final Material WATER_CAULDRON = getMaterialSafely("WATER_CAULDRON");
-    public static final Material MAGMA_BLOCK = getMaterialSafely("MAGMA_BLOCK");
-    public static final Material CAMPFIRE = getMaterialSafely("CAMPFIRE");
-    public static final Material SOUL_CAMPFIRE = getMaterialSafely("SOUL_CAMPFIRE");
-    public static final Material SOUL_FIRE = getMaterialSafely("SOUL_FIRE");
     public static final Material CLOCK = getMaterialSafely("CLOCK");
 
 
@@ -55,23 +51,11 @@ public final class MaterialUtil {
     }
 
 
+    /**
+     * @return Whether the given block is heating the cauldron above it, see {@link BreweryHeatSource}
+     */
     public static boolean isCauldronHeatSource(Block block) {
-        Material type = block.getType();
-        return type == Material.FIRE || type == SOUL_FIRE || type == MAGMA_BLOCK || litCampfire(block) || isLava(type);
-    }
-
-    public static boolean isLava(Material type) {
-        return type == Material.LAVA;
-    }
-
-    public static boolean litCampfire(Block block) {
-        if (block.getType() == CAMPFIRE || block.getType() == SOUL_CAMPFIRE) {
-            BlockData data = block.getBlockData();
-            if (data instanceof org.bukkit.block.data.Lightable) {
-                return ((org.bukkit.block.data.Lightable) data).isLit();
-            }
-        }
-        return false;
+        return BreweryHeatSource.of(block) != null;
     }
 
     public static boolean isBottle(Material type) {

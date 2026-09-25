@@ -21,6 +21,7 @@
 package com.dre.brewery.recipe;
 
 import com.dre.brewery.brew.BreweryIngredients;
+import com.dre.brewery.instruments.BreweryHeatSource;
 import com.dre.brewery.instruments.barrel.BarrelWoodType;
 import com.dre.brewery.brew.Brew;
 import com.dre.brewery.BreweryPlugin;
@@ -81,6 +82,7 @@ public class BreweryRecipe implements Cloneable {
     private int distillTime; // time for one distill run in seconds
     private List<BarrelWoodType> barrelTypes = new ArrayList<>(); // barrel types the brew should be aged in
     private int age; // time in minecraft days for the potions to age in barrels
+    private BreweryHeatSource.HeatSourceRequirement heatSource = BreweryHeatSource.HeatSourceRequirement.ALL; // heat sources the brew may be cooked over
 
     // outcome
     private PotionColor color; // color of the distilled/finished potion
@@ -650,27 +652,27 @@ public class BreweryRecipe implements Cloneable {
 
     @Override
     public String toString() {
-        return new StringBuilder("BreweryRecipe{")
-            .append("name = ").append(Arrays.toString(name))
-            .append(", ingredients = ").append(ingredients)
-            .append(", difficulty = ").append(difficulty)
-            .append(", cookingTime = ").append(cookingTime)
-            .append(", distillRuns = ").append(distillRuns)
-            .append(", distillTime = ").append(distillTime)
-            .append(", barrelTypes = ").append(barrelTypes)
-            .append(", age = ").append(age)
-            .append(", color = ").append(color)
-            .append(", alcohol = ").append(alcohol)
-            .append(", lore = ").append(lore)
-            .append(", customModelData = ").append(Arrays.toString(customModelData))
-            .append(", effects = ").append(effects)
-            .append(", playerCommands = ").append(playerCommands)
-            .append(", serverCommands = ").append(serverCommands)
-            .append(", drinkMessage = '").append(drinkMessage).append('\'')
-            .append(", drinkTitle = '").append(drinkTitle).append('\'')
-            .append(", glint = ").append(glint)
-            .append('}')
-            .toString();
+        return "BreweryRecipe{" +
+            "name = " + Arrays.toString(name) +
+            ", ingredients = " + ingredients +
+            ", difficulty = " + difficulty +
+            ", cookingTime = " + cookingTime +
+            ", distillRuns = " + distillRuns +
+            ", distillTime = " + distillTime +
+            ", barrelTypes = " + barrelTypes +
+            ", age = " + age +
+            ", heatSource = " + heatSource +
+            ", color = " + color +
+            ", alcohol = " + alcohol +
+            ", lore = " + lore +
+            ", customModelData = " + Arrays.toString(customModelData) +
+            ", effects = " + effects +
+            ", playerCommands = " + playerCommands +
+            ", serverCommands = " + serverCommands +
+            ", drinkMessage = '" + drinkMessage + '\'' +
+            ", drinkTitle = '" + drinkTitle + '\'' +
+            ", glint = " + glint +
+            '}';
     }
 
     /**

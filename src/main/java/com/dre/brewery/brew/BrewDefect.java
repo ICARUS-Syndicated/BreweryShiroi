@@ -21,6 +21,7 @@
 package com.dre.brewery.brew;
 
 import com.dre.brewery.configuration.files.Lang;
+import com.dre.brewery.instruments.BreweryHeatSource;
 import com.dre.brewery.instruments.barrel.BarrelWoodType;
 import com.dre.brewery.recipe.items.DebuggableItem;
 import com.dre.brewery.recipe.items.Ingredient;
@@ -140,6 +141,23 @@ public interface BrewDefect {
         @Override
         public @NotNull String toString() {
             return String.format("CookTimeMismatch{%d/%d}", actual, needed);
+        }
+    }
+
+    /**
+     * The brew was cooked over a heat source the recipe does not allow. Fatal, because no amount of
+     * adjusting the other dimensions makes a brew the recipe that was never cooked the right way.
+     */
+    record HeatSourceMismatch(BreweryHeatSource actual, BreweryHeatSource.HeatSourceRequirement needed) implements BrewDefect {
+
+        @Override
+        public List<String> getMessages(Lang lang) {
+            return lang.getEntries("Defect_WrongHeatSource", needed.name());
+        }
+
+        @Override
+        public @NotNull String toString() {
+            return String.format("HeatSourceMismatch{was %s, needs %s}", actual, needed.name());
         }
     }
 

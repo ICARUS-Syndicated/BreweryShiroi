@@ -24,6 +24,7 @@ import com.dre.brewery.brew.Brew;
 import com.dre.brewery.brew.BreweryIngredients;
 import com.dre.brewery.commands.BreweryCommandManager;
 import com.dre.brewery.configuration.files.Lang;
+import com.dre.brewery.instruments.BreweryHeatSource;
 import com.dre.brewery.instruments.barrel.BarrelWoodType;
 import com.dre.brewery.recipe.BreweryCauldronRecipe;
 import com.dre.brewery.recipe.BreweryRecipe;
@@ -57,6 +58,7 @@ import java.util.stream.Stream;
  *     <li>{@code -c/--cook <minutes>}</li>
  *     <li>{@code -d/--distill <runs>}</li>
  *     <li>{@code -a/--age <barrel type> <years>}</li>
+ *     <li>{@code -h/--heat <heat source>} (a single block, or {@code all} to not check)</li>
  *     <li>{@code -b/--brewer <player>}</li>
  *     <li>{@code -p/--player <player>}</li>
  * </ul>
@@ -67,6 +69,7 @@ public class SimulateCommand {
     private static final String OPTION_COOK = "c";
     private static final String OPTION_DISTILL = "d";
     private static final String OPTION_AGE = "a";
+    private static final String OPTION_HEAT = "h";
     private static final String OPTION_BREWER = "b";
     private static final String OPTION_PLAYER = "p";
 
@@ -136,7 +139,6 @@ public class SimulateCommand {
         } else {
             age = null;
         }
-
         if (ingredients.isEmpty()) {
             if (recipe == null) {
                 lang.sendEntry(sender, "CMD_Missing_Ingredients");
@@ -161,7 +163,7 @@ public class SimulateCommand {
             }
         }
 
-        run(lang, sender, cookedTime, distill, age, ingredients, brewer, player);
+        run(lang, sender, cookedTime, distill, age, arguments.heatSource, ingredients, brewer, player);
     }
 
     @Nullable
@@ -174,7 +176,7 @@ public class SimulateCommand {
     }
 
     private static void run(Lang lang, CommandSender sender, int cookedTime, OptionalInt distillRuns,
-                            @Nullable Age age, List<RecipeItem> ingredients,
+                            @Nullable Age age, @Nullable BreweryHeatSource heatSource, List<RecipeItem> ingredients,
                             @Nullable Player brewer, @Nullable Player player) {
         BreweryIngredients ingredientsHolder = new BreweryIngredients();
         for (RecipeItem item : ingredients) {
@@ -182,6 +184,8 @@ public class SimulateCommand {
                 ingredientsHolder.addGeneric(item);
             }
         }
+        // Without this the recipe lookup has no heat source to judge, which is what a barrel also sees
+        ingredientsHolder.setHeatSource(heatSource);
 
         ItemStack item = ingredientsHolder.cook(cookedTime, brewer);
         Brew brew = new Brew(ingredientsHolder);
@@ -239,7 +243,7 @@ public class SimulateCommand {
     private static List<String> suggestions(String input) {
         List<String> options = new ArrayList<>(List.of(
             "-r", "--recipe", "-c", "--cook", "-d", "--distill",
-            "-a", "--age", "-b", "--brewer", "-p", "--player"));
+            "-a", "--age", "-h", "--heat", "-b", "--brewer", "-p", "--player"));
         options.addAll(recipeNames());
         options.addAll(ingredientNames());
 
@@ -298,6 +302,8 @@ public class SimulateCommand {
         private Integer distill;
         @Nullable
         private Age age;
+        @Nullable
+        private BreweryHeatSource heatSource;
         @Nullable
         private String brewer;
         @Nullable
@@ -361,6 +367,11 @@ public class SimulateCommand {
                         }
                         age = value;
                     }
+                    case OPTION_HEAT -> {
+                        if (!parseHeat(next(parts, ++i))) {
+                            return;
+                        }
+                    }
                     case OPTION_BREWER -> {
                         String value = next(parts, ++i);
                         if (value == null) {
@@ -396,6 +407,7 @@ public class SimulateCommand {
                 case "c", "cook" -> OPTION_COOK;
                 case "d", "distill" -> OPTION_DISTILL;
                 case "a", "age" -> OPTION_AGE;
+                case "h", "heat" -> OPTION_HEAT;
                 case "b", "brewer" -> OPTION_BREWER;
                 case "p", "player" -> OPTION_PLAYER;
                 default -> null;
@@ -441,6 +453,33 @@ public class SimulateCommand {
                 return null;
             }
             return new Age(woodType, parsedTime.getAsFloat());
+        }
+
+        /**
+         * Reads the heat source a simulated brew was cooked over.
+         * <p>
+         * Only a single block makes sense here, a cauldron sits on one of them, so the groups a recipe may
+         * name are deliberately not accepted. {@code all} is the exception: it means no check at all, which is
+         * what leaving the option out already does.
+         *
+         * @return Whether the option was usable
+         */
+        private boolean parseHeat(@Nullable String value) {
+            if (value == null) {
+                fail("--heat");
+                return false;
+            }
+            if (value.equalsIgnoreCase(BreweryHeatSource.HeatSourceRequirement.ALL.name())) {
+                heatSource = null;
+                return true;
+            }
+            BreweryHeatSource source = BreweryHeatSource.fromName(value);
+            if (source == null) {
+                failure = new ParseFailure("Error_InvalidHeatSource", value);
+                return false;
+            }
+            heatSource = source;
+            return true;
         }
 
         /**

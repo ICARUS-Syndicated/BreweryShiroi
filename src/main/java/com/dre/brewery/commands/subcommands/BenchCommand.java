@@ -60,7 +60,7 @@ public class BenchCommand {
     private static final int LARGE_BARREL_SIZE = 54;
 
     /** A material no recipe is expected to use, so a brew made of it matches nothing. */
-    private static final Material NON_MATCHING_MATERIAL = Material.NETHERITE_BLOCK;
+    private static final Material NON_MATCHING_MATERIAL = Material.STRUCTURE_VOID;
 
     /**
      * Accumulates something derived from every benchmark result, so the JIT cannot discard the measured

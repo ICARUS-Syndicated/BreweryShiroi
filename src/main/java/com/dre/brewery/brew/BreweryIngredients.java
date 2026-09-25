@@ -679,11 +679,10 @@ public class BreweryIngredients {
         String ingredientsStr = ingredients.stream()
             .map(DebuggableItem::debug)
             .collect(Collectors.joining(", ", "[", "]"));
-        return new StringBuilder("BreweryIngredients{")
-            .append("cookedTime = ").append(cookedTime)
-            .append(", ingredients = ").append(ingredientsStr)
-            .append('}')
-            .toString();
+        return "BreweryIngredients{" +
+            "cookedTime = " + cookedTime +
+            ", ingredients = " + ingredientsStr +
+            '}';
     }
 
 	/*public void testStore(DataOutputStream out) throws IOException {

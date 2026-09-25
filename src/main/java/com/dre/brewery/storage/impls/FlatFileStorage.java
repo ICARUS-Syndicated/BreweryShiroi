@@ -70,7 +70,7 @@ public class FlatFileStorage extends DataManager {
 
         if (!rawFile.exists()) {
             try {
-                rawFile.createNewFile();
+                boolean ignored = rawFile.createNewFile();
             } catch (IOException e) {
                 throw new StorageInitException("Failed to create file! " + fileName, e);
             }

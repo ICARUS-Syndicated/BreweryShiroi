@@ -33,7 +33,6 @@ public final class MaterialUtil {
     // Cauldron stuff
     public static final byte EMPTY = 0, SOME = 1, FULL = 2;
     public static final Material WATER_CAULDRON = getMaterialSafely("WATER_CAULDRON");
-    public static final Material CLOCK = getMaterialSafely("CLOCK");
 
 
     @Nullable

@@ -66,7 +66,7 @@ public class Lang extends AbstractOkaeriConfigFile {
         Path bind = ConfigManager.getFilePath(Lang.class);
         File file = bind.toFile();
         if (!file.exists()) {
-            file.createNewFile();
+            boolean ignored = file.createNewFile();
         }
         this.setBindFile(bind);
         this.load(this.update);

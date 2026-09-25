@@ -72,7 +72,7 @@ public class Config extends AbstractOkaeriConfigFile {
     private int autosave = 10;
 
     @LocalizedComment("config.pluginPrefix")
-    private String pluginPrefix = "&#D7FFFFBrewShiroi \u00BB &f ";
+    private String pluginPrefix = "&#D7FFFFBrewShiroi » &f ";
 
     @LocalizedComment("config.debug")
     private boolean debug = false;

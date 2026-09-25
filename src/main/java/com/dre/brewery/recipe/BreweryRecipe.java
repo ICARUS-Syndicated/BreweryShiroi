@@ -429,7 +429,7 @@ public class BreweryRecipe implements Cloneable {
         if (command.startsWith("/")) command = command.substring(1);
         if (command.contains("/")) {
             String[] parts = command.split("/");
-            String trimmed = parts[0].trim(); // Needs to be effectively final for scheduling
+            String trimmed; // Needs to be effectively final for scheduling
             trimmed = parts[0].trim();
             String delay = parts[1].trim();
             long delayTicks = parseDelayToTicks(delay);

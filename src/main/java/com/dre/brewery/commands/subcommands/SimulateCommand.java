@@ -105,8 +105,10 @@ public class SimulateCommand {
         List<RecipeItem> ingredients = new ArrayList<>();
         for (String raw : arguments.ingredients) {
             BreweryRecipe.IngredientResult result = BreweryRecipe.loadIngredientVerbose(raw);
-            if (result instanceof BreweryRecipe.IngredientResult.Error error) {
-                lang.sendEntry(sender, error.error().getTranslationKey(), error.invalidPart());
+            if (result instanceof BreweryRecipe.IngredientResult.Error(
+                BreweryRecipe.IngredientError error1, String invalidPart
+            )) {
+                lang.sendEntry(sender, error1.getTranslationKey(), invalidPart);
                 return;
             }
             ingredients.add(((BreweryRecipe.IngredientResult.Success) result).ingredient());
@@ -328,7 +330,7 @@ public class SimulateCommand {
                 if (option == null) {
                     // The user probably meant "ingredient/#" instead of "ingredient #"
                     if (BreweryUtil.isInt(part) && !ingredients.isEmpty()) {
-                        ingredients.set(ingredients.size() - 1, ingredients.get(ingredients.size() - 1) + "/" + part);
+                        ingredients.set(ingredients.size() - 1, ingredients.getLast() + "/" + part);
                     } else {
                         ingredients.add(part);
                     }

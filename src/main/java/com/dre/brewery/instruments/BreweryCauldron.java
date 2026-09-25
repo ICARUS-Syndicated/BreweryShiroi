@@ -69,7 +69,6 @@ import java.util.concurrent.ThreadLocalRandom;
 @Setter
 public class BreweryCauldron {
 
-    private static final MinecraftVersion VERSION = BreweryPlugin.getMCVersion();
     private static final Config config = ConfigManager.getConfig(Config.class);
     private static final Lang lang = ConfigManager.getConfig(Lang.class);
     public static final int PARTICLE_PAUSE = 15;
@@ -627,7 +626,7 @@ public class BreweryCauldron {
                 if (worldName.startsWith("DXL_")) {
                     prefix = BreweryUtil.getDxlName(worldName) + "." + id;
                 } else {
-                    prefix = cauldron.block.getWorld().getUID().toString() + "." + id;
+                    prefix = cauldron.block.getWorld().getUID() + "." + id;
                 }
 
                 config.set(prefix + ".block", cauldron.block.getX() + "/" + cauldron.block.getY() + "/" + cauldron.block.getZ());

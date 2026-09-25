@@ -268,9 +268,8 @@ publishing {
     }
 
     publications {
-        if (user == null || pass == null) {
-            return@publications
-        }
+        // Always created, so that publishToMavenLocal works without any credentials. Addons such as Garden
+        // build against this artifact, and a local build is the only place they can get it from.
         create<MavenPublication>("maven") {
             groupId = project.group.toString()
             artifactId = project.name
